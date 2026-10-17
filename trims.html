@@ -3,36 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PO Search & Summary</title>
+    <title>Trims Tracker</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html2pdf & html2canvas Libraries for Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
-
-    <!-- Header Section (Cleaned) -->
-    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-boxes-packing text-emerald-400 text-xl"></i>
-                <h1 class="text-base font-bold leading-tight">Trims Tracker</h1>
-            </div>
-            <button onclick="fetchSheetData()" id="refresh-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center">
-                <i class="fa-solid fa-rotate text-emerald-400 mr-1.5"></i> Sync Data
-            </button>
-        </div>
-    </header>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col p-3 max-w-2xl mx-auto">
 
     <!-- Main Container -->
-    <main class="flex-1 max-w-4xl w-full mx-auto p-4 space-y-4">
+    <main class="w-full space-y-3">
 
         <!-- Search Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 relative">
@@ -50,16 +40,26 @@
             </div>
         </div>
 
-        <!-- Result Card -->
-        <div id="result-container" class="space-y-4 hidden">
+        <!-- Download Buttons (Hidden initially) -->
+        <div id="download-actions" class="flex gap-2 justify-end hidden">
+            <button onclick="downloadAsPDF()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-file-pdf text-sm"></i>
+                <span>Download PDF</span>
+            </button>
+            <button onclick="downloadAsImage()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-file-image text-sm"></i>
+                <span>Download Image</span>
+            </button>
+        </div>
+
+        <!-- Printable Report Area -->
+        <div id="report-area" class="space-y-3 hidden">
             
-            <!-- Clean Single PO Info Card -->
-            <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-md border border-slate-800">
-                <div class="mb-2 pb-2 border-b border-slate-800 flex justify-between items-center">
-                    <div>
-                        <span class="text-[10px] uppercase tracking-wider text-slate-400 block">PO Name</span>
-                        <h2 id="disp-po-name" class="text-xl font-bold text-amber-400">PO-XXXX</h2>
-                    </div>
+            <!-- Clean PO Info Card -->
+            <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-sm border border-slate-800">
+                <div class="mb-2 pb-2 border-b border-slate-800">
+                    <span class="text-[10px] uppercase tracking-wider text-slate-400 block">PO Name</span>
+                    <h2 id="disp-po-name" class="text-xl font-bold text-amber-400">PO-XXXX</h2>
                 </div>
                 
                 <div class="grid grid-cols-3 gap-2 text-xs pt-1">
@@ -153,7 +153,6 @@
         function parseSheetRows(rows) {
             const headers = rows[0].map(h => (h || '').toString().trim());
 
-            // Exact Column Indexes Match
             let idxBuyer = headers.findIndex(h => h.toLowerCase() === 'buyer');
             let idxStyle = headers.findIndex(h => h.toLowerCase() === 'style name');
             let idxPo = headers.findIndex(h => h.toLowerCase() === 'po name');
@@ -162,14 +161,13 @@
             let idxWo = headers.findIndex(h => h.toLowerCase() === 'wo qnty');
             let idxInhouse = headers.findIndex(h => h.toLowerCase().includes('in-house'));
 
-            // Fallback column positions
-            if (idxBuyer === -1) idxBuyer = 1;      // Column B
-            if (idxStyle === -1) idxStyle = 3;      // Column D
-            if (idxPo === -1) idxPo = 4;            // Column E
-            if (idxShipment === -1) idxShipment = 6;// Column G
-            if (idxTrims === -1) idxTrims = 7;      // Column H
-            if (idxWo === -1) idxWo = 9;         // Column J
-            if (idxInhouse === -1) idxInhouse = 10; // Column K
+            if (idxBuyer === -1) idxBuyer = 1;
+            if (idxStyle === -1) idxStyle = 3;
+            if (idxPo === -1) idxPo = 4;
+            if (idxShipment === -1) idxShipment = 6;
+            if (idxTrims === -1) idxTrims = 7;
+            if (idxWo === -1) idxWo = 9;
+            if (idxInhouse === -1) idxInhouse = 10;
 
             masterData = [];
             for(let i = 1; i < rows.length; i++) {
@@ -231,9 +229,9 @@
             document.getElementById('disp-style-name').innerText = poRows[0].styleName || 'N/A';
             document.getElementById('disp-shipment').innerText = poRows[0].shipmentDate || 'N/A';
             
-            document.getElementById('result-container').classList.remove('hidden');
+            document.getElementById('report-area').classList.remove('hidden');
+            document.getElementById('download-actions').classList.remove('hidden');
 
-            // Grouping Trims Data
             let trimsMap = {};
             poRows.forEach(row => {
                 let trim = row.trimsName || 'Unspecified Trim';
@@ -244,7 +242,6 @@
                 trimsMap[trim].inhouse += row.inhouseQnty;
             });
 
-            // Render Table
             const tbody = document.getElementById('trims-table-body');
             tbody.innerHTML = '';
 
@@ -262,6 +259,35 @@
                 `;
                 tbody.appendChild(tr);
             }
+        }
+
+        // Download PDF Function
+        function downloadAsPDF() {
+            const element = document.getElementById('report-area');
+            const poName = document.getElementById('disp-po-name').innerText;
+            
+            const opt = {
+                margin:       0.3,
+                filename:     `Trims_Report_${poName}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // Download Image (PNG) Function
+        function downloadAsImage() {
+            const element = document.getElementById('report-area');
+            const poName = document.getElementById('disp-po-name').innerText;
+
+            html2canvas(element, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Trims_Report_${poName}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
         }
     </script>
 </body>
