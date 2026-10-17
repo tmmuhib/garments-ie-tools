@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Subway Runner - Pro Logic</title>
+    <title>3D Chess Game</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Three.js Library -->
+    <!-- Three.js and OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
         * {
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none;
+            touch-action: manipulation;
         }
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #020617;
+            background-color: #0f172a;
             font-family: system-ui, -apple-system, sans-serif;
         }
         #canvas-container {
@@ -35,499 +36,289 @@
     <!-- 3D Canvas -->
     <div id="canvas-container" class="absolute inset-0"></div>
 
-    <!-- HUD Overlay -->
-    <div id="hud" class="relative z-10 p-4 flex justify-between items-center text-white pointer-events-none hidden">
-        <div class="flex items-center space-x-2 bg-slate-900/80 px-3 py-1.5 rounded-full border border-amber-500/50">
-            <i class="fa-solid fa-coins text-amber-400 text-lg"></i>
-            <span id="coin-count" class="font-bold text-lg text-amber-400">0</span>
+    <!-- Top UI Overlay -->
+    <div class="relative z-10 p-4 flex justify-between items-center text-white pointer-events-none">
+        <div class="bg-slate-900/80 px-4 py-2 rounded-2xl border border-amber-500/40 shadow-lg pointer-events-auto">
+            <h1 class="text-sm font-bold text-amber-400">3D Daba (Chess)</h1>
+            <p class="text-[10px] text-slate-400">Drag to rotate board | Click piece to move</p>
         </div>
-        <div class="flex items-center space-x-2 bg-slate-900/80 px-4 py-1.5 rounded-full border border-sky-500/50">
-            <span id="mode-badge" class="text-xs uppercase px-2 py-0.5 rounded font-bold bg-emerald-500 text-slate-950">EASY</span>
-            <span id="score-count" class="font-bold text-xl text-sky-400">0m</span>
-        </div>
-    </div>
-
-    <!-- Start / Difficulty Screen -->
-    <div id="start-screen" class="relative z-20 flex flex-col items-center justify-center h-full bg-slate-950/90 p-6 text-center">
-        <div class="bg-slate-900 p-6 rounded-3xl border-2 border-amber-500 shadow-2xl max-w-sm w-full">
-            <div class="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
-                <i class="fa-solid fa-person-running"></i>
-            </div>
-            <h1 class="text-2xl font-black text-amber-400 mb-1">3D SUBWAY RUNNER</h1>
-            <p class="text-xs text-slate-400 mb-4">Swipe Left/Right to Turn, Up to Jump, Down to Roll!</p>
-
-            <label class="text-xs font-bold text-slate-300 block mb-2 text-left">Difficulty Mode:</label>
-            <div class="grid grid-cols-3 gap-2 mb-6">
-                <button onclick="setDifficulty('easy')" id="btn-easy" class="mode-btn bg-emerald-600 text-white py-2 rounded-xl font-bold text-xs shadow border-2 border-emerald-400">Easy</button>
-                <button onclick="setDifficulty('medium')" id="btn-medium" class="mode-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs border border-slate-700">Medium</button>
-                <button onclick="setDifficulty('hard')" id="btn-hard" class="mode-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs border border-slate-700">Hard</button>
-            </div>
-
-            <button onclick="startGame()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-2xl shadow-lg text-base tracking-wider transition">START RUNNER</button>
+        <div class="bg-slate-900/80 px-4 py-2 rounded-2xl border border-sky-500/40 shadow-lg pointer-events-auto text-right">
+            <span class="text-[10px] text-slate-400 block">Current Turn</span>
+            <span id="turn-display" class="font-bold text-sm text-emerald-400">WHITE</span>
         </div>
     </div>
 
-    <!-- Game Over Screen -->
-    <div id="game-over-screen" class="relative z-20 flex flex-col items-center justify-center h-full bg-slate-950/90 p-6 text-center hidden">
-        <div class="bg-slate-900 p-6 rounded-3xl border-2 border-rose-500 shadow-2xl max-w-sm w-full">
-            <h1 class="text-3xl font-black text-rose-500 mb-1">CRASHED!</h1>
-            <p class="text-xs text-slate-400 mb-4">You hit a vehicle directly!</p>
+    <!-- Status Message -->
+    <div id="status-msg" class="relative z-10 mx-auto bg-slate-900/90 text-amber-300 text-xs px-4 py-1.5 rounded-full border border-slate-700 shadow-md min-h-[28px] flex items-center justify-center">
+        White's turn to play.
+    </div>
 
-            <div class="bg-slate-950 p-4 rounded-2xl mb-6 space-y-2 text-sm">
-                <div class="flex justify-between text-slate-300">
-                    <span>Coins Collected:</span>
-                    <span id="final-coins" class="font-bold text-amber-400">0</span>
-                </div>
-                <div class="flex justify-between text-slate-300">
-                    <span>Distance Covered:</span>
-                    <span id="final-score" class="font-bold text-sky-400">0m</span>
-                </div>
-            </div>
-
-            <button onclick="restartGame()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-2xl shadow-lg text-base tracking-wider transition">PLAY AGAIN</button>
-        </div>
+    <!-- Bottom Controls -->
+    <div class="relative z-10 p-4 flex justify-center space-x-3 pointer-events-auto">
+        <button onclick="resetGame()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs shadow-lg transition flex items-center space-x-1">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>Reset Game</span>
+        </button>
+        <button onclick="resetCamera()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl text-xs border border-slate-600 shadow-lg transition flex items-center space-x-1">
+            <i class="fa-solid fa-camera"></i>
+            <span>Reset Camera</span>
+        </button>
     </div>
 
     <!-- 3D Engine Code -->
     <script>
-        let scene, camera, renderer;
-        let playerGroup;
-        let leftLeg, rightLeg, leftArm, rightArm;
-        let lanes = [-2.2, 0, 2.2];
-        let currentLane = 1;
-        let targetX = 0;
+        let scene, camera, renderer, controls;
+        let boardGroup, piecesGroup, highlightGroup;
+        let raycaster, mouse;
 
-        let playerY = 0;
-        let groundLevel = 0; // Dynamic ground level (0 or top of vehicle)
-        let isJumping = false, jumpVelocity = 0, gravity = -0.016;
-        let isRolling = false, rollTimer = 0;
+        let selectedPiece = null;
+        let turn = 'white'; // 'white' or 'black'
 
-        let gameRunning = false, score = 0, coins = 0, speed = 0.25;
-        let selectedDifficulty = 'easy';
+        // Initial Chess Board State (8x8)
+        const initialBoard = [
+            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+        ]; // Lowercase = Black, Uppercase = White
 
-        const diffSettings = {
-            easy: { speed: 0.24, obstacleFreq: 0.025, coinFreq: 0.05, name: 'EASY', color: 'bg-emerald-500' },
-            medium: { speed: 0.35, obstacleFreq: 0.04, coinFreq: 0.06, name: 'MEDIUM', color: 'bg-amber-500' },
-            hard: { speed: 0.48, obstacleFreq: 0.07, coinFreq: 0.08, name: 'HARD', color: 'bg-rose-500' }
-        };
-
-        let obstacles = [], coinObjects = [];
+        let boardState = JSON.parse(JSON.stringify(initialBoard));
 
         function init3D() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x020617);
-            scene.fog = new THREE.Fog(0x020617, 12, 55);
+            scene.background = new THREE.Color(0x0f172a);
 
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, 3.8, 6.5);
-            camera.lookAt(0, 1.2, -5);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 12, 12);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             container.appendChild(renderer.domElement);
 
-            // Lights
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambientLight);
 
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-            dirLight.position.set(5, 20, 10);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(10, 20, 10);
             dirLight.castShadow = true;
             scene.add(dirLight);
 
-            // Track Floor
-            const groundGeo = new THREE.PlaneGeometry(9, 120);
-            const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-            const ground = new THREE.Mesh(groundGeo, groundMat);
-            ground.rotation.x = -Math.PI / 2;
-            ground.position.z = -50;
-            ground.receiveShadow = true;
-            scene.add(ground);
+            boardGroup = new THREE.Group();
+            piecesGroup = new THREE.Group();
+            highlightGroup = new THREE.Group();
 
-            // Rails
-            for (let x of [-2.2, 0, 2.2]) {
-                const railGeo = new THREE.BoxGeometry(0.1, 0.08, 120);
-                const railMat = new THREE.MeshStandardMaterial({ color: 0x64748b });
-                const rail = new THREE.Mesh(railGeo, railMat);
-                rail.position.set(x, 0.04, -50);
-                scene.add(rail);
-            }
+            scene.add(boardGroup);
+            scene.add(piecesGroup);
+            scene.add(highlightGroup);
 
-            // Human Character
-            createSubwayHumanPlayer();
+            createBoard();
+            createPieces();
 
             window.addEventListener('resize', onWindowResize);
-            setupSwipeControls();
-        }
+            window.addEventListener('pointerdown', onPointerDown);
 
-        // Realistic Human Character Model
-        function createSubwayHumanPlayer() {
-            playerGroup = new THREE.Group();
-
-            const skinMat = new THREE.MeshStandardMaterial({ color: 0xfbcfe8 });
-            const jacketMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
-            const pantsMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
-            const capMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b });
-            const shoeMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-
-            // Torso / Jacket
-            const torsoGeo = new THREE.BoxGeometry(0.6, 0.8, 0.35);
-            const torso = new THREE.Mesh(torsoGeo, jacketMat);
-            torso.position.y = 1.0;
-            playerGroup.add(torso);
-
-            // Head
-            const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
-            const head = new THREE.Mesh(headGeo, skinMat);
-            head.position.y = 1.6;
-            playerGroup.add(head);
-
-            // Cap
-            const capGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.08, 12);
-            const cap = new THREE.Mesh(capGeo, capMat);
-            cap.position.set(0, 1.8, -0.05);
-            playerGroup.add(cap);
-
-            // Legs
-            const legGeo = new THREE.BoxGeometry(0.22, 0.65, 0.22);
-            leftLeg = new THREE.Mesh(legGeo, pantsMat);
-            leftLeg.position.set(-0.16, 0.32, 0);
-            playerGroup.add(leftLeg);
-
-            rightLeg = new THREE.Mesh(legGeo, pantsMat);
-            rightLeg.position.set(0.16, 0.32, 0);
-            playerGroup.add(rightLeg);
-
-            // Shoes
-            const shoeGeo = new THREE.BoxGeometry(0.24, 0.12, 0.35);
-            const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
-            leftShoe.position.set(0, -0.3, 0.05);
-            leftLeg.add(leftShoe);
-
-            const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
-            rightShoe.position.set(0, -0.3, 0.05);
-            rightLeg.add(rightShoe);
-
-            // Arms
-            const armGeo = new THREE.BoxGeometry(0.16, 0.65, 0.16);
-            leftArm = new THREE.Mesh(armGeo, skinMat);
-            leftArm.position.set(-0.42, 1.0, 0);
-            playerGroup.add(leftArm);
-
-            rightArm = new THREE.Mesh(armGeo, skinMat);
-            rightArm.position.set(0.42, 1.0, 0);
-            playerGroup.add(rightArm);
-
-            playerGroup.position.set(0, 0, 0);
-            scene.add(playerGroup);
-        }
-
-        // Realistic Vehicle Model with Precise Height
-        function createVehicle() {
-            const group = new THREE.Group();
-            const isBus = Math.random() > 0.4; // 60% Bus/Train, 40% Car
-
-            const carColor = [0xdc2626, 0x2563eb, 0x16a34a, 0xd97706][Math.floor(Math.random() * 4)];
-            const bodyMat = new THREE.MeshStandardMaterial({ color: carColor });
-            const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.7 });
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-
-            let height = 0;
-            let length = 0;
-
-            if (isBus) {
-                height = 2.2;
-                length = 5.0;
-
-                // Bus / Train Body
-                const bodyGeo = new THREE.BoxGeometry(1.7, height, length);
-                const body = new THREE.Mesh(bodyGeo, bodyMat);
-                body.position.y = height / 2;
-                group.add(body);
-
-                // Windshield
-                const glassGeo = new THREE.BoxGeometry(1.5, 0.8, 0.1);
-                const glass = new THREE.Mesh(glassGeo, glassMat);
-                glass.position.set(0, 1.5, length / 2 + 0.01);
-                group.add(glass);
-            } else {
-                height = 1.2;
-                length = 3.6;
-
-                // Car Base
-                const baseGeo = new THREE.BoxGeometry(1.6, 0.6, length);
-                const base = new THREE.Mesh(baseGeo, bodyMat);
-                base.position.y = 0.3;
-                group.add(base);
-
-                // Car Cabin
-                const cabinGeo = new THREE.BoxGeometry(1.4, 0.6, 1.8);
-                const cabin = new THREE.Mesh(cabinGeo, glassMat);
-                cabin.position.set(0, 0.8, -0.2);
-                group.add(cabin);
-            }
-
-            // Wheels
-            const wheelGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.2, 12);
-            wheelGeo.rotateZ(Math.PI / 2);
-
-            [[-0.85, 0.28, length / 3], [0.85, 0.28, length / 3],
-             [-0.85, 0.28, -length / 3], [0.85, 0.28, -length / 3]].forEach(pos => {
-                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-                wheel.position.set(...pos);
-                group.add(wheel);
-            });
-
-            return { mesh: group, height: height, length: length };
-        }
-
-        function setDifficulty(mode) {
-            selectedDifficulty = mode;
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.className = 'mode-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs border border-slate-700';
-            });
-
-            const activeBtn = document.getElementById(`btn-${mode}`);
-            if (mode === 'easy') activeBtn.className = 'mode-btn bg-emerald-600 text-white py-2 rounded-xl font-bold text-xs shadow border-2 border-emerald-400';
-            if (mode === 'medium') activeBtn.className = 'mode-btn bg-amber-600 text-white py-2 rounded-xl font-bold text-xs shadow border-2 border-amber-400';
-            if (mode === 'hard') activeBtn.className = 'mode-btn bg-rose-600 text-white py-2 rounded-xl font-bold text-xs shadow border-2 border-rose-400';
-        }
-
-        function startGame() {
-            const conf = diffSettings[selectedDifficulty];
-            speed = conf.speed;
-
-            document.getElementById('mode-badge').innerText = conf.name;
-            document.getElementById('mode-badge').className = `text-xs uppercase px-2 py-0.5 rounded font-bold ${conf.color} text-slate-950`;
-
-            document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('hud').classList.remove('hidden');
-
-            score = 0; coins = 0; currentLane = 1; targetX = 0; playerY = 0; groundLevel = 0;
-            playerGroup.position.set(0, 0, 0);
-
-            obstacles.forEach(o => scene.remove(o.mesh));
-            coinObjects.forEach(c => scene.remove(c.mesh));
-            obstacles = []; coinObjects = [];
-
-            gameRunning = true;
             animate();
         }
 
-        function restartGame() {
-            document.getElementById('game-over-screen').classList.add('hidden');
-            startGame();
-        }
+        // Create 8x8 Board
+        function createBoard() {
+            const darkMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4 });
+            const lightMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
+            const borderMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
 
-        function spawnObstacle() {
-            const laneIndex = Math.floor(Math.random() * 3);
-            const x = lanes[laneIndex];
+            // Board Frame
+            const frameGeo = new THREE.BoxGeometry(9, 0.4, 9);
+            const frame = new THREE.Mesh(frameGeo, borderMat);
+            frame.position.y = -0.2;
+            boardGroup.add(frame);
 
-            const vehicle = createVehicle();
-            vehicle.mesh.position.set(x, 0, -55);
-            scene.add(vehicle.mesh);
-
-            obstacles.push({
-                mesh: vehicle.mesh,
-                x: x,
-                height: vehicle.height,
-                length: vehicle.length
-            });
-        }
-
-        function spawnCoin() {
-            const laneIndex = Math.floor(Math.random() * 3);
-            const x = lanes[laneIndex];
-
-            const geo = new THREE.CylinderGeometry(0.3, 0.3, 0.08, 16);
-            const mat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.1 });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.rotation.x = Math.PI / 2;
-            mesh.position.set(x, 0.8, -55);
-            scene.add(mesh);
-
-            coinObjects.push({ mesh: mesh, x: x });
-        }
-
-        let animTime = 0;
-        function animate() {
-            if (!gameRunning) return;
-
-            requestAnimationFrame(animate);
-            animTime += 0.16;
-
-            // Smooth Lane Transition
-            playerGroup.position.x += (targetX - playerGroup.position.x) * 0.25;
-
-            // Running Limb Motion
-            if (!isJumping && !isRolling) {
-                leftLeg.rotation.x = Math.sin(animTime) * 0.65;
-                rightLeg.rotation.x = -Math.sin(animTime) * 0.65;
-                leftArm.rotation.x = -Math.sin(animTime) * 0.65;
-                rightArm.rotation.x = Math.sin(animTime) * 0.65;
-            }
-
-            // Jump & Dynamic Ground Physics
-            if (isJumping) {
-                playerY += jumpVelocity;
-                jumpVelocity += gravity;
-
-                if (playerY <= groundLevel) {
-                    playerY = groundLevel;
-                    isJumping = false;
-                }
-            } else {
-                // Gravity drop if running off a car roof
-                if (playerY > groundLevel) {
-                    playerY += gravity * 2;
-                    if (playerY <= groundLevel) playerY = groundLevel;
-                }
-            }
-
-            playerGroup.position.y = playerY;
-
-            // Roll Dynamics
-            if (isRolling) {
-                rollTimer--;
-                playerGroup.scale.set(1, 0.5, 1);
-                if (rollTimer <= 0) {
-                    playerGroup.scale.set(1, 1, 1);
-                    isRolling = false;
-                }
-            }
-
-            // Spawning
-            const conf = diffSettings[selectedDifficulty];
-            if (Math.random() < conf.obstacleFreq) spawnObstacle();
-            if (Math.random() < conf.coinFreq) spawnCoin();
-
-            // Vehicle Movement & Intelligent Collision Logic
-            groundLevel = 0; // Reset ground
-
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                const obs = obstacles[i];
-                obs.mesh.position.z += speed;
-
-                const playerZ = playerGroup.position.z;
-                const obsZ = obs.mesh.position.z;
-                const halfLen = obs.length / 2;
-
-                // Check if player is on the same lane and within Z-range of vehicle
-                if (Math.abs(playerGroup.position.x - obs.x) < 0.8 &&
-                    playerZ >= obsZ - halfLen && playerZ <= obsZ + halfLen) {
-
-                    // If Player is high enough -> Land on Top of Vehicle!
-                    if (playerY >= obs.height - 0.2) {
-                        groundLevel = obs.height;
-                    } else {
-                        // Crash directly into the front or side of vehicle
-                        gameOver();
-                        return;
-                    }
-                }
-
-                if (obs.mesh.position.z > 6) {
-                    scene.remove(obs.mesh);
-                    obstacles.splice(i, 1);
-                }
-            }
-
-            // Coins Logic
-            for (let i = coinObjects.length - 1; i >= 0; i--) {
-                const c = coinObjects[i];
-                c.mesh.position.z += speed;
-                c.mesh.rotation.z += 0.08;
-
-                if (Math.abs(playerGroup.position.x - c.x) < 0.8 &&
-                    Math.abs(playerGroup.position.z - c.mesh.position.z) < 1.0 &&
-                    Math.abs(playerGroup.position.y - (c.mesh.position.y - 0.8)) < 1.2) {
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const isDark = (row + col) % 2 === 1;
+                    const tileGeo = new THREE.BoxGeometry(1, 0.2, 1);
+                    const tile = new THREE.Mesh(tileGeo, isDark ? darkMat : lightMat);
                     
-                    coins += 1;
-                    document.getElementById('coin-count').innerText = coins;
-                    scene.remove(c.mesh);
-                    coinObjects.splice(i, 1);
-                    continue;
-                }
-
-                if (c.mesh.position.z > 6) {
-                    scene.remove(c.mesh);
-                    coinObjects.splice(i, 1);
+                    tile.position.set(col - 3.5, 0, row - 3.5);
+                    tile.userData = { row: row, col: col, type: 'tile' };
+                    tile.receiveShadow = true;
+                    boardGroup.add(tile);
                 }
             }
+        }
 
-            score += speed * 0.5;
-            document.getElementById('score-count').innerText = `${Math.floor(score)}m`;
+        // Create 3D Chess Pieces
+        function createPieces() {
+            // Clear existing
+            while(piecesGroup.children.length > 0) { 
+                piecesGroup.remove(piecesGroup.children[0]); 
+            }
 
+            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.2, metalness: 0.1 });
+            const blackMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2, metalness: 0.2 });
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const code = boardState[row][col];
+                    if (!code) continue;
+
+                    const isWhite = code === code.toUpperCase();
+                    const mat = isWhite ? whiteMat : blackMat;
+                    const pieceMesh = generatePieceMesh(code.toLowerCase(), mat);
+
+                    pieceMesh.position.set(col - 3.5, 0.1, row - 3.5);
+                    pieceMesh.userData = { row: row, col: col, type: 'piece', isWhite: isWhite, code: code };
+                    piecesGroup.add(pieceMesh);
+                }
+            }
+        }
+
+        // Shape 3D Mesh according to piece type
+        function generatePieceMesh(type, mat) {
+            const group = new THREE.Group();
+
+            // Base
+            const baseGeo = new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16);
+            const base = new THREE.Mesh(baseGeo, mat);
+            base.position.y = 0.075;
+            base.castShadow = true;
+            group.add(base);
+
+            let bodyGeo;
+            if (type === 'p') { // Pawn
+                bodyGeo = new THREE.SphereGeometry(0.25, 16, 16);
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.position.y = 0.4;
+                group.add(body);
+            } else if (type === 'r') { // Rook / Nouka
+                bodyGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.6, 12);
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.position.y = 0.45;
+                group.add(body);
+            } else if (type === 'n') { // Knight / Ghora
+                bodyGeo = new THREE.BoxGeometry(0.3, 0.6, 0.4);
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.position.y = 0.45;
+                group.add(body);
+            } else if (type === 'b') { // Bishop / Hathi
+                bodyGeo = new THREE.ConeGeometry(0.28, 0.7, 16);
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.position.y = 0.5;
+                group.add(body);
+            } else if (type === 'q') { // Queen / Mantri
+                bodyGeo = new THREE.CylinderGeometry(0.2, 0.35, 0.9, 16);
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.position.y = 0.6;
+                group.add(body);
+            } else if (type === 'k') { // King / Raja
+                bodyGeo = new THREE.CylinderGeometry(0.22, 0.38, 1.0, 16);
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.position.y = 0.65;
+                group.add(body);
+            }
+
+            return group;
+        }
+
+        // Handle Click / Tap
+        function onPointerDown(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects([...piecesGroup.children, ...boardGroup.children], true);
+
+            if (intersects.length > 0) {
+                let hitObj = intersects[0].object;
+                while (hitObj.parent && hitObj.parent !== piecesGroup && hitObj.parent !== boardGroup && hitObj.parent !== scene) {
+                    hitObj = hitObj.parent;
+                }
+
+                const data = hitObj.userData;
+
+                if (data.type === 'piece') {
+                    // Check turn
+                    if ((turn === 'white' && data.isWhite) || (turn === 'black' && !data.isWhite)) {
+                        selectedPiece = data;
+                        highlightSquare(data.row, data.col);
+                        document.getElementById('status-msg').innerText = `Selected ${data.code} at (${data.row}, ${data.col}). Click destination tile.`;
+                    } else if (selectedPiece) {
+                        // Capture move
+                        movePiece(selectedPiece.row, selectedPiece.col, data.row, data.col);
+                    }
+                } else if (data.type === 'tile' && selectedPiece) {
+                    // Move to tile
+                    movePiece(selectedPiece.row, selectedPiece.col, data.row, data.col);
+                }
+            }
+        }
+
+        function highlightSquare(row, col) {
+            while(highlightGroup.children.length > 0) { highlightGroup.remove(highlightGroup.children[0]); }
+
+            const hlGeo = new THREE.PlaneGeometry(0.95, 0.95);
+            const hlMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            const hlMesh = new THREE.Mesh(hlGeo, hlMat);
+            hlMesh.rotation.x = -Math.PI / 2;
+            hlMesh.position.set(col - 3.5, 0.11, row - 3.5);
+            highlightGroup.add(hlMesh);
+        }
+
+        function movePiece(fromRow, fromCol, toRow, toCol) {
+            if (fromRow === toRow && fromCol === toCol) return;
+
+            // Execute Move
+            const pieceCode = boardState[fromRow][fromCol];
+            boardState[toRow][toCol] = pieceCode;
+            boardState[fromRow][fromCol] = '';
+
+            selectedPiece = null;
+            while(highlightGroup.children.length > 0) { highlightGroup.remove(highlightGroup.children[0]); }
+
+            // Switch Turn
+            turn = (turn === 'white') ? 'black' : 'white';
+            document.getElementById('turn-display').innerText = turn.toUpperCase();
+            document.getElementById('turn-display').className = `font-bold text-sm ${turn === 'white' ? 'text-emerald-400' : 'text-rose-400'}`;
+            document.getElementById('status-msg').innerText = `${turn.toUpperCase()}'s turn to move.`;
+
+            createPieces();
+        }
+
+        function resetGame() {
+            boardState = JSON.parse(JSON.stringify(initialBoard));
+            turn = 'white';
+            selectedPiece = null;
+            document.getElementById('turn-display').innerText = 'WHITE';
+            document.getElementById('turn-display').className = 'font-bold text-sm text-emerald-400';
+            document.getElementById('status-msg').innerText = "Game reset. White's turn to play.";
+            while(highlightGroup.children.length > 0) { highlightGroup.remove(highlightGroup.children[0]); }
+            createPieces();
+        }
+
+        function resetCamera() {
+            camera.position.set(0, 12, 12);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
             renderer.render(scene, camera);
-        }
-
-        function gameOver() {
-            gameRunning = false;
-            document.getElementById('hud').classList.add('hidden');
-            document.getElementById('game-over-screen').classList.remove('hidden');
-
-            document.getElementById('final-coins').innerText = coins;
-            document.getElementById('final-score').innerText = `${Math.floor(score)}m`;
-        }
-
-        // Swipe Controls Logic
-        function setupSwipeControls() {
-            let startX = 0, startY = 0;
-
-            document.addEventListener('touchstart', (e) => {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-            }, { passive: true });
-
-            document.addEventListener('touchend', (e) => {
-                if (!gameRunning) return;
-
-                let diffX = e.changedTouches[0].clientX - startX;
-                let diffY = e.changedTouches[0].clientY - startY;
-
-                if (Math.abs(diffX) > Math.abs(diffY)) {
-                    // Left / Right Swipe
-                    if (diffX > 30 && currentLane < 2) {
-                        currentLane++;
-                        targetX = lanes[currentLane];
-                    } else if (diffX < -30 && currentLane > 0) {
-                        currentLane--;
-                        targetX = lanes[currentLane];
-                    }
-                } else {
-                    // Up / Down Swipe
-                    if (diffY < -30 && !isJumping) {
-                        isJumping = true;
-                        jumpVelocity = 0.28;
-                    } else if (diffY > 30 && !isRolling) {
-                        isRolling = true;
-                        rollTimer = 25;
-                    }
-                }
-            }, { passive: true });
-
-            // Keyboard Controls
-            document.addEventListener('keydown', (e) => {
-                if (!gameRunning) return;
-                if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) {
-                    currentLane--;
-                    targetX = lanes[currentLane];
-                }
-                if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) {
-                    currentLane++;
-                    targetX = lanes[currentLane];
-                }
-                if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && !isJumping) {
-                    isJumping = true;
-                    jumpVelocity = 0.28;
-                }
-                if ((e.key === 'ArrowDown' || e.key === 's') && !isRolling) {
-                    isRolling = true;
-                    rollTimer = 25;
-                }
-            });
         }
 
         function onWindowResize() {
