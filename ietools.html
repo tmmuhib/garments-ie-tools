@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Garments IE Suite - Industrial Engineering Tools</title>
+    <title>IE Development - Industrial Engineering Tools</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -44,7 +44,6 @@
             font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        /* Custom scrollbar for tab items */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -66,22 +65,16 @@
 
     <!-- Header Section -->
     <header class="bg-industrial-900 text-white sticky top-0 z-30 shadow-md">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid me-1 fa-industry text-brand-500 text-2xl"></i>
-                <div>
-                    <h1 class="text-lg font-bold leading-tight">Garments IE Suite</h1>
-                    <p class="text-xs text-slate-400">Apparel Industrial Engineering Tools</p>
-                </div>
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center space-x-2">
+            <i class="fa-solid me-1 fa-industry text-brand-500 text-2xl"></i>
+            <div>
+                <h1 class="text-lg font-bold leading-tight">IE Development</h1>
+                <p class="text-xs text-slate-400">Apparel Industrial Engineering Tools</p>
             </div>
-            <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-brand-500 px-3 py-1.5 rounded-lg border border-slate-700 flex items-center space-x-1 transition">
-                <i class="fa-solid fa-key"></i>
-                <span id="api-status-badge">API Key</span>
-            </button>
         </div>
     </header>
 
-    <!-- Navigation Tabs (Desktop & Mobile Scrollable Header) -->
+    <!-- Navigation Tabs -->
     <nav class="bg-white border-b border-slate-200 sticky top-[57px] z-20 shadow-sm">
         <div class="max-w-4xl mx-auto flex overflow-x-auto no-scrollbar text-xs md:text-sm">
             <button onclick="switchTab('smv')" id="tab-btn-smv" class="tab-btn active-tab flex-1 min-w-[100px] py-3 px-2 text-center font-medium transition whitespace-nowrap">
@@ -90,14 +83,8 @@
             <button onclick="switchTab('efficiency')" id="tab-btn-efficiency" class="tab-btn flex-1 min-w-[100px] py-3 px-2 text-center font-medium text-slate-500 hover:text-slate-800 transition whitespace-nowrap">
                 <i class="fa-solid fa-chart-line mb-1 block md:inline md:mr-1"></i> Efficiency
             </button>
-            <button onclick="switchTab('thread')" id="tab-btn-thread" class="tab-btn flex-1 min-w-[100px] py-3 px-2 text-center font-medium text-slate-500 hover:text-slate-800 transition whitespace-nowrap">
-                <i class="fa-solid fa-spool mb-1 block md:inline md:mr-1"></i> Thread Calc
-            </button>
             <button onclick="switchTab('rpm')" id="tab-btn-rpm" class="tab-btn flex-1 min-w-[100px] py-3 px-2 text-center font-medium text-slate-500 hover:text-slate-800 transition whitespace-nowrap">
                 <i class="fa-solid fa-gauge-high mb-1 block md:inline md:mr-1"></i> RPM & Time
-            </button>
-            <button onclick="switchTab('ai')" id="tab-btn-ai" class="tab-btn flex-1 min-w-[100px] py-3 px-2 text-center font-medium text-slate-500 hover:text-slate-800 transition whitespace-nowrap">
-                <i class="fa-solid fa-robot mb-1 block md:inline md:mr-1 text-purple-600"></i> AI Assistant
             </button>
         </div>
     </nav>
@@ -222,65 +209,7 @@
             </div>
         </section>
 
-        <!-- TAB 3: Thread Consumption Estimator -->
-        <section id="tab-thread" class="tab-content hidden space-y-4">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
-                <div class="flex items-center space-x-2 border-b border-slate-100 pb-3 mb-4">
-                    <i class="fa-solid fa-spool text-brand-600 text-xl"></i>
-                    <div>
-                        <h2 class="text-base font-semibold text-slate-800">Thread Consumption Estimator</h2>
-                        <p class="text-xs text-slate-500">Calculate required thread meters based on seam and stitch specifications</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Stitch Type Class</label>
-                        <select id="thread-stitch-type" onchange="calcThread()" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <option value="2.7">ISO 301 - Lockstitch (Factor ~2.7)</option>
-                            <option value="4.0">ISO 401 - 2-Thread Chainstitch (Factor ~4.0)</option>
-                            <option value="14.0">ISO 504 - 3-Thread Overlock (Factor ~14.0)</option>
-                            <option value="18.0">ISO 514 - 4-Thread Overlock (Factor ~18.0)</option>
-                            <option value="25.0">ISO 516 - 5-Thread Safety Stitch (Factor ~25.0)</option>
-                            <option value="18.5">ISO 602 - 4-Thread Coverstitch (Factor ~18.5)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Total Seam Length per Garment (cm)</label>
-                        <input type="number" id="thread-seam-len" placeholder="e.g. 500" value="500" oninput="calcThread()" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Wastage & Margin Allowance (%)</label>
-                        <input type="number" id="thread-wastage" placeholder="e.g. 15" value="15" oninput="calcThread()" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Order Quantity (Garments Output)</label>
-                        <input type="number" id="thread-order-qty" placeholder="e.g. 1000" value="1000" oninput="calcThread()" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <!-- Results Box -->
-                <div class="mt-6 bg-slate-50 rounded-xl p-4 border border-slate-200">
-                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Thread Estimates</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
-                            <span class="text-xs text-slate-500 block">Thread per Garment</span>
-                            <span id="res-thread-pc" class="text-lg font-bold text-slate-800">0 meters</span>
-                        </div>
-                        <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
-                            <span class="text-xs text-slate-500 block">Total Order Consumption</span>
-                            <span id="res-thread-total" class="text-lg font-bold text-brand-600">0 meters</span>
-                        </div>
-                        <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
-                            <span class="text-xs text-slate-500 block">Est. Spools (4000m Cones)</span>
-                            <span id="res-thread-cones" class="text-lg font-bold text-slate-800">0 Cones</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 4: Machine RPM & Output Calculator -->
+        <!-- TAB 3: Machine RPM & Output Calculator -->
         <section id="tab-rpm" class="tab-content hidden space-y-4">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
                 <div class="flex items-center space-x-2 border-b border-slate-100 pb-3 mb-4">
@@ -332,85 +261,11 @@
             </div>
         </section>
 
-        <!-- TAB 5: AI Assistant (Gemini API Integration) -->
-        <section id="tab-ai" class="tab-content hidden space-y-4">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                    <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-robot text-purple-600 text-xl"></i>
-                        <div>
-                            <h2 class="text-base font-semibold text-slate-800">Garment IE AI Assistant</h2>
-                            <p class="text-xs text-slate-500">Powered by Gemini 1.5 Flash</p>
-                        </div>
-                    </div>
-                    <span id="ai-key-indicator" class="text-[10px] px-2 py-1 rounded bg-red-100 text-red-600 font-medium">Key Not Saved</span>
-                </div>
-
-                <!-- Quick Prompt Buttons -->
-                <div class="space-y-2 mb-4">
-                    <label class="text-xs font-semibold text-slate-600 block">Quick Suggestions:</label>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="setAiPrompt('How to balance a polo shirt sewing line with 20 operators?')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-200 transition">
-                            👕 Polo Shirt Line Balancing
-                        </button>
-                        <button onclick="setAiPrompt('What are common causes of bottleneck in pocket-attaching operations and how to solve them?')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-200 transition">
-                            ⚠️ Pocket Attaching Bottleneck
-                        </button>
-                        <button onclick="setAiPrompt('Give standard SMV estimates for a basic denim 5-pocket pant.')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-200 transition">
-                            👖 Denim Pant SMV Breakdown
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Input Field -->
-                <div class="space-y-3">
-                    <textarea id="ai-input" rows="3" placeholder="Ask any IE query (e.g. SMV reduction tips, line layout, bottleneck resolution)..." class="w-full p-3 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
-                    
-                    <button onclick="askGeminiAI()" id="ai-submit-btn" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm rounded-lg shadow-sm transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>Ask AI Assistant</span>
-                    </button>
-                </div>
-
-                <!-- AI Response Window -->
-                <div id="ai-response-container" class="mt-6 hidden">
-                    <div class="bg-purple-50 rounded-xl p-4 border border-purple-100">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <i class="fa-solid fa-sparkles text-purple-600"></i>
-                            <h3 class="text-xs font-bold text-purple-900 uppercase">Gemini IE Advice</h3>
-                        </div>
-                        <div id="ai-response-text" class="text-xs md:text-sm text-slate-800 leading-relaxed whitespace-pre-wrap font-sans">
-                            <!-- Output text will be injected here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
     </main>
-
-    <!-- API Key Config Modal -->
-    <div id="api-key-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-key text-brand-600"></i>
-                    <h3 class="text-base font-bold text-slate-800">Set Gemini API Key</h3>
-                </div>
-                <button onclick="toggleApiKeyModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
-            </div>
-            <p class="text-xs text-slate-500 mb-4">Your key is stored safely in your browser's local storage and is never uploaded anywhere except directly to Google AI Studio API calls.</p>
-            <input type="text" id="api-key-input" placeholder="AIzaSy..." class="w-full p-3 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none mb-4">
-            <div class="flex space-x-2">
-                <button onclick="saveApiKey()" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg transition">Save Key</button>
-                <button onclick="clearApiKey()" class="py-2.5 px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-sm rounded-lg transition">Clear</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Mobile Bottom Navigation Bar -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 px-2 py-1 shadow-lg">
-        <div class="grid grid-cols-5 text-center text-[10px]">
+        <div class="grid grid-cols-3 text-center text-[10px]">
             <button onclick="switchTab('smv')" id="nav-mob-smv" class="mob-nav-btn py-1 active-nav-item">
                 <i class="fa-solid fa-stopwatch text-base block mb-0.5"></i>
                 <span>SMV</span>
@@ -419,51 +274,34 @@
                 <i class="fa-solid fa-chart-line text-base block mb-0.5"></i>
                 <span>Efficiency</span>
             </button>
-            <button onclick="switchTab('thread')" id="nav-mob-thread" class="mob-nav-btn py-1 text-slate-400">
-                <i class="fa-solid fa-spool text-base block mb-0.5"></i>
-                <span>Thread</span>
-            </button>
             <button onclick="switchTab('rpm')" id="nav-mob-rpm" class="mob-nav-btn py-1 text-slate-400">
                 <i class="fa-solid fa-gauge-high text-base block mb-0.5"></i>
                 <span>RPM</span>
-            </button>
-            <button onclick="switchTab('ai')" id="nav-mob-ai" class="mob-nav-btn py-1 text-slate-400">
-                <i class="fa-solid fa-robot text-base block mb-0.5 text-purple-600"></i>
-                <span>AI Assistant</span>
             </button>
         </div>
     </nav>
 
     <!-- Script Section -->
     <script>
-        // Initial setup on load
         window.onload = function() {
-            checkApiKeyStatus();
             calcSMV();
             calcEfficiency();
-            calcThread();
             calcRPM();
         };
 
-        // Tab Switching Logic
         function switchTab(tabId) {
-            // Hide all contents
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            // Remove active classes from header buttons
             document.querySelectorAll('.tab-btn').forEach(el => {
                 el.classList.remove('active-tab');
                 el.classList.add('text-slate-500');
             });
-            // Remove active classes from mobile nav buttons
             document.querySelectorAll('.mob-nav-btn').forEach(el => {
                 el.classList.remove('active-nav-item');
                 el.classList.add('text-slate-400');
             });
 
-            // Show current content
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
 
-            // Set active tab buttons
             const activeHeaderBtn = document.getElementById(`tab-btn-${tabId}`);
             if (activeHeaderBtn) {
                 activeHeaderBtn.classList.add('active-tab');
@@ -477,8 +315,6 @@
             }
         }
 
-        // --- CALCULATOR LOGIC ---
-
         // 1. SMV / SAM Calculator
         function calcSMV() {
             const cycleTimeSec = parseFloat(document.getElementById('smv-cycle').value) || 0;
@@ -487,204 +323,53 @@
             const targetEff = parseFloat(document.getElementById('smv-target-eff').value) || 0;
             const operators = parseFloat(document.getElementById('smv-operators').value) || 0;
 
-            // Basic Time (mins) = Cycle Time (sec) * (Rating / 100) / 60
             const basicTimeMin = (cycleTimeSec * (ratingPercent / 100)) / 60;
-            
-            // SAM/SMV (mins) = Basic Time * (1 + Allowance / 100)
             const smvMin = basicTimeMin * (1 + (allowancePercent / 100));
-
-            // Single Operator Target per Hour at 100% = 60 / SMV
-            const opTarget100 = smvMin > 0 ? (60 / smvMin) : 0;
-
-            // Line Target per Hour = (Operators * 60 / SMV) * (Efficiency % / 100)
-            const lineTarget = smvMin > 0 ? (operators * 60 / smvMin) * (targetEff / 100) : 0;
+            
+            const singleOpTargetPerHour = smvMin > 0 ? (60 / smvMin) : 0;
+            const lineTargetPerHour = smvMin > 0 ? Math.round((operators * 60 * (targetEff / 100)) / smvMin) : 0;
 
             document.getElementById('res-basic-time').innerText = basicTimeMin.toFixed(2) + ' min';
             document.getElementById('res-smv').innerText = smvMin.toFixed(2) + ' min';
-            document.getElementById('res-op-target').innerText = Math.round(opTarget100) + ' pcs/hr';
-            document.getElementById('res-line-target').innerText = Math.round(lineTarget) + ' pcs/hr';
+            document.getElementById('res-op-target').innerText = Math.round(singleOpTargetPerHour) + ' pcs/hr';
+            document.getElementById('res-line-target').innerText = lineTargetPerHour + ' pcs/hr';
             document.getElementById('disp-eff-tag').innerText = targetEff + '%';
         }
 
-        // 2. Line Efficiency Calculator
+        // 2. Line Efficiency & Pitch Time Calculator
         function calcEfficiency() {
             const lineSmv = parseFloat(document.getElementById('eff-line-smv').value) || 0;
-            const totalProduced = parseFloat(document.getElementById('eff-produced').value) || 0;
+            const produced = parseFloat(document.getElementById('eff-produced').value) || 0;
             const manpower = parseFloat(document.getElementById('eff-manpower').value) || 0;
             const hours = parseFloat(document.getElementById('eff-hours').value) || 0;
 
-            // Earned Minutes = Total Output * Line SMV
-            const earnedMins = totalProduced * lineSmv;
-
-            // Available Minutes = Manpower * Hours * 60
-            const availableMins = manpower * hours * 60;
-
-            // Efficiency % = (Earned Minutes / Available Minutes) * 100
-            const efficiency = availableMins > 0 ? (earnedMins / availableMins) * 100 : 0;
-
-            // Pitch Time / Takt Time (mins) = Total Line SMV / Manpower
-            const pitchTime = manpower > 0 ? (lineSmv / manpower) : 0;
-
-            // Maximum Capacity Output at 100% efficiency
-            const maxCapacity = lineSmv > 0 ? (availableMins / lineSmv) : 0;
+            const totalMinutesAvailable = manpower * hours * 60;
+            const earnedMinutes = produced * lineSmv;
+            const efficiency = totalMinutesAvailable > 0 ? (earnedMinutes / totalMinutesAvailable) * 100 : 0;
+            const pitchTime = produced > 0 && hours > 0 ? (hours * 60 * manpower) / produced : 0;
+            const maxCapacity = lineSmv > 0 ? Math.round((manpower * hours * 60) / lineSmv) : 0;
 
             document.getElementById('res-line-eff').innerText = efficiency.toFixed(1) + '%';
             document.getElementById('res-pitch-time').innerText = pitchTime.toFixed(2) + ' min';
-            document.getElementById('res-earned-mins').innerText = Math.round(earnedMins) + ' mins';
-            document.getElementById('res-max-capacity').innerText = Math.round(maxCapacity) + ' pcs';
+            document.getElementById('res-earned-mins').innerText = Math.round(earnedMinutes).toLocaleString() + ' mins';
+            document.getElementById('res-max-capacity').innerText = maxCapacity.toLocaleString() + ' pcs';
         }
 
-        // 3. Thread Consumption Estimator
-        function calcThread() {
-            const factor = parseFloat(document.getElementById('thread-stitch-type').value) || 0;
-            const seamLenCm = parseFloat(document.getElementById('thread-seam-len').value) || 0;
-            const wastagePercent = parseFloat(document.getElementById('thread-wastage').value) || 0;
-            const orderQty = parseFloat(document.getElementById('thread-order-qty').value) || 0;
-
-            // Seam Length in Meters
-            const seamLenMeters = seamLenCm / 100;
-
-            // Net Thread Consumption per garment (Meters) = Seam Length * Factor
-            const netThreadPerPc = seamLenMeters * factor;
-
-            // Gross Thread per garment with wastage
-            const grossThreadPerPc = netThreadPerPc * (1 + (wastagePercent / 100));
-
-            // Total Order Consumption (Meters)
-            const totalOrderMeters = grossThreadPerPc * orderQty;
-
-            // Est. Cones (assuming 4000 meter cones)
-            const cones = Math.ceil(totalOrderMeters / 4000);
-
-            document.getElementById('res-thread-pc').innerText = grossThreadPerPc.toFixed(1) + ' m';
-            document.getElementById('res-thread-total').innerText = Math.round(totalOrderMeters).toLocaleString() + ' m';
-            document.getElementById('res-thread-cones').innerText = cones + ' Cones';
-        }
-
-        // 4. Machine RPM & Output Calculator
+        // 3. Machine RPM & Output Time Calculator
         function calcRPM() {
             const rpm = parseFloat(document.getElementById('rpm-speed').value) || 0;
             const spi = parseFloat(document.getElementById('rpm-spi').value) || 0;
             const lengthInches = parseFloat(document.getElementById('rpm-length').value) || 0;
-            const handlingPercent = parseFloat(document.getElementById('rpm-handling').value) || 0;
+            const handlingFactor = parseFloat(document.getElementById('rpm-handling').value) || 0;
 
-            // Total stitches required = Length (inches) * SPI
             const totalStitches = lengthInches * spi;
+            const pureSewingTimeSec = rpm > 0 ? (totalStitches / rpm) * 60 : 0;
+            const totalCycleTimeSec = pureSewingTimeSec * (1 + (handlingFactor / 100));
+            const maxOutputPerHour = totalCycleTimeSec > 0 ? Math.round(3600 / totalCycleTimeSec) : 0;
 
-            // Pure Sewing Time (Seconds) = (Total Stitches / RPM) * 60
-            const pureSewingSec = rpm > 0 ? (totalStitches / rpm) * 60 : 0;
-
-            // Total Estimated Cycle Time with Handling = Pure Sewing Time / (1 - Handling Allowance/100)
-            const handlingFactor = (100 - handlingPercent) / 100;
-            const totalCycleSec = handlingFactor > 0 ? (pureSewingSec / handlingFactor) : 0;
-
-            // Output per hour = 3600 / Total Cycle Sec
-            const outputPerHour = totalCycleSec > 0 ? (3600 / totalCycleSec) : 0;
-
-            document.getElementById('res-sewing-time').innerText = pureSewingSec.toFixed(2) + ' sec';
-            document.getElementById('res-total-cycle').innerText = totalCycleSec.toFixed(2) + ' sec';
-            document.getElementById('res-rpm-output').innerText = Math.round(outputPerHour) + ' pcs/hr';
-        }
-
-        // --- GEMINI AI INTEGRATION ---
-
-        function toggleApiKeyModal() {
-            const modal = document.getElementById('api-key-modal');
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                document.getElementById('api-key-input').value = localStorage.getItem('gemini_ie_api_key') || '';
-            }
-        }
-
-        function saveApiKey() {
-            const key = document.getElementById('api-key-input').value.trim();
-            if (key) {
-                localStorage.setItem('gemini_ie_api_key', key);
-                checkApiKeyStatus();
-                toggleApiKeyModal();
-            }
-        }
-
-        function clearApiKey() {
-            localStorage.removeItem('gemini_ie_api_key');
-            document.getElementById('api-key-input').value = '';
-            checkApiKeyStatus();
-            toggleApiKeyModal();
-        }
-
-        function checkApiKeyStatus() {
-            const key = localStorage.getItem('gemini_ie_api_key');
-            const statusBadge = document.getElementById('api-status-badge');
-            const aiKeyIndicator = document.getElementById('ai-key-indicator');
-
-            if (key) {
-                statusBadge.innerText = 'API Saved';
-                statusBadge.classList.add('text-green-400');
-                aiKeyIndicator.innerText = 'API Key Configured';
-                aiKeyIndicator.className = 'text-[10px] px-2 py-1 rounded bg-green-100 text-green-700 font-medium';
-            } else {
-                statusBadge.innerText = 'Set Key';
-                statusBadge.classList.remove('text-green-400');
-                aiKeyIndicator.innerText = 'Key Missing';
-                aiKeyIndicator.className = 'text-[10px] px-2 py-1 rounded bg-red-100 text-red-600 font-medium';
-            }
-        }
-
-        function setAiPrompt(text) {
-            document.getElementById('ai-input').value = text;
-        }
-
-        async function askGeminiAI() {
-            const apiKey = localStorage.getItem('gemini_ie_api_key');
-            if (!apiKey) {
-                toggleApiKeyModal();
-                return;
-            }
-
-            const promptText = document.getElementById('ai-input').value.trim();
-            if (!promptText) return;
-
-            const submitBtn = document.getElementById('ai-submit-btn');
-            const responseContainer = document.getElementById('ai-response-container');
-            const responseText = document.getElementById('ai-response-text');
-
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Analyzing IE Query...</span>`;
-
-            responseContainer.classList.remove('hidden');
-            responseText.innerText = "Consulting Gemini AI Industrial Engineering Engine...";
-
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-            const requestBody = {
-                contents: [{
-                    parts: [{
-                        text: `You are an expert Garments Industrial Engineer (IE Specialist). Please provide practical, technical, concise, and structured advice for the following apparel manufacturing request:\n\n${promptText}`
-                    }]
-                }]
-            };
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.candidates && data.candidates.length > 0) {
-                    const aiReply = data.candidates[0].content.parts[0].text;
-                    responseText.innerText = aiReply;
-                } else {
-                    responseText.innerText = "API Error: " + (data.error ? data.error.message : "Failed to obtain AI response.");
-                }
-            } catch (err) {
-                responseText.innerText = "Network Error: Unable to reach Gemini API. Please check connection and API key.";
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>Ask AI Assistant</span>`;
-            }
+            document.getElementById('res-sewing-time').innerText = pureSewingTimeSec.toFixed(2) + ' sec';
+            document.getElementById('res-total-cycle').innerText = totalCycleTimeSec.toFixed(2) + ' sec';
+            document.getElementById('res-rpm-output').innerText = maxOutputPerHour.toLocaleString() + ' pcs';
         }
     </script>
 </body>
