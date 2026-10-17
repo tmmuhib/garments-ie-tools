@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Subway Street Runner</title>
+    <title>3D Subway Runner - Pro Logic</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Three.js for 3D Engine -->
+    <!-- Three.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
@@ -53,8 +53,8 @@
             <div class="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
                 <i class="fa-solid fa-person-running"></i>
             </div>
-            <h1 class="text-2xl font-black text-amber-400 mb-1">3D STREET RUNNER</h1>
-            <p class="text-xs text-slate-400 mb-4">Swipe Left/Right to turn, Up to Jump, Down to Roll!</p>
+            <h1 class="text-2xl font-black text-amber-400 mb-1">3D SUBWAY RUNNER</h1>
+            <p class="text-xs text-slate-400 mb-4">Swipe Left/Right to Turn, Up to Jump, Down to Roll!</p>
 
             <label class="text-xs font-bold text-slate-300 block mb-2 text-left">Difficulty Mode:</label>
             <div class="grid grid-cols-3 gap-2 mb-6">
@@ -63,7 +63,7 @@
                 <button onclick="setDifficulty('hard')" id="btn-hard" class="mode-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs border border-slate-700">Hard</button>
             </div>
 
-            <button onclick="startGame()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-2xl shadow-lg text-base tracking-wider transition">PLAY RUNNER</button>
+            <button onclick="startGame()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-2xl shadow-lg text-base tracking-wider transition">START RUNNER</button>
         </div>
     </div>
 
@@ -71,7 +71,7 @@
     <div id="game-over-screen" class="relative z-20 flex flex-col items-center justify-center h-full bg-slate-950/90 p-6 text-center hidden">
         <div class="bg-slate-900 p-6 rounded-3xl border-2 border-rose-500 shadow-2xl max-w-sm w-full">
             <h1 class="text-3xl font-black text-rose-500 mb-1">CRASHED!</h1>
-            <p class="text-xs text-slate-400 mb-4">You hit a vehicle on the street!</p>
+            <p class="text-xs text-slate-400 mb-4">You hit a vehicle directly!</p>
 
             <div class="bg-slate-950 p-4 rounded-2xl mb-6 space-y-2 text-sm">
                 <div class="flex justify-between text-slate-300">
@@ -88,15 +88,17 @@
         </div>
     </div>
 
-    <!-- 3D Engine & Swipe Logic -->
+    <!-- 3D Engine Code -->
     <script>
         let scene, camera, renderer;
-        let playerGroup, playerBox;
+        let playerGroup;
         let leftLeg, rightLeg, leftArm, rightArm;
         let lanes = [-2.2, 0, 2.2];
         let currentLane = 1;
         let targetX = 0;
 
+        let playerY = 0;
+        let groundLevel = 0; // Dynamic ground level (0 or top of vehicle)
         let isJumping = false, jumpVelocity = 0, gravity = -0.016;
         let isRolling = false, rollTimer = 0;
 
@@ -126,7 +128,7 @@
             renderer.shadowMap.enabled = true;
             container.appendChild(renderer.domElement);
 
-            // Lighting
+            // Lights
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
             scene.add(ambientLight);
 
@@ -135,7 +137,7 @@
             dirLight.castShadow = true;
             scene.add(dirLight);
 
-            // Ground Track
+            // Track Floor
             const groundGeo = new THREE.PlaneGeometry(9, 120);
             const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
             const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -153,27 +155,26 @@
                 scene.add(rail);
             }
 
-            // Create Humanoid Character
-            createHumanPlayer();
-
-            playerBox = new THREE.Box3();
+            // Human Character
+            createSubwayHumanPlayer();
 
             window.addEventListener('resize', onWindowResize);
             setupSwipeControls();
         }
 
-        // Build 3D Human Runner
-        function createHumanPlayer() {
+        // Realistic Human Character Model
+        function createSubwayHumanPlayer() {
             playerGroup = new THREE.Group();
 
-            // Materials
             const skinMat = new THREE.MeshStandardMaterial({ color: 0xfbcfe8 });
-            const shirtMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+            const jacketMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
             const pantsMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+            const capMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b });
+            const shoeMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
-            // Torso
-            const torsoGeo = new THREE.BoxGeometry(0.6, 0.8, 0.4);
-            const torso = new THREE.Mesh(torsoGeo, shirtMat);
+            // Torso / Jacket
+            const torsoGeo = new THREE.BoxGeometry(0.6, 0.8, 0.35);
+            const torso = new THREE.Mesh(torsoGeo, jacketMat);
             torso.position.y = 1.0;
             playerGroup.add(torso);
 
@@ -183,81 +184,103 @@
             head.position.y = 1.6;
             playerGroup.add(head);
 
+            // Cap
+            const capGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.08, 12);
+            const cap = new THREE.Mesh(capGeo, capMat);
+            cap.position.set(0, 1.8, -0.05);
+            playerGroup.add(cap);
+
             // Legs
-            const legGeo = new THREE.BoxGeometry(0.2, 0.6, 0.2);
+            const legGeo = new THREE.BoxGeometry(0.22, 0.65, 0.22);
             leftLeg = new THREE.Mesh(legGeo, pantsMat);
-            leftLeg.position.set(-0.15, 0.3, 0);
+            leftLeg.position.set(-0.16, 0.32, 0);
             playerGroup.add(leftLeg);
 
             rightLeg = new THREE.Mesh(legGeo, pantsMat);
-            rightLeg.position.set(0.15, 0.3, 0);
+            rightLeg.position.set(0.16, 0.32, 0);
             playerGroup.add(rightLeg);
 
+            // Shoes
+            const shoeGeo = new THREE.BoxGeometry(0.24, 0.12, 0.35);
+            const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
+            leftShoe.position.set(0, -0.3, 0.05);
+            leftLeg.add(leftShoe);
+
+            const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
+            rightShoe.position.set(0, -0.3, 0.05);
+            rightLeg.add(rightShoe);
+
             // Arms
-            const armGeo = new THREE.BoxGeometry(0.15, 0.6, 0.15);
+            const armGeo = new THREE.BoxGeometry(0.16, 0.65, 0.16);
             leftArm = new THREE.Mesh(armGeo, skinMat);
-            leftArm.position.set(-0.4, 1.0, 0);
+            leftArm.position.set(-0.42, 1.0, 0);
             playerGroup.add(leftArm);
 
             rightArm = new THREE.Mesh(armGeo, skinMat);
-            rightArm.position.set(0.4, 1.0, 0);
+            rightArm.position.set(0.42, 1.0, 0);
             playerGroup.add(rightArm);
 
             playerGroup.position.set(0, 0, 0);
             scene.add(playerGroup);
         }
 
-        // Realistic Car / Truck Model Generator
+        // Realistic Vehicle Model with Precise Height
         function createVehicle() {
             const group = new THREE.Group();
-            const isTruck = Math.random() > 0.5;
+            const isBus = Math.random() > 0.4; // 60% Bus/Train, 40% Car
 
             const carColor = [0xdc2626, 0x2563eb, 0x16a34a, 0xd97706][Math.floor(Math.random() * 4)];
             const bodyMat = new THREE.MeshStandardMaterial({ color: carColor });
-            const glassMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.7 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.7 });
             const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
 
-            if (isTruck) {
-                // Bus / Truck Body
-                const bodyGeo = new THREE.BoxGeometry(1.6, 2.2, 4.5);
+            let height = 0;
+            let length = 0;
+
+            if (isBus) {
+                height = 2.2;
+                length = 5.0;
+
+                // Bus / Train Body
+                const bodyGeo = new THREE.BoxGeometry(1.7, height, length);
                 const body = new THREE.Mesh(bodyGeo, bodyMat);
-                body.position.y = 1.1;
+                body.position.y = height / 2;
                 group.add(body);
 
                 // Windshield
-                const glassGeo = new THREE.BoxGeometry(1.4, 0.8, 0.1);
+                const glassGeo = new THREE.BoxGeometry(1.5, 0.8, 0.1);
                 const glass = new THREE.Mesh(glassGeo, glassMat);
-                glass.position.set(0, 1.6, 2.26);
+                glass.position.set(0, 1.5, length / 2 + 0.01);
                 group.add(glass);
             } else {
-                // Sedan / Sports Car Body
-                const baseGeo = new THREE.BoxGeometry(1.5, 0.7, 3.2);
+                height = 1.2;
+                length = 3.6;
+
+                // Car Base
+                const baseGeo = new THREE.BoxGeometry(1.6, 0.6, length);
                 const base = new THREE.Mesh(baseGeo, bodyMat);
-                base.position.y = 0.45;
+                base.position.y = 0.3;
                 group.add(base);
 
-                const topGeo = new THREE.BoxGeometry(1.3, 0.6, 1.6);
-                const top = new THREE.Mesh(topGeo, glassMat);
-                top.position.set(0, 0.9, -0.2);
-                group.add(top);
+                // Car Cabin
+                const cabinGeo = new THREE.BoxGeometry(1.4, 0.6, 1.8);
+                const cabin = new THREE.Mesh(cabinGeo, glassMat);
+                cabin.position.set(0, 0.8, -0.2);
+                group.add(cabin);
             }
 
             // Wheels
-            const wheelGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 12);
+            const wheelGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.2, 12);
             wheelGeo.rotateZ(Math.PI / 2);
 
-            const wheelPositions = [
-                [-0.8, 0.25, 1.0], [0.8, 0.25, 1.0],
-                [-0.8, 0.25, -1.0], [0.8, 0.25, -1.0]
-            ];
-
-            wheelPositions.forEach(pos => {
+            [[-0.85, 0.28, length / 3], [0.85, 0.28, length / 3],
+             [-0.85, 0.28, -length / 3], [0.85, 0.28, -length / 3]].forEach(pos => {
                 const wheel = new THREE.Mesh(wheelGeo, wheelMat);
                 wheel.position.set(...pos);
                 group.add(wheel);
             });
 
-            return group;
+            return { mesh: group, height: height, length: length };
         }
 
         function setDifficulty(mode) {
@@ -282,7 +305,7 @@
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
 
-            score = 0; coins = 0; currentLane = 1; targetX = 0;
+            score = 0; coins = 0; currentLane = 1; targetX = 0; playerY = 0; groundLevel = 0;
             playerGroup.position.set(0, 0, 0);
 
             obstacles.forEach(o => scene.remove(o.mesh));
@@ -303,10 +326,15 @@
             const x = lanes[laneIndex];
 
             const vehicle = createVehicle();
-            vehicle.position.set(x, 0, -55);
-            scene.add(vehicle);
+            vehicle.mesh.position.set(x, 0, -55);
+            scene.add(vehicle.mesh);
 
-            obstacles.push({ mesh: vehicle, box: new THREE.Box3() });
+            obstacles.push({
+                mesh: vehicle.mesh,
+                x: x,
+                height: vehicle.height,
+                length: vehicle.length
+            });
         }
 
         function spawnCoin() {
@@ -320,7 +348,7 @@
             mesh.position.set(x, 0.8, -55);
             scene.add(mesh);
 
-            coinObjects.push({ mesh: mesh, box: new THREE.Box3() });
+            coinObjects.push({ mesh: mesh, x: x });
         }
 
         let animTime = 0;
@@ -328,30 +356,39 @@
             if (!gameRunning) return;
 
             requestAnimationFrame(animate);
-            animTime += 0.15;
+            animTime += 0.16;
 
-            // Smooth Lane Movement
+            // Smooth Lane Transition
             playerGroup.position.x += (targetX - playerGroup.position.x) * 0.25;
 
-            // Running Limb Animation
+            // Running Limb Motion
             if (!isJumping && !isRolling) {
-                leftLeg.rotation.x = Math.sin(animTime) * 0.6;
-                rightLeg.rotation.x = -Math.sin(animTime) * 0.6;
-                leftArm.rotation.x = -Math.sin(animTime) * 0.6;
-                rightArm.rotation.x = Math.sin(animTime) * 0.6;
+                leftLeg.rotation.x = Math.sin(animTime) * 0.65;
+                rightLeg.rotation.x = -Math.sin(animTime) * 0.65;
+                leftArm.rotation.x = -Math.sin(animTime) * 0.65;
+                rightArm.rotation.x = Math.sin(animTime) * 0.65;
             }
 
-            // Jump Dynamics
+            // Jump & Dynamic Ground Physics
             if (isJumping) {
-                playerGroup.position.y += jumpVelocity;
+                playerY += jumpVelocity;
                 jumpVelocity += gravity;
-                if (playerGroup.position.y <= 0) {
-                    playerGroup.position.y = 0;
+
+                if (playerY <= groundLevel) {
+                    playerY = groundLevel;
                     isJumping = false;
+                }
+            } else {
+                // Gravity drop if running off a car roof
+                if (playerY > groundLevel) {
+                    playerY += gravity * 2;
+                    if (playerY <= groundLevel) playerY = groundLevel;
                 }
             }
 
-            // Roll / Down Dynamics
+            playerGroup.position.y = playerY;
+
+            // Roll Dynamics
             if (isRolling) {
                 rollTimer--;
                 playerGroup.scale.set(1, 0.5, 1);
@@ -366,16 +403,29 @@
             if (Math.random() < conf.obstacleFreq) spawnObstacle();
             if (Math.random() < conf.coinFreq) spawnCoin();
 
-            // Vehicles Collision & Movement
+            // Vehicle Movement & Intelligent Collision Logic
+            groundLevel = 0; // Reset ground
+
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obs = obstacles[i];
                 obs.mesh.position.z += speed;
-                obs.box.setFromObject(obs.mesh);
 
-                playerBox.setFromObject(playerGroup);
-                if (playerBox.intersectsBox(obs.box)) {
-                    gameOver();
-                    return;
+                const playerZ = playerGroup.position.z;
+                const obsZ = obs.mesh.position.z;
+                const halfLen = obs.length / 2;
+
+                // Check if player is on the same lane and within Z-range of vehicle
+                if (Math.abs(playerGroup.position.x - obs.x) < 0.8 &&
+                    playerZ >= obsZ - halfLen && playerZ <= obsZ + halfLen) {
+
+                    // If Player is high enough -> Land on Top of Vehicle!
+                    if (playerY >= obs.height - 0.2) {
+                        groundLevel = obs.height;
+                    } else {
+                        // Crash directly into the front or side of vehicle
+                        gameOver();
+                        return;
+                    }
                 }
 
                 if (obs.mesh.position.z > 6) {
@@ -384,15 +434,16 @@
                 }
             }
 
-            // Coins Collection
+            // Coins Logic
             for (let i = coinObjects.length - 1; i >= 0; i--) {
                 const c = coinObjects[i];
                 c.mesh.position.z += speed;
                 c.mesh.rotation.z += 0.08;
-                c.box.setFromObject(c.mesh);
 
-                playerBox.setFromObject(playerGroup);
-                if (playerBox.intersectsBox(c.box)) {
+                if (Math.abs(playerGroup.position.x - c.x) < 0.8 &&
+                    Math.abs(playerGroup.position.z - c.mesh.position.z) < 1.0 &&
+                    Math.abs(playerGroup.position.y - (c.mesh.position.y - 0.8)) < 1.2) {
+                    
                     coins += 1;
                     document.getElementById('coin-count').innerText = coins;
                     scene.remove(c.mesh);
@@ -421,7 +472,7 @@
             document.getElementById('final-score').innerText = `${Math.floor(score)}m`;
         }
 
-        // Swipe Controls Logic (Touch gestures)
+        // Swipe Controls Logic
         function setupSwipeControls() {
             let startX = 0, startY = 0;
 
@@ -436,7 +487,6 @@
                 let diffX = e.changedTouches[0].clientX - startX;
                 let diffY = e.changedTouches[0].clientY - startY;
 
-                // Horizontal vs Vertical Swipe Detection
                 if (Math.abs(diffX) > Math.abs(diffY)) {
                     // Left / Right Swipe
                     if (diffX > 30 && currentLane < 2) {
