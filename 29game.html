@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>29 Card Game</title>
+    <title>29 Card Game - Pro Version</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -15,8 +15,8 @@
             -webkit-user-select: none;
         }
         .card {
-            width: 55px;
-            height: 80px;
+            width: 50px;
+            height: 75px;
             background: white;
             color: black;
             border-radius: 6px;
@@ -31,86 +31,90 @@
         }
         @media (min-width: 640px) {
             .card {
-                width: 70px;
-                height: 100px;
+                width: 65px;
+                height: 95px;
                 padding: 6px;
             }
         }
         .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 12px rgba(0,0,0,0.5);
+            transform: translateY(-6px);
         }
         .card.red {
             color: #dc2626;
         }
         .card-back {
+            width: 45px;
+            height: 70px;
             background: linear-gradient(135deg, #1e3a8a, #3b82f6);
             border: 2px solid #ffffff;
+            border-radius: 6px;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between p-2 max-w-lg mx-auto border-x border-slate-800">
 
     <!-- Header Section -->
-    <header class="bg-slate-800/80 p-3 rounded-xl flex justify-between items-center shadow-lg">
+    <header class="bg-slate-800/90 p-3 rounded-xl flex justify-between items-center shadow-lg">
         <div>
             <h1 class="text-base font-bold text-amber-400">29 Card Game</h1>
             <p class="text-[10px] text-slate-400">Team A (You & P3) vs Team B (P2 & P4)</p>
         </div>
         <div class="text-right text-xs">
-            <div>Bid: <span id="current-bid" class="font-bold text-amber-400">16</span> (<span id="bidder-name">P1</span>)</div>
-            <div>Trump: <span id="trump-display" class="font-bold text-xl">❓</span></div>
+            <div>Match Points: <span id="match-pts-a" class="font-bold text-emerald-400">0</span> - <span id="match-pts-b" class="font-bold text-rose-400">0</span> (First to 6)</div>
+            <div>Trump: <span id="trump-display" class="font-bold text-lg">❓</span></div>
         </div>
     </header>
 
     <!-- Score Board -->
     <div class="grid grid-cols-2 gap-2 my-2 text-center text-xs">
         <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
-            <span class="text-slate-400 block">Team A Points</span>
+            <span class="text-slate-400 block">Team A Round Pts (Target: <span id="target-bid">16</span>)</span>
             <span id="team-a-score" class="text-lg font-bold text-emerald-400">0</span>
         </div>
         <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
-            <span class="text-slate-400 block">Team B Points</span>
+            <span class="text-slate-400 block">Team B Round Pts</span>
             <span id="team-b-score" class="text-lg font-bold text-rose-400">0</span>
         </div>
     </div>
 
     <!-- Playing Table Area -->
     <div class="relative bg-emerald-800/80 rounded-2xl p-4 my-auto h-64 border-4 border-amber-900/40 flex items-center justify-center shadow-inner">
-        <!-- Partner Top (P3) -->
+        <!-- Partner Top (P3) - Hidden Cards -->
         <div class="absolute top-2 text-center">
-            <span class="text-[10px] bg-slate-900/60 px-2 py-0.5 rounded text-slate-300">Player 3 (Partner)</span>
+            <span class="text-[10px] bg-slate-900/60 px-2 py-0.5 rounded text-slate-300">Player 3 (Partner) - 8 Cards</span>
+            <div id="hand-p3" class="flex gap-0.5 justify-center mt-1"></div>
             <div id="card-p3" class="mt-1"></div>
         </div>
 
-        <!-- Left AI (P2) -->
-        <div class="absolute left-2 text-center">
-            <span class="text-[10px] bg-slate-900/60 px-2 py-0.5 rounded text-slate-300">Player 2</span>
+        <!-- Left AI (P2) - Hidden Cards -->
+        <div class="absolute left-2 top-1/2 -translate-y-1/2 text-center">
+            <span class="text-[10px] bg-slate-900/60 px-1 rounded text-slate-300">P2</span>
             <div id="card-p2" class="mt-1"></div>
         </div>
 
-        <!-- Right AI (P4) -->
-        <div class="absolute right-2 text-center">
-            <span class="text-[10px] bg-slate-900/60 px-2 py-0.5 rounded text-slate-300">Player 4</span>
+        <!-- Right AI (P4) - Hidden Cards -->
+        <div class="absolute right-2 top-1/2 -translate-y-1/2 text-center">
+            <span class="text-[10px] bg-slate-900/60 px-1 rounded text-slate-300">P4</span>
             <div id="card-p4" class="mt-1"></div>
         </div>
 
-        <!-- Bottom Player (You - P1) -->
-        <div class="absolute bottom-2 text-center">
-            <div id="card-p1" class="mb-1"></div>
-            <span class="text-[10px] bg-amber-500 text-slate-950 font-bold px-2 py-0.5 rounded">You (P1)</span>
+        <!-- Bottom Player (You - P1) Table Drop -->
+        <div class="absolute bottom-16 text-center">
+            <div id="card-p1"></div>
         </div>
 
-        <!-- Info Overlay / Bidding Modal -->
+        <!-- Modal Overlay -->
         <div id="action-modal" class="absolute inset-0 bg-slate-950/90 rounded-2xl flex flex-col items-center justify-center p-4 z-20">
             <h2 id="modal-title" class="text-lg font-bold mb-2 text-amber-400">Bidding Phase</h2>
-            <p id="modal-desc" class="text-xs text-center text-slate-300 mb-4">Select your bid value:</p>
+            <p id="modal-desc" class="text-xs text-center text-slate-300 mb-4">Set your bid (16 to 28):</p>
 
             <div id="bidding-controls" class="flex flex-wrap gap-2 justify-center">
                 <button onclick="placeBid(16)" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-xs font-bold">16</button>
-                <button onclick="placeBid(17)" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-xs font-bold">17</button>
                 <button onclick="placeBid(18)" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-xs font-bold">18</button>
-                <button onclick="placeBid(19)" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-xs font-bold">19</button>
+                <button onclick="placeBid(20)" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-xs font-bold">20</button>
+                <button onclick="placeBid(22)" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-xs font-bold">22</button>
                 <button onclick="passBid()" class="bg-rose-600 hover:bg-rose-500 px-3 py-1.5 rounded text-xs font-bold">Pass</button>
             </div>
 
@@ -121,27 +125,24 @@
                 <button onclick="selectTrump('♦')" class="bg-slate-800 text-xl p-3 rounded-xl border border-slate-600 text-red-500">♦️</button>
             </div>
             
-            <button id="restart-btn" onclick="startNewGame()" class="hidden bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold mt-2">New Game</button>
+            <button id="next-round-btn" onclick="startNewRound()" class="hidden bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold mt-2">Next Round</button>
         </div>
     </div>
 
-    <!-- Message / Turn Indicator -->
-    <div id="status-msg" class="text-center text-xs text-amber-300 font-semibold my-2 min-h-[18px]">
-        Welcome! Starting game...
+    <!-- Status -->
+    <div id="status-msg" class="text-center text-xs text-amber-300 font-semibold my-1 min-h-[16px]">
+        Game loading...
     </div>
 
-    <!-- Player Hand (Your Cards) -->
-    <div class="bg-slate-800/80 p-3 rounded-xl">
-        <div class="text-[11px] text-slate-400 mb-2 flex justify-between">
-            <span>Your Hand</span>
+    <!-- Player Hand (Your 8 Cards Fully Visible) -->
+    <div class="bg-slate-800/90 p-2 rounded-xl">
+        <div class="text-[11px] text-slate-400 mb-1 flex justify-between">
+            <span>Your Hand (8 Cards)</span>
             <span id="turn-badge" class="text-amber-400 font-bold">Your Turn</span>
         </div>
-        <div id="player-hand" class="flex justify-center gap-1 overflow-x-auto p-1 min-h-[90px]">
-            <!-- Cards injected by JS -->
-        </div>
+        <div id="player-hand" class="flex justify-center gap-1 overflow-x-auto p-1 min-h-[85px]"></div>
     </div>
 
-    <!-- Game Logic JavaScript -->
     <script>
         const SUITS = ['♠', '♥', '♣', '♦'];
         const RANKS = ['J', '9', 'A', '10', 'K', 'Q', '8', '7'];
@@ -152,6 +153,7 @@
         let currentBid = 16, highestBidder = 'p1', trumpSuit = null;
         let tableCards = {}, currentTurn = 'p1', leadSuit = null;
         let teamAScore = 0, teamBScore = 0;
+        let matchPtsA = 0, matchPtsB = 0;
         let trickCount = 0;
 
         function createDeck() {
@@ -178,24 +180,34 @@
                 const cardEl = document.createElement('div');
                 cardEl.className = `card ${isRed ? 'red' : ''}`;
                 cardEl.innerHTML = `
-                    <div class="text-xs">${card.rank}<span class="text-[10px] block">${card.suit}</span></div>
-                    <div class="text-center text-lg">${card.suit}</div>
-                    <div class="text-xs text-right">${card.rank}</div>
+                    <div class="text-[10px]">${card.rank}<span class="block">${card.suit}</span></div>
+                    <div class="text-center text-base">${card.suit}</div>
+                    <div class="text-[10px] text-right">${card.rank}</div>
                 `;
                 cardEl.onclick = () => playCard('p1', index);
                 handEl.appendChild(cardEl);
             });
         }
 
-        function startNewGame() {
+        function renderHiddenHands() {
+            // Render card backs for AI & Partner so user cannot see their cards
+            ['p2', 'p3', 'p4'].forEach(p => {
+                const container = document.getElementById(`hand-${p}` );
+                if(container) {
+                    container.innerHTML = '';
+                    for(let i=0; i<hands[p].length; i++) {
+                        container.innerHTML += `<div class="card-back"></div>`;
+                    }
+                }
+            });
+        }
+
+        function startNewRound() {
             teamAScore = 0; teamBScore = 0; trickCount = 0;
             document.getElementById('team-a-score').innerText = '0';
             document.getElementById('team-b-score').innerText = '0';
-            document.getElementById('restart-btn').classList.add('hidden');
-            startRound();
-        }
+            document.getElementById('next-round-btn').classList.add('hidden');
 
-        function startRound() {
             createDeck();
             hands = { p1: [], p2: [], p3: [], p4: [] };
             tableCards = {};
@@ -205,36 +217,32 @@
             leadSuit = null;
 
             document.getElementById('trump-display').innerText = '❓';
-            document.getElementById('current-bid').innerText = '16';
-            document.getElementById('bidder-name').innerText = 'P1';
+            document.getElementById('target-bid').innerText = '16';
 
-            dealCards(4); // First deal: 4 cards each
+            dealCards(4); // First 4 cards
             renderPlayerHand();
+            renderHiddenHands();
 
-            // Show Bidding Modal
             document.getElementById('action-modal').classList.remove('hidden');
             document.getElementById('bidding-controls').classList.remove('hidden');
             document.getElementById('trump-controls').classList.add('hidden');
             document.getElementById('modal-title').innerText = 'Bidding Phase';
-            document.getElementById('modal-desc').innerText = 'Select your bid starting from 16:';
+            document.getElementById('modal-desc').innerText = 'Set your bid (16 to 28):';
         }
 
         function placeBid(bid) {
             currentBid = bid;
             highestBidder = 'p1';
-            document.getElementById('current-bid').innerText = currentBid;
-            document.getElementById('bidder-name').innerText = 'You (P1)';
+            document.getElementById('target-bid').innerText = currentBid;
             promptTrumpSelection();
         }
 
         function passBid() {
             currentBid = 16;
-            highestBidder = 'p2'; // AI becomes bidder
+            highestBidder = 'p2';
             trumpSuit = SUITS[Math.floor(Math.random() * SUITS.length)];
-            document.getElementById('current-bid').innerText = '16';
-            document.getElementById('bidder-name').innerText = 'P2 (AI)';
+            document.getElementById('target-bid').innerText = currentBid;
             document.getElementById('trump-display').innerText = '🔒';
-            
             document.getElementById('action-modal').classList.add('hidden');
             dealRemainingCards();
         }
@@ -243,7 +251,7 @@
             document.getElementById('bidding-controls').classList.add('hidden');
             document.getElementById('trump-controls').classList.remove('hidden');
             document.getElementById('modal-title').innerText = 'Select Trump (রং)';
-            document.getElementById('modal-desc').innerText = 'Choose trump suit for this round:';
+            document.getElementById('modal-desc').innerText = 'Choose trump suit:';
         }
 
         function selectTrump(suit) {
@@ -254,9 +262,10 @@
         }
 
         function dealRemainingCards() {
-            dealCards(4); // Deal remaining 4 cards
+            dealCards(4); // Remaining 4 cards (Total 8 cards each)
             renderPlayerHand();
-            updateStatus('Game Started! Your turn to play first.');
+            renderHiddenHands();
+            updateStatus('All 8 cards dealt. Game started!');
             currentTurn = 'p1';
         }
 
@@ -279,6 +288,7 @@
 
             renderTableCard(player, card);
             renderPlayerHand();
+            renderHiddenHands();
 
             nextTurn();
         }
@@ -286,12 +296,14 @@
         function renderTableCard(player, card) {
             const el = document.getElementById(`card-${player}`);
             const isRed = card.suit === '♥' || card.suit === '♦';
-            el.innerHTML = `
-                <div class="card ${isRed ? 'red' : ''} text-xs">
-                    <div>${card.rank}<span>${card.suit}</span></div>
-                    <div class="text-center text-sm">${card.suit}</div>
-                </div>
-            `;
+            if(el) {
+                el.innerHTML = `
+                    <div class="card ${isRed ? 'red' : ''} text-xs">
+                        <div>${card.rank}<span>${card.suit}</span></div>
+                        <div class="text-center text-sm">${card.suit}</div>
+                    </div>
+                `;
+            }
         }
 
         function nextTurn() {
@@ -299,15 +311,15 @@
             let idx = order.indexOf(currentTurn);
             
             if (Object.keys(tableCards).length === 4) {
-                setTimeout(evaluateTrick, 1200);
+                setTimeout(evaluateTrick, 1000);
                 return;
             }
 
             currentTurn = order[(idx + 1) % 4];
             
             if (currentTurn !== 'p1') {
-                document.getElementById('turn-badge').innerText = `${currentTurn.toUpperCase()} Thinking...`;
-                setTimeout(playAI, 800);
+                document.getElementById('turn-badge').innerText = `${currentTurn.toUpperCase()} thinking...`;
+                setTimeout(playAI, 600);
             } else {
                 document.getElementById('turn-badge').innerText = 'Your Turn';
             }
@@ -315,7 +327,8 @@
 
         function playAI() {
             const hand = hands[currentTurn];
-            let validCards = hand.filter(c => c.suit === leadSuit);
+            if(!hand || hand.length === 0) return;
+            let validCards = leadSuit ? hand.filter(c => c.suit === leadSuit) : hand;
             if (validCards.length === 0) validCards = hand;
 
             const cardIndex = hand.indexOf(validCards[0]);
@@ -347,10 +360,12 @@
             document.getElementById('team-a-score').innerText = teamAScore;
             document.getElementById('team-b-score').innerText = teamBScore;
 
-            updateStatus(`${winner.toUpperCase()} won this trick! (+${points} pts)`);
+            updateStatus(`${winner.toUpperCase()} won trick! (+${points} pts)`);
 
-            // Clear table
-            ['p1', 'p2', 'p3', 'p4'].forEach(p => document.getElementById(`card-${p}`).innerHTML = '');
+            ['p1', 'p2', 'p3', 'p4'].forEach(p => {
+                const el = document.getElementById(`card-${p}`);
+                if(el) el.innerHTML = '';
+            });
             tableCards = {};
             leadSuit = null;
             trickCount++;
@@ -359,36 +374,45 @@
                 endRound();
             } else {
                 currentTurn = winner;
-                if (currentTurn !== 'p1') setTimeout(playAI, 800);
+                if (currentTurn !== 'p1') setTimeout(playAI, 600);
             }
         }
 
         function endRound() {
             document.getElementById('action-modal').classList.remove('hidden');
-            document.getElementById('bidding-controls').classList.add('hidden');
-            document.getElementById('trump-controls').classList.add('hidden');
-            document.getElementById('restart-btn').classList.remove('hidden');
+            document.getElementById('next-round-btn').classList.remove('hidden');
 
-            document.getElementById('modal-title').innerText = 'Round Complete!';
-            let winnerText = '';
-
+            let roundWonByA = false;
             if (highestBidder === 'p1' || highestBidder === 'p3') {
-                if (teamAScore >= currentBid) winnerText = `Team A Won! (Scored ${teamAScore} / Target ${currentBid})`;
-                else winnerText = `Team A Failed! (Scored ${teamAScore} / Target ${currentBid})`;
+                if (teamAScore >= currentBid) roundWonByA = true;
             } else {
-                if (teamBScore >= currentBid) winnerText = `Team B Won! (Scored ${teamBScore} / Target ${currentBid})`;
-                else winnerText = `Team B Failed! (Scored ${teamBScore} / Target ${currentBid})`;
+                if (teamBScore < currentBid) roundWonByA = true;
             }
 
-            document.getElementById('modal-desc').innerText = winnerText;
+            if (roundWonByA) {
+                matchPtsA++;
+                document.getElementById('modal-title').innerText = 'Team A Won Round! (+1 Pt)';
+            } else {
+                matchPtsB++;
+                document.getElementById('modal-title').innerText = 'Team B Won Round! (+1 Pt)';
+            }
+
+            document.getElementById('match-pts-a').innerText = matchPtsA;
+            document.getElementById('match-pts-b').innerText = matchPtsB;
+
+            if (matchPtsA >= 6 || matchPtsB >= 6) {
+                document.getElementById('modal-desc').innerText = matchPtsA >= 6 ? '🏆 Team A Wins the Match (6 Points)!' : '🏆 Team B Wins the Match (6 Points)!';
+                matchPtsA = 0; matchPtsB = 0;
+            } else {
+                document.getElementById('modal-desc').innerText = `Scores - Team A: ${teamAScore}, Team B: ${teamBScore}`;
+            }
         }
 
         function updateStatus(msg) {
             document.getElementById('status-msg').innerText = msg;
         }
 
-        // Initialize Game
-        startNewGame();
+        startNewRound();
     </script>
 </body>
 </html>
