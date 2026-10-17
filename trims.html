@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PO Trims Dashboard</title>
+    <title>PO Search & Summary</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -18,18 +18,15 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Header Section -->
+    <!-- Header Section (Cleaned) -->
     <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
         <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-file-excel text-emerald-400 text-2xl"></i>
-                <div>
-                    <h1 class="text-base font-bold leading-tight">PO Trims Analysis</h1>
-                    <p class="text-[11px] text-slate-400">Google Drive Sheets Live Data</p>
-                </div>
+                <i class="fa-solid fa-boxes-packing text-emerald-400 text-xl"></i>
+                <h1 class="text-base font-bold leading-tight">Trims Tracker</h1>
             </div>
-            <button onclick="fetchSheetData()" id="refresh-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition">
-                <i class="fa-solid fa-rotate text-emerald-400 mr-1"></i> Sync Data
+            <button onclick="fetchSheetData()" id="refresh-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center">
+                <i class="fa-solid fa-rotate text-emerald-400 mr-1.5"></i> Sync Data
             </button>
         </div>
     </header>
@@ -55,24 +52,36 @@
 
         <!-- Result Card -->
         <div id="result-container" class="space-y-4 hidden">
-            <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-4 shadow-md flex justify-between items-center">
-                <div>
-                    <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Selected PO Info</span>
-                    <h2 id="disp-po-name" class="text-lg font-bold text-amber-400">PO-XXXX</h2>
-                    <p class="text-xs text-slate-300">Style name: <span id="disp-style-name" class="font-semibold text-white">Style-XXXX</span></p>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Buyer: <span id="disp-buyer" class="text-slate-200 font-medium">N/A</span> | Job: <span id="disp-job" class="text-slate-200 font-medium">N/A</span></p>
+            
+            <!-- Clean Single PO Info Card -->
+            <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-md border border-slate-800">
+                <div class="mb-2 pb-2 border-b border-slate-800 flex justify-between items-center">
+                    <div>
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400 block">PO Name</span>
+                        <h2 id="disp-po-name" class="text-xl font-bold text-amber-400">PO-XXXX</h2>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <span class="text-[10px] text-slate-400 block">Status</span>
-                    <span class="inline-block bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-full font-bold">Active</span>
+                
+                <div class="grid grid-cols-3 gap-2 text-xs pt-1">
+                    <div>
+                        <span class="text-slate-400 block text-[10px]">Buyer</span>
+                        <span id="disp-buyer" class="font-semibold text-slate-200">N/A</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px]">Style</span>
+                        <span id="disp-style-name" class="font-semibold text-slate-200">N/A</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px]">Shipment Date</span>
+                        <span id="disp-shipment" class="font-semibold text-slate-200">N/A</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Summary Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Trims Requirement & Balance Summary</h3>
-                    <span class="text-[11px] text-slate-500">Live Calculation</span>
+                <div class="p-3 border-b border-slate-100 bg-slate-50">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Trims Requirement Summary</h3>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
@@ -81,7 +90,7 @@
                                 <th class="p-3 font-semibold">Trims Name</th>
                                 <th class="p-3 font-semibold text-right">WO Qnty</th>
                                 <th class="p-3 font-semibold text-right">In-House-Qnty</th>
-                                <th class="p-3 font-semibold text-right">Balance (WO - In-House)</th>
+                                <th class="p-3 font-semibold text-right">Bal.</th>
                             </tr>
                         </thead>
                         <tbody id="trims-table-body" class="divide-y divide-slate-100">
@@ -123,7 +132,7 @@
                 
                 if(json.error) {
                     alert("API Error: " + json.error.message);
-                    loadingText.innerText = "Error loading sheet. Please make sure Google Sheet is shared with 'Anyone with the link can view'.";
+                    loadingText.innerText = "Error loading sheet. Check share permissions.";
                     return;
                 }
 
@@ -144,20 +153,20 @@
         function parseSheetRows(rows) {
             const headers = rows[0].map(h => (h || '').toString().trim());
 
-            // Exact Column Header Index Matchers
+            // Exact Column Indexes Match
             let idxBuyer = headers.findIndex(h => h.toLowerCase() === 'buyer');
-            let idxJob = headers.findIndex(h => h.toLowerCase() === 'job');
             let idxStyle = headers.findIndex(h => h.toLowerCase() === 'style name');
             let idxPo = headers.findIndex(h => h.toLowerCase() === 'po name');
+            let idxShipment = headers.findIndex(h => h.toLowerCase().includes('shipment'));
             let idxTrims = headers.findIndex(h => h.toLowerCase() === 'trims name');
             let idxWo = headers.findIndex(h => h.toLowerCase() === 'wo qnty');
             let idxInhouse = headers.findIndex(h => h.toLowerCase().includes('in-house'));
 
-            // Fallbacks based on exact image column positions if header text differs slightly
+            // Fallback column positions
             if (idxBuyer === -1) idxBuyer = 1;      // Column B
-            if (idxJob === -1) idxJob = 2;          // Column C
             if (idxStyle === -1) idxStyle = 3;      // Column D
             if (idxPo === -1) idxPo = 4;            // Column E
+            if (idxShipment === -1) idxShipment = 6;// Column G
             if (idxTrims === -1) idxTrims = 7;      // Column H
             if (idxWo === -1) idxWo = 9;         // Column J
             if (idxInhouse === -1) idxInhouse = 10; // Column K
@@ -169,9 +178,9 @@
 
                 masterData.push({
                     buyer: (r[idxBuyer] || '').toString().trim(),
-                    job: (r[idxJob] || '').toString().trim(),
                     styleName: (r[idxStyle] || '').toString().trim(),
                     poName: (r[idxPo] || '').toString().trim(),
+                    shipmentDate: (r[idxShipment] || '').toString().trim(),
                     trimsName: (r[idxTrims] || '').toString().trim(),
                     woQnty: parseFloat((r[idxWo] || '0').toString().replace(/,/g, '')) || 0,
                     inhouseQnty: parseFloat((r[idxInhouse] || '0').toString().replace(/,/g, '')) || 0
@@ -188,7 +197,6 @@
                 return;
             }
 
-            // Get unique PO Names matching search query
             let matchedPOs = [...new Set(masterData.filter(item => 
                 item.poName.toLowerCase().includes(query) || 
                 item.styleName.toLowerCase().includes(query)
@@ -200,7 +208,7 @@
                     let sampleItem = masterData.find(i => i.poName === po);
                     let div = document.createElement('div');
                     div.className = "p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 text-xs flex justify-between items-center";
-                    div.innerHTML = `<div><span class="font-bold text-slate-800">${po}</span> <span class="text-slate-400 block text-[10px]">Style name: ${sampleItem ? sampleItem.styleName : ''}</span></div> <i class="fa-solid fa-chevron-right text-slate-300 text-[10px]"></i>`;
+                    div.innerHTML = `<div><span class="font-bold text-slate-800">${po}</span> <span class="text-slate-400 block text-[10px]">Style: ${sampleItem ? sampleItem.styleName : ''}</span></div> <i class="fa-solid fa-chevron-right text-slate-300 text-[10px]"></i>`;
                     div.onclick = () => selectPO(po);
                     box.appendChild(div);
                 });
@@ -219,12 +227,13 @@
             if(poRows.length === 0) return;
 
             document.getElementById('disp-po-name').innerText = poRows[0].poName;
-            document.getElementById('disp-style-name').innerText = poRows[0].styleName;
             document.getElementById('disp-buyer').innerText = poRows[0].buyer || 'N/A';
-            document.getElementById('disp-job').innerText = poRows[0].job || 'N/A';
+            document.getElementById('disp-style-name').innerText = poRows[0].styleName || 'N/A';
+            document.getElementById('disp-shipment').innerText = poRows[0].shipmentDate || 'N/A';
+            
             document.getElementById('result-container').classList.remove('hidden');
 
-            // Unique Trims Name Aggregation
+            // Grouping Trims Data
             let trimsMap = {};
             poRows.forEach(row => {
                 let trim = row.trimsName || 'Unspecified Trim';
