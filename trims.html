@@ -168,21 +168,33 @@
         }
 
         function parseSheetRows(rows) {
-            const headers = rows[0].map(h => (h || '').toString().trim());
+            const headers = rows[0].map(h => (h || '').toString().trim().toLowerCase());
 
-            // Header Column Index Detection
-            let idxBuyer = headers.findIndex(h => h.toLowerCase() === 'buyer');
-            let idxStyle = headers.findIndex(h => h.toLowerCase() === 'style name');
-            let idxPo = headers.findIndex(h => h.toLowerCase() === 'po name');
-            let idxShipment = headers.findIndex(h => h.toLowerCase().includes('shipment'));
-            let idxTrims = headers.findIndex(h => h.toLowerCase() === 'trims name');
-            let idxWo = headers.findIndex(h => h.toLowerCase() === 'wo qnty');
-            let idxInhouse = headers.findIndex(h => h.toLowerCase().includes('in-house'));
+            // Smart Header Matcher with Multi-Keyword Detection
+            let idxBuyer = headers.findIndex(h => h === 'buyer' || h.includes('buyer'));
+            let idxStyle = headers.findIndex(h => h === 'style name' || h.includes('style'));
+            let idxPo = headers.findIndex(h => h === 'po name' || h.includes('po'));
+            let idxShipment = headers.findIndex(h => h.includes('shipment') || h.includes('ship'));
+            let idxTrims = headers.findIndex(h => h === 'trims name' || h.includes('trim'));
+            let idxWo = headers.findIndex(h => h === 'wo qnty' || h.includes('wo'));
+            let idxInhouse = headers.findIndex(h => h.includes('in-house') || h.includes('inhouse') || h.includes('house'));
             
             // Cutting, Input, Input Ready Column Matcher
-            let idxCutting = headers.findIndex(h => h.toLowerCase().includes('total cutting') || h.toLowerCase().includes('cutting'));
-            let idxInput = headers.findIndex(h => h.toLowerCase().includes('total input') || (h.toLowerCase().includes('input') && !h.toLowerCase().includes('ready')));
-            let idxInputReady = headers.findIndex(h => h.toLowerCase().includes('input ready') || h.toLowerCase().includes('ready'));
+            let idxCutting = headers.findIndex(h => h.includes('total cutting') || h.includes('cutting') || h.includes('cut'));
+            let idxInput = headers.findIndex(h => h === 'total input' || (h.includes('input') && !h.includes('ready')));
+            let idxInputReady = headers.findIndex(h => h.includes('input ready') || h.includes('ready'));
+
+            // Fallback column positions if headers fail
+            if (idxBuyer === -1) idxBuyer = 1;
+            if (idxStyle === -1) idxStyle = 3;
+            if (idxPo === -1) idxPo = 4;
+            if (idxShipment === -1) idxShipment = 6;
+            if (idxTrims === -1) idxTrims = 7;
+            if (idxWo === -1) idxWo = 9;
+            if (idxInhouse === -1) idxInhouse = 10;
+            if (idxCutting === -1) idxCutting = 11;
+            if (idxInput === -1) idxInput = 12;
+            if (idxInputReady === -1) idxInputReady = 13;
 
             masterData = [];
             for(let i = 1; i < rows.length; i++) {
@@ -190,16 +202,16 @@
                 if(!r || r.length === 0) continue;
 
                 masterData.push({
-                    buyer: idxBuyer !== -1 ? (r[idxBuyer] || '').toString().trim() : '',
-                    styleName: idxStyle !== -1 ? (r[idxStyle] || '').toString().trim() : '',
-                    poName: idxPo !== -1 ? (r[idxPo] || '').toString().trim() : '',
-                    shipmentDate: idxShipment !== -1 ? (r[idxShipment] || '').toString().trim() : '',
-                    trimsName: idxTrims !== -1 ? (r[idxTrims] || '').toString().trim() : '',
-                    woQnty: idxWo !== -1 ? parseFloat((r[idxWo] || '0').toString().replace(/,/g, '')) || 0 : 0,
-                    inhouseQnty: idxInhouse !== -1 ? parseFloat((r[idxInhouse] || '0').toString().replace(/,/g, '')) || 0 : 0,
-                    cuttingQnty: idxCutting !== -1 ? parseFloat((r[idxCutting] || '0').toString().replace(/,/g, '')) || 0 : 0,
-                    inputQnty: idxInput !== -1 ? parseFloat((r[idxInput] || '0').toString().replace(/,/g, '')) || 0 : 0,
-                    inputReadyQnty: idxInputReady !== -1 ? parseFloat((r[idxInputReady] || '0').toString().replace(/,/g, '')) || 0 : 0
+                    buyer: (r[idxBuyer] || '').toString().trim(),
+                    styleName: (r[idxStyle] || '').toString().trim(),
+                    poName: (r[idxPo] || '').toString().trim(),
+                    shipmentDate: (r[idxShipment] || '').toString().trim(),
+                    trimsName: (r[idxTrims] || '').toString().trim(),
+                    woQnty: parseFloat((r[idxWo] || '0').toString().replace(/,/g, '')) || 0,
+                    inhouseQnty: parseFloat((r[idxInhouse] || '0').toString().replace(/,/g, '')) || 0,
+                    cuttingQnty: parseFloat((r[idxCutting] || '0').toString().replace(/,/g, '')) || 0,
+                    inputQnty: parseFloat((r[idxInput] || '0').toString().replace(/,/g, '')) || 0,
+                    inputReadyQnty: parseFloat((r[idxInputReady] || '0').toString().replace(/,/g, '')) || 0
                 });
             }
         }
@@ -247,7 +259,7 @@
             document.getElementById('disp-style-name').innerText = poRows[0].styleName || 'N/A';
             document.getElementById('disp-shipment').innerText = poRows[0].shipmentDate || 'N/A';
 
-            // Calculate Sum for Cutting, Input, Input Ready for selected PO
+            // Sum Cutting, Input, Input Ready
             let totalCutting = 0;
             let totalInput = 0;
             let totalInputReady = 0;
