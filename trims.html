@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IE Development - PO Trims Dashboard</title>
+    <title>PO Trims Dashboard</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -37,41 +37,42 @@
     <!-- Main Container -->
     <main class="flex-1 max-w-4xl w-full mx-auto p-4 space-y-4">
 
-        <!-- Search & Suggestion Section -->
+        <!-- Search Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 relative">
-            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Search PO Name or Style Name:</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Search PO Name or Style name:</label>
             <div class="relative">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </span>
-                <input type="text" id="search-input" placeholder="Type PO Name (e.g. PO-101) or Style..." oninput="handleSearchInput()" class="w-full pl-10 pr-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <input type="text" id="search-input" placeholder="Type PO Name or Style name..." oninput="handleSearchInput()" class="w-full pl-10 pr-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
             </div>
 
             <!-- Suggestion Dropdown -->
             <div id="suggestion-box" class="absolute left-4 right-4 bg-white border border-slate-200 rounded-xl shadow-xl mt-1 max-h-56 overflow-y-auto z-20 hidden no-scrollbar">
-                <!-- Dynamic Suggestions will render here -->
+                <!-- Dynamic Suggestions -->
             </div>
         </div>
 
-        <!-- Selected PO Details Card -->
+        <!-- Result Card -->
         <div id="result-container" class="space-y-4 hidden">
             <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-4 shadow-md flex justify-between items-center">
                 <div>
                     <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Selected PO Info</span>
                     <h2 id="disp-po-name" class="text-lg font-bold text-amber-400">PO-XXXX</h2>
-                    <p class="text-xs text-slate-300">Style: <span id="disp-style-name" class="font-semibold text-white">Style-XXXX</span></p>
+                    <p class="text-xs text-slate-300">Style name: <span id="disp-style-name" class="font-semibold text-white">Style-XXXX</span></p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Buyer: <span id="disp-buyer" class="text-slate-200 font-medium">N/A</span> | Job: <span id="disp-job" class="text-slate-200 font-medium">N/A</span></p>
                 </div>
                 <div class="text-right">
                     <span class="text-[10px] text-slate-400 block">Status</span>
-                    <span class="inline-block bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-full font-bold">Active Data</span>
+                    <span class="inline-block bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-full font-bold">Active</span>
                 </div>
             </div>
 
-            <!-- Trims Unique Summary Table -->
+            <!-- Summary Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                     <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Trims Requirement & Balance Summary</h3>
-                    <span class="text-[11px] text-slate-500">Calculated Live</span>
+                    <span class="text-[11px] text-slate-500">Live Calculation</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
@@ -79,8 +80,8 @@
                             <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
                                 <th class="p-3 font-semibold">Trims Name</th>
                                 <th class="p-3 font-semibold text-right">WO Qnty</th>
-                                <th class="p-3 font-semibold text-right">In-House Qnty</th>
-                                <th class="p-3 font-semibold text-right">Balance (WO - Inhouse)</th>
+                                <th class="p-3 font-semibold text-right">In-House-Qnty</th>
+                                <th class="p-3 font-semibold text-right">Balance (WO - In-House)</th>
                             </tr>
                         </thead>
                         <tbody id="trims-table-body" class="divide-y divide-slate-100">
@@ -91,10 +92,10 @@
             </div>
         </div>
 
-        <!-- Initial / Loading State -->
+        <!-- Initial Status Card -->
         <div id="status-card" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center text-slate-500">
             <i class="fa-solid fa-cloud-arrow-down text-3xl text-emerald-500 mb-2 block"></i>
-            <p id="loading-text" class="text-sm font-medium">Click "Sync Data" or wait while fetching Google Drive Sheet...</p>
+            <p id="loading-text" class="text-sm font-medium">Syncing Google Drive Sheet data...</p>
         </div>
 
     </main>
@@ -103,52 +104,156 @@
     <script>
         const API_KEY = "AIzaSyDAI_8a9hSn7yRXX7xN_kES65LtQ0MMXck";
         const SPREADSHEET_ID = "12ws1pIEdlRM36dQz_UgeXpGmUzuZAJtXjtKXvSCeCH4";
-        let masterData = []; // To store parsed rows
+        
+        let masterData = [];
 
         window.onload = function() {
             fetchSheetData();
         };
 
-        // Fetch Google Sheet Data via Google Sheets API v4
         async function fetchSheetData() {
             const loadingText = document.getElementById('loading-text');
-            loadingText.innerText = "Syncing data from Google Drive Sheet...";
+            loadingText.innerText = "Connecting to Google Drive Sheet...";
             
-            // First fetch spreadsheet metadata to get the first sheet name
-            const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?key=${API_KEY}`;
+            const dataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/A1:Z5000?key=${API_KEY}`;
             
             try {
-                const metaRes = await fetch(metaUrl);
-                const metaJson = await metaRes.json();
+                const response = await fetch(dataUrl);
+                const json = await response.json();
                 
-                if(metaJson.error) {
-                    alert("API Error: " + metaJson.error.message);
-                    loadingText.innerText = "Error loading sheet. Check permissions or API Key.";
+                if(json.error) {
+                    alert("API Error: " + json.error.message);
+                    loadingText.innerText = "Error loading sheet. Please make sure Google Sheet is shared with 'Anyone with the link can view'.";
                     return;
                 }
 
-                const sheetName = metaJson.sheets[0].properties.title;
-                const dataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${sheetName}!A1:Z1000?key=${API_KEY}`;
-
-                const dataRes = await fetch(dataUrl);
-                const dataJson = await dataRes.json();
-
-                if(dataJson.values && dataJson.values.length > 1) {
-                    parseSheetRows(dataJson.values);
+                if(json.values && json.values.length > 1) {
+                    parseSheetRows(json.values);
                     document.getElementById('status-card').classList.add('hidden');
                     document.getElementById('search-input').focus();
                 } else {
-                    loadingText.innerText = "No records found in the spreadsheet.";
+                    loadingText.innerText = "Spreadsheet is empty or has no records.";
                 }
 
             } catch (err) {
                 console.error(err);
-                loadingText.innerText = "Failed to connect to Google Drive. Check internet connection.";
+                loadingText.innerText = "Failed to fetch data. Check internet connection.";
             }
         }
 
-        // Parse Sheet Columns dynamically
         function parseSheetRows(rows) {
-            const headers = rows[0].map(h => h.trim().toLowerCase());
-            
-            // Find index of
+            const headers = rows[0].map(h => (h || '').toString().trim());
+
+            // Exact Column Header Index Matchers
+            let idxBuyer = headers.findIndex(h => h.toLowerCase() === 'buyer');
+            let idxJob = headers.findIndex(h => h.toLowerCase() === 'job');
+            let idxStyle = headers.findIndex(h => h.toLowerCase() === 'style name');
+            let idxPo = headers.findIndex(h => h.toLowerCase() === 'po name');
+            let idxTrims = headers.findIndex(h => h.toLowerCase() === 'trims name');
+            let idxWo = headers.findIndex(h => h.toLowerCase() === 'wo qnty');
+            let idxInhouse = headers.findIndex(h => h.toLowerCase().includes('in-house'));
+
+            // Fallbacks based on exact image column positions if header text differs slightly
+            if (idxBuyer === -1) idxBuyer = 1;      // Column B
+            if (idxJob === -1) idxJob = 2;          // Column C
+            if (idxStyle === -1) idxStyle = 3;      // Column D
+            if (idxPo === -1) idxPo = 4;            // Column E
+            if (idxTrims === -1) idxTrims = 7;      // Column H
+            if (idxWo === -1) idxWo = 9;         // Column J
+            if (idxInhouse === -1) idxInhouse = 10; // Column K
+
+            masterData = [];
+            for(let i = 1; i < rows.length; i++) {
+                let r = rows[i];
+                if(!r || r.length === 0) continue;
+
+                masterData.push({
+                    buyer: (r[idxBuyer] || '').toString().trim(),
+                    job: (r[idxJob] || '').toString().trim(),
+                    styleName: (r[idxStyle] || '').toString().trim(),
+                    poName: (r[idxPo] || '').toString().trim(),
+                    trimsName: (r[idxTrims] || '').toString().trim(),
+                    woQnty: parseFloat((r[idxWo] || '0').toString().replace(/,/g, '')) || 0,
+                    inhouseQnty: parseFloat((r[idxInhouse] || '0').toString().replace(/,/g, '')) || 0
+                });
+            }
+        }
+
+        function handleSearchInput() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const box = document.getElementById('suggestion-box');
+
+            if(query.length === 0) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            // Get unique PO Names matching search query
+            let matchedPOs = [...new Set(masterData.filter(item => 
+                item.poName.toLowerCase().includes(query) || 
+                item.styleName.toLowerCase().includes(query)
+            ).map(item => item.poName))].filter(p => p !== '');
+
+            if(matchedPOs.length > 0) {
+                box.innerHTML = '';
+                matchedPOs.forEach(po => {
+                    let sampleItem = masterData.find(i => i.poName === po);
+                    let div = document.createElement('div');
+                    div.className = "p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 text-xs flex justify-between items-center";
+                    div.innerHTML = `<div><span class="font-bold text-slate-800">${po}</span> <span class="text-slate-400 block text-[10px]">Style name: ${sampleItem ? sampleItem.styleName : ''}</span></div> <i class="fa-solid fa-chevron-right text-slate-300 text-[10px]"></i>`;
+                    div.onclick = () => selectPO(po);
+                    box.appendChild(div);
+                });
+                box.classList.remove('hidden');
+            } else {
+                box.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No matching PO Name found</div>`;
+                box.classList.remove('hidden');
+            }
+        }
+
+        function selectPO(poName) {
+            document.getElementById('search-input').value = poName;
+            document.getElementById('suggestion-box').classList.add('hidden');
+
+            const poRows = masterData.filter(i => i.poName.toLowerCase() === poName.toLowerCase());
+            if(poRows.length === 0) return;
+
+            document.getElementById('disp-po-name').innerText = poRows[0].poName;
+            document.getElementById('disp-style-name').innerText = poRows[0].styleName;
+            document.getElementById('disp-buyer').innerText = poRows[0].buyer || 'N/A';
+            document.getElementById('disp-job').innerText = poRows[0].job || 'N/A';
+            document.getElementById('result-container').classList.remove('hidden');
+
+            // Unique Trims Name Aggregation
+            let trimsMap = {};
+            poRows.forEach(row => {
+                let trim = row.trimsName || 'Unspecified Trim';
+                if(!trimsMap[trim]) {
+                    trimsMap[trim] = { wo: 0, inhouse: 0 };
+                }
+                trimsMap[trim].wo += row.woQnty;
+                trimsMap[trim].inhouse += row.inhouseQnty;
+            });
+
+            // Render Table
+            const tbody = document.getElementById('trims-table-body');
+            tbody.innerHTML = '';
+
+            for(let trimName in trimsMap) {
+                let data = trimsMap[trimName];
+                let balance = data.wo - data.inhouse;
+
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-slate-800">${trimName}</td>
+                    <td class="p-3 text-right font-medium text-slate-700">${data.wo.toLocaleString()}</td>
+                    <td class="p-3 text-right font-medium text-emerald-600">${data.inhouse.toLocaleString()}</td>
+                    <td class="p-3 text-right font-bold ${balance < 0 ? 'text-rose-600' : 'text-sky-600'}">${balance.toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+    </script>
+</body>
+</html>
