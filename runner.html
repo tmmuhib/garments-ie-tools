@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Street Runner</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js for 3D Graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0f172a;
+            font-family: sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+    </style>
+</head>
+<body class="relative flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+    <!-- Game Canvas Container -->
+    <div id="canvas-container" class="absolute inset-0"></div>
+
+    <!-- HUD Overlay -->
+    <div id="hud" class="relative z-10 p-4 flex justify-between items-center text-white pointer-events-none hidden">
+        <div class="flex items-center space-x-2 bg-slate-900/80 px-3 py-1.5 rounded-full border border-amber-500/50">
+            <i class="fa-solid fa-coins text-amber-400 text-lg"></i>
+            <span id="coin-count" class="font-bold text-lg text-amber-400">0</span>
+        </div>
+        <div class="flex items-center space-x-2 bg-slate-900/80 px-4 py-1.5 rounded-full border border-sky-500/50">
+            <span id="mode-badge" class="text-xs uppercase px-2 py-0.5 rounded font-bold bg-emerald-500 text-slate-950">EASY</span>
+            <span id="score-count" class="font-bold text-xl text-sky-400">0m</span>
+        </div>
+    </div>
+
+    <!-- Mode Select & Start Screen -->
+    <div id="start-screen" class="relative z-20 flex flex-col items-center justify-center h-full bg-slate-950/85 p-6 text-center">
+        <div class="bg-slate-900 p-6 rounded-3xl border-2 border-amber-500 shadow-2xl max-w-sm w-full">
+            <div class="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
+                <i class="fa-solid fa-person-running"></i>
+            </div>
+            <h1 class="text-2xl font-black text-amber-400 mb-1">3D STREET RUNNER</h1>
+            <p class="text-xs text-slate-400 mb-6">Dodge obstacles & collect coins!</p>
+
+            <label class="text-xs font-bold text-slate-300 block mb-2 text-left">Select Difficulty Mode:</label>
+            <div class="grid grid-cols-3 gap-2 mb-6">
+                <button onclick="setDifficulty('easy')" id="btn-easy" class="mode-btn bg-emerald-600 text-white py-2 rounded-xl font-bold text-xs shadow border-2 border-emerald-400">Easy</button>
+                <button onclick="setDifficulty('medium')" id="btn-medium" class="mode-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs border border-slate-700">Medium</button>
+                <button onclick="setDifficulty('hard')" id="btn-hard" class="mode-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs border border-slate-700">Hard</button>
+            </div>
+
+            <button onclick="startGame()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-2xl shadow-lg text-base tracking-wider transition">START RUN</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="relative z-20 flex flex-col items-center justify-center h-full bg-slate-950/90 p-6 text-center hidden">
+        <div class="bg-slate-900 p-6 rounded-3xl border-2 border-rose-500 shadow-2xl max-w-sm w-full">
+            <h1 class="text-3xl font-black text-rose-500 mb-1">CRASHED!</h1>
+            <p class="text-xs text-slate-400 mb-4">You hit an obstacle on the tracks!</p>
+
+            <div class="bg-slate-950 p-4 rounded-2xl mb-6 space-y-2 text-sm">
+                <div class="flex justify-between text-slate-300">
+                    <span>Coins Collected:</span>
+                    <span id="final-coins" class="font-bold text-amber-400">0</span>
+                </div>
+                <div class="flex justify-between text-slate-300">
+                    <span>Distance Covered:</span>
+                    <span id="final-score" class="font-bold text-sky-400">0m</span>
+                </div>
+            </div>
+
+            <button onclick="restartGame()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-2xl shadow-lg text-base tracking-wider transition">TRY AGAIN</button>
+        </div>
+    </div>
+
+    <!-- Mobile Touch Controls -->
+    <div id="controls" class="relative z-10 p-4 pb-6 flex justify-between items-center pointer-events-auto hidden">
+        <div class="flex space-x-2">
+            <button id="btn-left" class="w-14 h-14 bg-slate-800/80 active:bg-slate-700 text-white rounded-full text-xl border border-slate-600 flex items-center justify-center shadow-lg"><i class="fa-solid fa-arrow-left"></i></button>
+            <button id="btn-right" class="w-14 h-14 bg-slate-800/80 active:bg-slate-700 text-white rounded-full text-xl border border-slate-600 flex items-center justify-center shadow-lg"><i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+        <button id="btn-jump" class="w-16 h-16 bg-amber-500/90 active:bg-amber-400 text-slate-950 rounded-full text-2xl font-black border-2 border-amber-300 flex items-center justify-center shadow-lg"><i class="fa-solid fa-arrow-up"></i></button>
+    </div>
+
+    <script>
+        let scene, camera, renderer;
+        let player, playerBox;
+        let lanes = [-2, 0, 2];
+        let currentLane = 1;
+        let targetX = 0;
+        let isJumping = false;
+        let jumpVelocity = 0;
+        let gravity = -0.015;
+
+        let gameRunning = false;
+        let score = 0;
+        let coins = 0;
+        let speed = 0.25;
+        let selectedDifficulty = 'easy';
+
+        const diffSettings = {
+            easy: { speed: 0.22, obstacleFreq: 0.03, coinFreq: 0.05, name: 'EASY', color: 'bg-emerald-500' },
+            medium: { speed: 0.32, obstacleFreq: 0.05, coinFreq: 0.06, name: 'MEDIUM', color: 'bg-amber-500' },
+            hard: { speed: 0.45, obstacleFreq: 0.08, coinFreq: 0.08, name: 'HARD', color: 'bg-rose-500' }
+        };
+
+        let obstacles = [];
+        let coinObjects = [];
+
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+            scene.fog = new THREE.Fog(0x0f172a, 10, 50);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 3.5, 6);
+            camera.lookAt(0, 1, -5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 15, 10);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            // Ground Track
+            const groundGeo = new THREE.PlaneGeometry(8, 100);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.z = -40;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Rails
+            for (let x of [-2, 0, 2]) {
+                const railGeo = new THREE.BoxGeometry(0.1, 0.1, 100);
+                const railMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
+                const rail = new THREE.Mesh(railGeo, railMat);
+                rail.position.set(x, 0.05, -40);
+                scene.add(rail);
+            }
+
+            // Player Mesh
+            const playerGeo = new THREE.BoxGeometry(0.8, 1.6, 0.8);
+            const playerMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+            player = new THREE.Mesh(playerGeo, playerMat);
+            player.position.set(0, 0.8, 0);
+            player.castShadow = true;
+            scene.add(player);
+
+            playerBox = new THREE.Box3();
+
+            window.addEventListener('resize', onWindowResize);
+            setupControls();
+        }
+
+        function setDifficulty(mode) {
+            selectedDifficulty = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.className = 'mode-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs border border-slate-700';
+            });
+
+            const activeBtn = document.getElementById(`btn-${mode}`);
+            if (mode === 'easy') activeBtn.className = 'mode-btn bg-emerald-600 text-white py-2 rounded-xl font-bold text-xs shadow border-2 border-emerald-400';
+            if (mode === 'medium') activeBtn.className = 'mode-btn bg-amber-600 text-white py-2 rounded-xl font-bold text-xs shadow border-2 border-amber-400';
+            if (mode === 'hard') activeBtn.className = 'mode-btn bg-rose-600 text-white py-2 rounded-xl font-bold text-xs shadow border-2 border-rose-400';
+        }
+
+        function startGame() {
+            const conf = diffSettings[selectedDifficulty];
+            speed = conf.speed;
+
+            document.getElementById('mode-badge').innerText = conf.name;
+            document.getElementById('mode-badge').className = `text-xs uppercase px-2 py-0.5 rounded font-bold ${conf.color} text-slate-950`;
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('controls').classList.remove('hidden');
+
+            score = 0;
+            coins = 0;
+            currentLane = 1;
+            targetX = 0;
+            player.position.set(0, 0.8, 0);
+
+            // Clear existing objects
+            obstacles.forEach(o => scene.remove(o.mesh));
+            coinObjects.forEach(c => scene.remove(c.mesh));
+            obstacles = [];
+            coinObjects = [];
+
+            gameRunning = true;
+            animate();
+        }
+
+        function restartGame() {
+            document.getElementById('game-over-screen').classList.add('hidden');
+            startGame();
+        }
+
+        function spawnObstacle() {
+            const laneIndex = Math.floor(Math.random() * 3);
+            const x = lanes[laneIndex];
+
+            const geo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xe11d48 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, 0.6, -45);
+            mesh.castShadow = true;
+            scene.add(mesh);
+
+            obstacles.push({ mesh: mesh, box: new THREE.Box3() });
+        }
+
+        function spawnCoin() {
+            const laneIndex = Math.floor(Math.random() * 3);
+            const x = lanes[laneIndex];
+
+            const geo = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8, roughness: 0.2 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.rotation.x = Math.PI / 2;
+            mesh.position.set(x, 0.8, -45);
+            scene.add(mesh);
+
+            coinObjects.push({ mesh: mesh, box: new THREE.Box3() });
+        }
+
+        function animate() {
+            if (!gameRunning) return;
+
+            requestAnimationFrame(animate);
+
+            // Smooth Lane Transition
+            player.position.x += (targetX - player.position.x) * 0.2;
+
+            // Handle Jumping
+            if (isJumping) {
+                player.position.y += jumpVelocity;
+                jumpVelocity += gravity;
+                if (player.position.y <= 0.8) {
+                    player.position.y = 0.8;
+                    isJumping = false;
+                }
+            }
+
+            // Spawn Entities
+            const conf = diffSettings[selectedDifficulty];
+            if (Math.random() < conf.obstacleFreq) spawnObstacle();
+            if (Math.random() < conf.coinFreq) spawnCoin();
+
+            // Update Obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.mesh.position.z += speed;
+                obs.box.setFromObject(obs.mesh);
+
+                // Collision Detection
+                playerBox.setFromObject(player);
+                if (playerBox.intersectsBox(obs.box)) {
+                    gameOver();
+                    return;
+                }
+
+                if (obs.mesh.position.z > 5) {
+                    scene.remove(obs.mesh);
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            // Update Coins
+            for (let i = coinObjects.length - 1; i >= 0; i--) {
+                const c = coinObjects[i];
+                c.mesh.position.z += speed;
+                c.mesh.rotation.z += 0.05;
+                c.box.setFromObject(c.mesh);
+
+                playerBox.setFromObject(player);
+                if (playerBox.intersectsBox(c.box)) {
+                    coins += 1;
+                    document.getElementById('coin-count').innerText = coins;
+                    scene.remove(c.mesh);
+                    coinObjects.splice(i, 1);
+                    continue;
+                }
+
+                if (c.mesh.position.z > 5) {
+                    scene.remove(c.mesh);
+                    coinObjects.splice(i, 1);
+                }
+            }
+
+            // Score update
+            score += speed * 0.5;
+            document.getElementById('score-count').innerText = `${Math.floor(score)}m`;
+
+            renderer.render(scene, camera);
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('controls').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.remove('hidden');
+
+            document.getElementById('final-coins').innerText = coins;
+            document.getElementById('final-score').innerText = `${Math.floor(score)}m`;
+        }
+
+        function moveLeft() {
+            if (currentLane > 0) {
+                currentLane--;
+                targetX = lanes[currentLane];
+            }
+        }
+
+        function moveRight() {
+            if (currentLane < 2) {
+                currentLane++;
+                targetX = lanes[currentLane];
+            }
+        }
+
+        function jump() {
+            if (!isJumping) {
+                isJumping = true;
+                jumpVelocity = 0.28;
+            }
+        }
+
+        function setupControls() {
+            // Keyboard Controls
+            document.addEventListener('keydown', (e) => {
+                if (!gameRunning) return;
+                if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft();
+                if (e.key === 'ArrowRight' || e.key === 'd') moveRight();
+                if (e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') jump();
+            });
+
+            // Touch Control Buttons
+            document.getElementById('btn-left').onclick = moveLeft;
+            document.getElementById('btn-right').onclick = moveRight;
+            document.getElementById('btn-jump').onclick = jump;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.onload = init3D;
+    </script>
+</body>
+</html>
