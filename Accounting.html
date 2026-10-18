@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital TallyKhata</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Page Background: Grey 350 style (#d1d5db) */
+        body { 
+            background-color: #d1d5db; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            color: #1f2937;
+        }
+
+        /* Blue Styled Cards */
+        .card-custom { 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 12px; 
+            border: none; 
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); 
+            color: #ffffff;
+        }
+
+        .auth-container { max-width: 400px; margin: 60px auto; padding: 0 15px; }
+
+        /* Colorful Letter Effect for 'Welcome to Shop' */
+        .colorful-welcome {
+            display: inline-block;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .colorful-welcome span {
+            display: inline-block;
+            animation: bounceLetter 2s infinite ease-in-out;
+        }
+
+        /* Letter Color Schemes */
+        .c-1 { color: #ff4d4d; text-shadow: 0 0 6px rgba(255, 77, 77, 0.6); animation-delay: 0.0s !important; }
+        .c-2 { color: #ffaf40; text-shadow: 0 0 6px rgba(255, 175, 64, 0.6); animation-delay: 0.1s !important; }
+        .c-3 { color: #fffa65; text-shadow: 0 0 6px rgba(255, 250, 101, 0.6); animation-delay: 0.2s !important; }
+        .c-4 { color: #32ff7e; text-shadow: 0 0 6px rgba(50, 255, 126, 0.6); animation-delay: 0.3s !important; }
+        .c-5 { color: #18dcff; text-shadow: 0 0 6px rgba(24, 220, 255, 0.6); animation-delay: 0.4s !important; }
+        .c-6 { color: #7d5fff; text-shadow: 0 0 6px rgba(125, 95, 255, 0.6); animation-delay: 0.5s !important; }
+        .c-7 { color: #ff6b81; text-shadow: 0 0 6px rgba(255, 107, 129, 0.6); animation-delay: 0.6s !important; }
+
+        @keyframes bounceLetter {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        /* Customer Cards */
+        .customer-card {
+            background: #1e40af;
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ffffff;
+        }
+
+        .customer-click-area {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .customer-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+            text-decoration: none !important;
+        }
+
+        /* Summary Badges */
+        .col-summary-item {
+            width: 25%;
+            padding: 0 3px;
+        }
+
+        .summary-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
+            padding: 8px 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .text-palam-light { color: #86efac; font-weight: bold; }
+        .text-dilam-light { color: #fca5a5; font-weight: bold; }
+        .text-net-light { color: #93c5fd; font-weight: bold; }
+
+        /* Excel Table Grid Styling */
+        .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #ffffff;
+            font-size: 13px;
+            color: #1f2937;
+        }
+        .excel-table th, .excel-table td {
+            border: 1px solid #9ca3af !important;
+            padding: 8px 10px;
+            text-align: left;
+        }
+        .excel-table th {
+            background-color: #1e40af;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .excel-table tr:nth-child(even) { background-color: #f3f4f6; }
+    </style>
+</head>
+<body>
+
+<!-- 1. LOGIN SECTION -->
+<div id="authSection" class="container auth-container">
+    <div class="card card-custom p-4">
+        <h3 class="text-center text-white mb-3">TallyKhata Login</h3>
+        <div id="loginError" class="alert alert-danger py-2 mb-3" style="display: none; font-size: 14px;"></div>
+        
+        <form id="loginForm">
+            <div class="mb-3">
+                <label class="form-label fw-semibold text-white">Email / Phone / Name / ID</label>
+                <input type="text" id="loginIdentifier" class="form-control" placeholder="e.g. sktex@gmail.com or 01644854515" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold text-white">Password</label>
+                <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+            </div>
+            <button type="submit" id="loginBtn" class="btn btn-warning fw-bold text-dark w-100 py-2">Login</button>
+        </form>
+    </div>
+</div>
+
+
+<!-- 2. MAIN DASHBOARD SECTION -->
+<div id="dashboardSection" class="container py-3" style="display: none;">
+    
+    <!-- Topbar: Multi-colored animated "Welcome to Shop" & User Name -->
+    <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded card-custom">
+        <div class="colorful-welcome">
+            <span class="c-1">W</span><span class="c-2">e</span><span class="c-3">l</span><span class="c-4">c</span><span class="c-5">o</span><span class="c-6">m</span><span class="c-7">e</span>
+            <span style="width: 5px;"></span>
+            <span class="c-1">t</span><span class="c-2">o</span>
+            <span style="width: 5px;"></span>
+            <span class="c-3">S</span><span class="c-4">h</span><span class="c-5">o</span><span class="c-6">p</span>
+        </div>
+        <div class="text-white fw-semibold" style="font-size: 14px;">
+            👤 <span id="displayName">User</span>
+        </div>
+    </div>
+
+    <!-- Overall Summary Card + Add Customer Button in 1 Line -->
+    <div class="card card-custom p-2 mb-3">
+        <div class="row text-center g-1 align-items-center">
+            <div class="col-summary-item">
+                <div class="summary-box">
+                    <small class="text-white-50" style="font-size: 10px;">Dilam (Pabo)</small>
+                    <h6 id="totalGive" class="text-dilam-light m-0 mt-1" style="font-size: 13px;">BDT 0</h6>
+                </div>
+            </div>
+            <div class="col-summary-item">
+                <div class="summary-box">
+                    <small class="text-white-50" style="font-size: 10px;">Pelam (Joma)</small>
+                    <h6 id="totalGet" class="text-palam-light m-0 mt-1" style="font-size: 13px;">BDT 0</h6>
+                </div>
+            </div>
+            <div class="col-summary-item">
+                <div class="summary-box">
+                    <small class="text-white-50" style="font-size: 10px;">Net Balance</small>
+                    <h6 id="netBalance" class="text-net-light m-0 mt-1" style="font-size: 13px;">BDT 0</h6>
+                </div>
+            </div>
+            <div class="col-summary-item">
+                <button class="btn btn-warning btn-sm fw-bold w-100 py-3" onclick="openCustomerModal()" style="font-size: 11px; line-height: 1.1;">
+                    + Add<br>Customer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Card List Section -->
+    <div class="row">
+        <div class="col-12 px-0">
+            <div class="card card-custom p-3">
+                <div id="customerCardContainer">
+                    <!-- Dynamically loaded customer cards -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 3. ADD CUSTOMER MODAL -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fs-6">+ Add New Customer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCustomerForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Customer Name *</label>
+                        <input type="text" id="custName" class="form-control" placeholder="Enter name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phone Number (e.g. 8801...)</label>
+                        <input type="text" id="custPhone" class="form-control" placeholder="e.g. 8801644854515">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Address</label>
+                        <input type="text" id="custAddress" class="form-control" placeholder="Enter address">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Save Customer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 4. TRANSACTION ENTRY MODAL -->
+<div class="modal fade" id="transModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fs-6" id="transModalTitle">Add Transaction</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="transForm">
+                    <input type="hidden" id="modalCustId">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Transaction Date</label>
+                        <input type="date" id="transDate" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Transaction Type</label>
+                        <select id="transType" class="form-select" required>
+                            <option value="give">Dilam (Pabo / Sale Due)</option>
+                            <option value="get">Pelam (Joma / Receive Cash)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Amount (BDT)</label>
+                        <input type="number" id="transAmount" class="form-control" placeholder="0" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Note / Details (Optional)</label>
+                        <input type="text" id="transNote" class="form-control" placeholder="e.g. Item purchase">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Save Entry</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 5. EXCEL REPORT MODAL -->
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fs-6 fw-bold" id="reportModalTitle">📊 Customer Account Statement</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="mb-3 p-2 bg-light rounded border">
+                    <p class="m-0"><strong>Phone:</strong> <span id="rptCustPhone">N/A</span></p>
+                    <p class="m-0"><strong>Address:</strong> <span id="rptCustAddress">N/A</span></p>
+                </div>
+
+                <div class="card p-3 mb-3 bg-light border-0">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted d-block">Total Dilam</small>
+                            <strong id="rptTotalGive" class="text-danger">BDT 0</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Total Pelam</small>
+                            <strong id="rptTotalGet" class="text-success">BDT 0</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Net Balance</small>
+                            <strong id="rptNetBalance" class="text-primary">BDT 0</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="excel-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Note / Description</th>
+                                <th>Dilam (BDT)</th>
+                                <th>Pelam (BDT)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <!-- Dynamically loaded -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JS Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const FIREBASE_URL = "https://tmmeet-2cfad-default-rtdb.firebaseio.com/users";
+    let currentUserKey = "";
+    let currentUserName = "";
+    let customersData = {};
+
+    const transModal = new bootstrap.Modal(document.getElementById('transModal'));
+    const customerModal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
+    const reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
+
+    window.onload = function() {
+        const savedKey = localStorage.getItem('tally_user_key');
+        const savedName = localStorage.getItem('tally_user_name');
+        if (savedKey) {
+            currentUserKey = savedKey;
+            currentUserName = savedName || savedKey;
+            showDashboard();
+        }
+    };
+
+    // Login Logic
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const identifier = document.getElementById('loginIdentifier').value.trim().toLowerCase();
+        const password = document.getElementById('loginPassword').value.trim();
+        const errorBox = document.getElementById('loginError');
+        const loginBtn = document.getElementById('loginBtn');
+
+        errorBox.style.display = 'none';
+        loginBtn.innerText = 'Checking...';
+        loginBtn.disabled = true;
+
+        try {
+            const response = await fetch(`${FIREBASE_URL}.json`);
+            const users = await response.json();
+
+            if (!users) throw new Error("No user found.");
+
+            let foundKey = null;
+            let foundUserData = null;
+
+            for (let key in users) {
+                let user = users[key];
+                let uId = (user.id || key).toLowerCase();
+                let uEmail = (user.email || "").toLowerCase();
+                let uPhone = (user.phone || "").toLowerCase();
+                let uName = (user.name || "").toLowerCase();
+
+                if (uId === identifier || uEmail === identifier || uPhone === identifier || uName === identifier) {
+                    foundKey = key;
+                    foundUserData = user;
+                    break;
+                }
+            }
+
+            if (foundKey && foundUserData) {
+                if (foundUserData.passwordHash === password) {
+                    currentUserKey = foundKey;
+                    currentUserName = foundUserData.name || foundKey;
+                    
+                    localStorage.setItem('tally_user_key', currentUserKey);
+                    localStorage.setItem('tally_user_name', currentUserName);
+                    
+                    showDashboard();
+                } else {
+                    errorBox.innerText = "Invalid Password!";
+                    errorBox.style.display = 'block';
+                }
+            } else {
+                errorBox.innerText = "Account not found with this credential!";
+                errorBox.style.display = 'block';
+            }
+        } catch (err) {
+            console.error(err);
+            errorBox.innerText = "Connection error!";
+            errorBox.style.display = 'block';
+        } finally {
+            loginBtn.innerText = 'Login';
+            loginBtn.disabled = false;
+        }
+    });
+
+    function showDashboard() {
+        document.getElementById('authSection').style.display = 'none';
+        document.getElementById('dashboardSection').style.display = 'block';
+        document.getElementById('displayName').innerText = currentUserName;
+        fetchCustomers();
+    }
+
+    function openCustomerModal() {
+        customerModal.show();
+    }
+
+    async function fetchCustomers() {
+        try {
+            const res = await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers.json`);
+            const data = await res.json();
+            customersData = data || {};
+            renderCustomerCards();
+        } catch (err) {
+            console.error("Data Load Error:", err);
+        }
+    }
+
+    document.getElementById('addCustomerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('custName').value.trim();
+        const phone = document.getElementById('custPhone').value.trim();
+        const address = document.getElementById('custAddress').value.trim();
+
+        if (!name) return;
+
+        const newCust = {
+            name: name,
+            phone: phone,
+            address: address,
+            createdAt: new Date().toISOString(),
+            transactions: {}
+        };
+
+        await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers.json`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newCust)
+        });
+
+        document.getElementById('addCustomerForm').reset();
+        customerModal.hide();
+        fetchCustomers();
+    });
+
+    // Render Customer Cards
+    function renderCustomerCards() {
+        const container = document.getElementById('customerCardContainer');
+        container.innerHTML = '';
+
+        let grandTotalGive = 0;
+        let grandTotalGet = 0;
+
+        const keys = Object.keys(customersData);
+        if (keys.length === 0) {
+            container.innerHTML = '<div class="text-center text-white-50 py-3">No customers added yet.</div>';
+            return;
+        }
+
+        keys.forEach(key => {
+            const cust = customersData[key];
+            let totalGive = 0;
+            let totalGet = 0;
+
+            if (cust.transactions) {
+                Object.values(cust.transactions).forEach(t => {
+                    if (t.type === 'give') totalGive += Number(t.amount);
+                    if (t.type === 'get') totalGet += Number(t.amount);
+                });
+            }
+
+            grandTotalGive += totalGive;
+            grandTotalGet += totalGet;
+
+            const balance = totalGive - totalGet;
+            let balanceText = '';
+            
+            if (balance > 0) {
+                balanceText = `<span class="badge bg-danger ms-2">due ${balance}</span>`;
+            } else if (balance < 0) {
+                balanceText = `<span class="badge bg-success ms-2">advance ${Math.abs(balance)}</span>`;
+            } else {
+                balanceText = `<span class="badge bg-secondary ms-2">due 0</span>`;
+            }
+
+            // WhatsApp Native Link
+            let cleanPhone = cust.phone ? cust.phone.replace(/[^0-9]/g, '') : '';
+            let waMsg = encodeURIComponent(`Dear ${cust.name}, your total due balance is BDT ${balance}. Please clear this amount at your earliest convenience. Thank you!`);
+            let waNativeLink = cleanPhone ? `whatsapp://send?phone=${cleanPhone}&text=${waMsg}` : `#`;
+
+            let waButton = cleanPhone ? 
+                `<a href="${waNativeLink}" class="btn btn-sm btn-success text-white me-1" title="Open WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>` :
+                `<button class="btn btn-sm btn-secondary text-white me-1" disabled><i class="fa-brands fa-whatsapp"></i></button>`;
+
+            container.innerHTML += `
+                <div class="customer-card">
+                    <div class="customer-click-area d-flex align-items-center" onclick="openReportModal('${key}')">
+                        <p class="customer-name">${cust.name}</p>
+                        ${balanceText}
+                    </div>
+                    <div>
+                        ${waButton}
+                        <button class="btn btn-sm btn-warning fw-bold text-dark" onclick="openTransModal('${key}', '${cust.name}')">+ Entry</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('totalGive').innerText = `BDT ${grandTotalGive}`;
+        document.getElementById('totalGet').innerText = `BDT ${grandTotalGet}`;
+        const net = grandTotalGive - grandTotalGet;
+        document.getElementById('netBalance').innerText = `BDT ${net}`;
+    }
+
+    // Open Report Modal
+    function openReportModal(custId) {
+        const cust = customersData[custId];
+        if (!cust) return;
+
+        document.getElementById('reportModalTitle').innerText = `📊 Statement: ${cust.name}`;
+        document.getElementById('rptCustPhone').innerText = cust.phone || 'No phone number provided';
+        document.getElementById('rptCustAddress').innerText = cust.address || 'No address provided';
+
+        const tbody = document.getElementById('reportTableBody');
+        tbody.innerHTML = '';
+
+        let totalGive = 0;
+        let totalGet = 0;
+
+        if (cust.transactions) {
+            const transList = Object.values(cust.transactions);
+            
+            if (transList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>`;
+            } else {
+                transList.forEach((t, index) => {
+                    let giveAmt = t.type === 'give' ? Number(t.amount) : 0;
+                    let getAmt = t.type === 'get' ? Number(t.amount) : 0;
+
+                    totalGive += giveAmt;
+                    totalGet += getAmt;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${t.date || 'N/A'}</td>
+                            <td>${t.note || '-'}</td>
+                            <td class="${giveAmt > 0 ? 'text-danger fw-bold' : ''}">${giveAmt > 0 ? 'BDT ' + giveAmt : '-'}</td>
+                            <td class="${getAmt > 0 ? 'text-success fw-bold' : ''}">${getAmt > 0 ? 'BDT ' + getAmt : '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+        } else {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>`;
+        }
+
+        document.getElementById('rptTotalGive').innerText = `BDT ${totalGive}`;
+        document.getElementById('rptTotalGet').innerText = `BDT ${totalGet}`;
+        const balance = totalGive - totalGet;
+        document.getElementById('rptNetBalance').innerText = `BDT ${balance}`;
+
+        reportModal.show();
+    }
+
+    function openTransModal(custId, custName) {
+        document.getElementById('modalCustId').value = custId;
+        document.getElementById('transModalTitle').innerText = `${custName} - Add Transaction`;
+        
+        // Default current date (YYYY-MM-DD)
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('transDate').value = today;
+
+        transModal.show();
+    }
+
+    // Save Transaction
+    document.getElementById('transForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const custId = document.getElementById('modalCustId').value;
+        const transDate = document.getElementById('transDate').value;
+        const type = document.getElementById('transType').value;
+        const amount = document.getElementById('transAmount').value;
+        const note = document.getElementById('transNote').value;
+
+        const transaction = {
+            type: type,
+            amount: amount,
+            note: note,
+            date: transDate
+        };
+
+        await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers/${custId}/transactions.json`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(transaction)
+        });
+
+        document.getElementById('transForm').reset();
+        transModal.hide();
+        fetchCustomers();
+    });
+</script>
+
+</body>
+</html>
