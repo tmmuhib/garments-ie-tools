@@ -19,7 +19,7 @@
             }
         }
     </script>
-    <!-- FontAwesome Icons (Updated CDN) -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -35,6 +35,13 @@
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col p-2 max-w-2xl mx-auto">
+
+    <!-- In-App Browser Auto Redirect / Notice Banner -->
+    <div id="inapp-warning" class="bg-amber-100 border border-amber-300 text-amber-900 px-3 py-2.5 rounded-xl text-xs mb-2 hidden shadow-sm">
+        <div class="font-bold mb-1">⚠️ ইন-অ্যাপ ব্রাউজার শনাক্ত হয়েছে!</div>
+        <div class="text-[11px] mb-2">ডাউনলোড এবং কপি কাজ করার জন্য দয়া করে উপরের ডানপাশের কোনার **(•••)** মেনু থেকে **"Open in Chrome / Safari"** সিলেক্ট করুন।</div>
+        <button onclick="openInExternalBrowser()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold w-full transition">ক্রোম বা সাফারি ব্রাউজারে খুলুন</button>
+    </div>
 
     <!-- Main Container -->
     <main class="w-full space-y-2">
@@ -82,7 +89,7 @@
                         <span class="text-[9px] uppercase tracking-wider text-slate-400 block mb-0.5 leading-normal" id="disp-title-label">PO Name / Job</span>
                         <h2 id="disp-po-name" class="text-base font-bold text-amber-400 leading-normal">PO-XXXX</h2>
                     </div>
-                    <!-- Action Icon Buttons (Excel, PDF, Image, Print) - High Visibility Icons -->
+                    <!-- Action Icon Buttons (Excel, PDF, Image, Print) -->
                     <div id="action-buttons" class="flex items-center space-x-1.5">
                         <button type="button" onclick="handleExcelCopyAndDownload()" title="Download & Copy Excel File" class="bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg shadow transition flex items-center justify-center w-8 h-8">
                             <i class="fa-solid fa-file-excel text-sm text-white" style="color: #ffffff;"></i>
@@ -183,8 +190,26 @@
         let prodSummaryDataByJob = {};
 
         window.onload = function() {
+            checkInAppBrowser();
             fetchSheetData();
         };
+
+        function checkInAppBrowser() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            if (ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1 || ua.indexOf('Instagram') > -1 || ua.indexOf('WhatsApp') > -1 || ua.indexOf('Messenger') > -1) {
+                document.getElementById('inapp-warning').classList.remove('hidden');
+            }
+        }
+
+        function openInExternalBrowser() {
+            const currentUrl = window.location.href;
+            // Intent URL for Android Chrome & fallback to location
+            if (/android/i.test(navigator.userAgent)) {
+                window.location.href = `intent://${currentUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end;`;
+            } else {
+                window.open(currentUrl, '_system');
+            }
+        }
 
         const cleanNumber = (val) => {
             if (val === undefined || val === null || val === '') return 0;
@@ -461,7 +486,7 @@
             }
         }
 
-        // Action 1: Excel File Download + Excel Sheet Copy
+        // Action 1: Excel File Download & Copy
         async function handleExcelCopyAndDownload() {
             const rawPoName = document.getElementById('disp-po-name').innerText;
             const poNameClean = rawPoName.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30) || "Trims_Report";
@@ -500,23 +525,23 @@
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(excelData);
             XLSX.utils.book_append_sheet(wb, ws, poNameClean);
-
             XLSX.writeFile(wb, `${poNameClean}.xlsx`);
 
+            let plainText = `📌 *TRIMS TRACKER REPORT*\n*PO/Job:* ${rawPoName}\n*Buyer:* ${buyer} | *Style:* ${style}\n*Shipment:* ${shipment}\n\n`;
+            plainText += `Trims Name\tWO Qnty\tIn-House\tBal.\n`;
+
+            rows.forEach(r => {
+                const cols = r.querySelectorAll("td");
+                if(cols.length >= 4) {
+                    plainText += `${cols[0].innerText}\t${cols[1].innerText}\t${cols[2].innerText}\t${cols[3].innerText}\n`;
+                }
+            });
+
             try {
-                const excelArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                const excelBlob = new Blob([excelArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                
-                const item = new ClipboardItem({
-                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': excelBlob
-                });
-                await navigator.clipboard.write([item]);
-                showToast(`Downloaded & Copied ${poNameClean}.xlsx file!`);
+                await navigator.clipboard.writeText(plainText);
+                showToast(`Excel Downloaded & Copied for WhatsApp!`);
             } catch (err) {
-                let tsvData = "";
-                excelData.forEach(row => { tsvData += row.join("\t") + "\n"; });
-                navigator.clipboard.writeText(tsvData);
-                showToast(`Downloaded ${poNameClean}.xlsx & copied sheet!`);
+                showToast(`Excel Downloaded successfully!`);
             }
         }
 
@@ -527,7 +552,6 @@
             const rawPoName = document.getElementById('disp-po-name').innerText;
             const poNameClean = rawPoName.replace(/[^a-zA-Z0-9_-]/g, '_');
 
-            // Hide action buttons during PDF creation
             actionBtns.classList.add('hidden');
 
             const opt = {
@@ -544,7 +568,6 @@
                 actionBtns.classList.remove('hidden');
             });
 
-            // Copy Data Summary to Clipboard
             const buyer = document.getElementById('disp-buyer').innerText;
             const style = document.getElementById('disp-style-name').innerText;
             const shipment = document.getElementById('disp-shipment').innerText;
@@ -563,7 +586,6 @@
             plainText += `📦 *TRIMS REQUIREMENT SUMMARY*\n`;
             plainText += `-------------------------------------------\n`;
             plainText += `Trims Name\tWO Qnty\tIn-House\tBal.\n`;
-            plainText += `-------------------------------------------\n`;
 
             const rows = document.querySelectorAll("#trims-table-body tr");
             rows.forEach(r => {
@@ -574,23 +596,20 @@
             });
 
             navigator.clipboard.writeText(plainText).then(() => {
-                showToast("PDF Downloaded & Summary Copied!");
+                showToast("PDF Downloaded & Text Copied!");
             }).catch(() => {
                 showToast("PDF Downloaded!");
             });
         }
 
-        // Action 3: Copy & Download Image (Fixes Left Edge Clipping & Text Cutoffs)
+        // Action 3: Copy & Download Image
         function copyAndDownloadImage() {
             const element = document.getElementById('report-area');
             const actionBtns = document.getElementById('action-buttons');
             const tableContainer = document.getElementById('table-container');
             const poNameClean = document.getElementById('disp-po-name').innerText.replace(/[^a-zA-Z0-9_-]/g, '_');
 
-            // 1. Hide buttons before capturing
             actionBtns.classList.add('hidden');
-
-            // 2. Clear scroll restrictions so text & long tables capture without clipping
             const originalOverflow = tableContainer.style.overflow;
             tableContainer.style.overflow = 'visible';
 
@@ -602,26 +621,18 @@
                 windowWidth: element.scrollWidth + 10,
                 windowHeight: element.scrollHeight + 10
             }).then(canvas => {
-                // Restore buttons & overflow
                 actionBtns.classList.remove('hidden');
                 tableContainer.style.overflow = originalOverflow;
 
-                canvas.toBlob(async (blob) => {
-                    try {
-                        const item = new ClipboardItem({ "image/png": blob });
-                        await navigator.clipboard.write([item]);
-                        showToast("Full Image Copied & Downloaded!");
-                    } catch (err) {
-                        showToast("Full Image Downloaded!");
-                    }
+                const imgUrl = canvas.toDataURL('image/png');
+                const downloadLink = document.createElement('a');
+                downloadLink.download = `Report_${poNameClean}.png`;
+                downloadLink.href = imgUrl;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
 
-                    const downloadLink = document.createElement('a');
-                    downloadLink.download = `Report_${poNameClean}.png`;
-                    downloadLink.href = canvas.toDataURL('image/png');
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
-                }, 'image/png');
+                showToast("Image Saved to Downloads!");
             }).catch(err => {
                 actionBtns.classList.remove('hidden');
                 tableContainer.style.overflow = originalOverflow;
