@@ -36,11 +36,11 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col p-2 max-w-2xl mx-auto">
 
-    <!-- In-App Browser Auto Redirect / Notice Banner -->
+    <!-- In-App Browser Warning Banner & Open in Chrome Button -->
     <div id="inapp-warning" class="bg-amber-100 border border-amber-300 text-amber-900 px-3 py-2.5 rounded-xl text-xs mb-2 hidden shadow-sm">
-        <div class="font-bold mb-1">⚠️ ইন-অ্যাপ ব্রাউজার শনাক্ত হয়েছে!</div>
-        <div class="text-[11px] mb-2">ডাউনলোড এবং কপি কাজ করার জন্য দয়া করে উপরের ডানপাশের কোনার **(•••)** মেনু থেকে **"Open in Chrome / Safari"** সিলেক্ট করুন।</div>
-        <button onclick="openInExternalBrowser()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold w-full transition">ক্রোম বা সাফারি ব্রাউজারে খুলুন</button>
+        <div class="font-bold mb-1">⚠️ In-App Browser Detected!</div>
+        <div class="text-[11px] mb-2">Phone storage a file download ba WhatsApp copy korar jonno chrome browser a open korun.</div>
+        <button onclick="openInExternalBrowser()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold w-full transition">Open in Chrome / Safari</button>
     </div>
 
     <!-- Main Container -->
@@ -83,7 +83,7 @@
             
             <!-- PO Info & Production Summary Card -->
             <div class="bg-slate-900 text-white rounded-xl p-3.5 shadow-sm border border-slate-800 space-y-2.5 overflow-visible">
-                <!-- Header with PO Name / Job & Action Icon Buttons -->
+                <!-- Header with PO Name / Job & Action Icon -->
                 <div class="flex justify-between items-center pb-2 border-b border-slate-800 pl-1">
                     <div class="pl-0.5">
                         <span class="text-[9px] uppercase tracking-wider text-slate-400 block mb-0.5 leading-normal" id="disp-title-label">PO Name / Job</span>
@@ -203,7 +203,6 @@
 
         function openInExternalBrowser() {
             const currentUrl = window.location.href;
-            // Intent URL for Android Chrome & fallback to location
             if (/android/i.test(navigator.userAgent)) {
                 window.location.href = `intent://${currentUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end;`;
             } else {
