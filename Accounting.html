@@ -72,7 +72,7 @@
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
-            max-width: 55%;
+            max-width: 50%;
         }
 
         .customer-name {
@@ -261,7 +261,7 @@
 </div>
 
 
-<!-- 4. EDIT CUSTOMER MODAL -->
+<!-- 4. EDIT CUSTOMER MODAL (Triggered on Long Press) -->
 <div class="modal fade" id="editCustomerModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -699,14 +699,22 @@
                 balanceText = `<span class="badge bg-secondary ms-2">due 0</span>`;
             }
 
-            // Fixed WhatsApp Universal Link (https://wa.me/...) to avoid ERR_UNKNOWN_URL_SCHEME in WebViews
+            // WhatsApp Universal Link
             let cleanPhone = cust.phone ? cust.phone.replace(/[^0-9]/g, '') : '';
-            let waMsg = encodeURIComponent(`Dear ${cust.name}, your total due balance is BDT ${balance}. Please clear this amount at your earliest convenience. Thank you!`);
+            let msgText = `Dear ${cust.name}, your total due balance is BDT ${balance}. Please clear this amount at your earliest convenience. Thank you!`;
+            let waMsg = encodeURIComponent(msgText);
             let waLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=${waMsg}` : `#`;
+
+            // Native SIM SMS Link (sms:number?body=text)
+            let smsLink = cleanPhone ? `sms:+${cleanPhone}?body=${waMsg}` : `#`;
 
             let waButton = cleanPhone ? 
                 `<a href="${waLink}" target="_blank" class="btn btn-sm btn-success text-white me-1" title="Open WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>` :
                 `<button class="btn btn-sm btn-secondary text-white me-1" disabled><i class="fa-brands fa-whatsapp"></i></button>`;
+
+            let smsButton = cleanPhone ? 
+                `<a href="${smsLink}" class="btn btn-sm btn-info text-dark me-1" title="Send Native SIM SMS"><i class="fa-solid fa-comment-sms"></i></a>` :
+                `<button class="btn btn-sm btn-secondary text-white me-1" disabled><i class="fa-solid fa-comment-sms"></i></button>`;
 
             container.innerHTML += `
                 <div class="customer-card">
@@ -722,6 +730,7 @@
                     </div>
                     <div class="d-flex align-items-center">
                         ${waButton}
+                        ${smsButton}
                         <button class="btn btn-sm btn-warning fw-bold text-dark" onclick="openTransModal('${key}', '${cust.name}')">+ Entry</button>
                     </div>
                 </div>
