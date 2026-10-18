@@ -660,6 +660,24 @@
         }
     }
 
+    function openWhatsApp(cleanPhone, msgText) {
+        if (!cleanPhone) return;
+        const encodedMsg = encodeURIComponent(msgText);
+        const intentUrl = `intent://send?phone=${cleanPhone}&text=${encodedMsg}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
+        const whatsappSchemeUrl = `whatsapp://send?phone=${cleanPhone}&text=${encodedMsg}`;
+        const webUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
+
+        try {
+            window.location.href = intentUrl;
+        } catch (e) {
+            window.location.href = whatsappSchemeUrl;
+        }
+
+        setTimeout(() => {
+            window.location.href = webUrl;
+        }, 1200);
+    }
+
     function renderCustomerCards() {
         const container = document.getElementById('customerCardContainer');
         container.innerHTML = '';
@@ -699,17 +717,17 @@
                 balanceText = `<span class="badge bg-secondary ms-2">due 0</span>`;
             }
 
-            // WhatsApp Universal Link
             let cleanPhone = cust.phone ? cust.phone.replace(/[^0-9]/g, '') : '';
-            let msgText = `Dear ${cust.name}, your total due balance is BDT ${balance}. Please clear this amount at your earliest convenience. Thank you!`;
+            
+            // Shop Name & Due Amount Bold formatting
+            let msgText = `Welcome to *Shop* (${currentUserName}), your total due balance is *BDT ${balance}*. Please clear this amount at your earliest convenience. Thank you!`;
             let waMsg = encodeURIComponent(msgText);
-            let waLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=${waMsg}` : `#`;
 
-            // Native SIM SMS Link (sms:number?body=text)
-            let smsLink = cleanPhone ? `sms:+${cleanPhone}?body=${waMsg}` : `#`;
+            let smsMsgText = `Welcome to Shop (${currentUserName}), your total due balance is BDT ${balance}. Please clear this amount at your earliest convenience. Thank you!`;
+            let smsLink = cleanPhone ? `sms:+${cleanPhone}?body=${encodeURIComponent(smsMsgText)}` : `#`;
 
             let waButton = cleanPhone ? 
-                `<a href="${waLink}" target="_blank" class="btn btn-sm btn-success text-white me-1" title="Open WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>` :
+                `<button class="btn btn-sm btn-success text-white me-1" onclick="openWhatsApp('${cleanPhone}', \`${msgText}\`)" title="Open WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>` :
                 `<button class="btn btn-sm btn-secondary text-white me-1" disabled><i class="fa-brands fa-whatsapp"></i></button>`;
 
             let smsButton = cleanPhone ? 
