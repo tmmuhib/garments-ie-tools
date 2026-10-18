@@ -261,7 +261,7 @@
 </div>
 
 
-<!-- 4. EDIT CUSTOMER MODAL (Triggered on Long Press) -->
+<!-- 4. EDIT CUSTOMER MODAL -->
 <div class="modal fade" id="editCustomerModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -562,7 +562,6 @@
         }
     }
 
-    // Save Customer with Country Code + Phone formatting
     document.getElementById('addCustomerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('custName').value.trim();
@@ -596,7 +595,6 @@
         fetchCustomers();
     });
 
-    // Open Edit Customer Modal
     function openEditCustomerModal(custId) {
         const cust = customersData[custId];
         if (!cust) return;
@@ -610,7 +608,6 @@
         editCustomerModal.show();
     }
 
-    // Update Customer Details
     document.getElementById('editCustomerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const custId = document.getElementById('editCustId').value;
@@ -642,7 +639,6 @@
         fetchCustomers();
     });
 
-    // Helper functions for Touch & Mouse Long-Press
     let pressTimer = null;
     let isLongPress = false;
 
@@ -651,7 +647,7 @@
         pressTimer = setTimeout(() => {
             isLongPress = true;
             openEditCustomerModal(custId);
-        }, 500); // 500ms for long press
+        }, 500);
     }
 
     function handlePressEnd() {
@@ -703,10 +699,10 @@
                 balanceText = `<span class="badge bg-secondary ms-2">due 0</span>`;
             }
 
-            // WhatsApp Deep Link
+            // Fixed WhatsApp Universal Link (https://wa.me/...) to avoid ERR_UNKNOWN_URL_SCHEME in WebViews
             let cleanPhone = cust.phone ? cust.phone.replace(/[^0-9]/g, '') : '';
             let waMsg = encodeURIComponent(`Dear ${cust.name}, your total due balance is BDT ${balance}. Please clear this amount at your earliest convenience. Thank you!`);
-            let waLink = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${waMsg}` : `#`;
+            let waLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=${waMsg}` : `#`;
 
             let waButton = cleanPhone ? 
                 `<a href="${waLink}" target="_blank" class="btn btn-sm btn-success text-white me-1" title="Open WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>` :
