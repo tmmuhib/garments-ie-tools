@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital TallyKhata</title>
+    <title>Digital Ledger</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome Icons -->
@@ -71,6 +71,8 @@
         .customer-click-area {
             cursor: pointer;
             user-select: none;
+            -webkit-user-select: none;
+            max-width: 55%;
         }
 
         .customer-name {
@@ -79,12 +81,13 @@
             color: #ffffff;
             margin: 0;
             text-decoration: none !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* Summary Badges */
         .col-summary-item {
-            width: 25%;
-            padding: 0 3px;
+            padding: 0 2px;
         }
 
         .summary-box {
@@ -99,9 +102,14 @@
             justify-content: center;
         }
 
-        .text-palam-light { color: #86efac; font-weight: bold; }
-        .text-dilam-light { color: #fca5a5; font-weight: bold; }
-        .text-net-light { color: #93c5fd; font-weight: bold; }
+        /* Color definitions */
+        .color-get { color: #86efac !important; font-weight: bold; }       
+        .color-provide { color: #93c5fd !important; font-weight: bold; }   
+        .color-net-red { color: #f87171 !important; font-weight: bold; text-shadow: 0 0 6px rgba(248, 113, 113, 0.5); } 
+        .color-net-green { color: #4ade80 !important; font-weight: bold; } 
+
+        .text-get-dark { color: #16a34a !important; font-weight: bold; }
+        .text-provide-dark { color: #2563eb !important; font-weight: bold; }
 
         /* Excel Table Grid Styling */
         .excel-table {
@@ -130,7 +138,7 @@
 <!-- 1. LOGIN SECTION -->
 <div id="authSection" class="container auth-container">
     <div class="card card-custom p-4">
-        <h3 class="text-center text-white mb-3">TallyKhata Login</h3>
+        <h3 class="text-center text-white mb-3">Ledger Login</h3>
         <div id="loginError" class="alert alert-danger py-2 mb-3" style="display: none; font-size: 14px;"></div>
         
         <form id="loginForm">
@@ -165,31 +173,36 @@
         </div>
     </div>
 
-    <!-- Overall Summary Card + Add Customer Button in 1 Line -->
+    <!-- Overall Summary Card -->
     <div class="card card-custom p-2 mb-3">
         <div class="row text-center g-1 align-items-center">
-            <div class="col-summary-item">
+            <div class="col-3 col-summary-item">
                 <div class="summary-box">
-                    <small class="text-white-50" style="font-size: 10px;">Dilam (Pabo)</small>
-                    <h6 id="totalGive" class="text-dilam-light m-0 mt-1" style="font-size: 13px;">BDT 0</h6>
+                    <small class="text-white-50" style="font-size: 10px;">Total Provide</small>
+                    <h6 id="totalProvide" class="color-provide m-0 mt-1" style="font-size: 12px;">BDT 0</h6>
                 </div>
             </div>
-            <div class="col-summary-item">
+            <div class="col-3 col-summary-item">
                 <div class="summary-box">
-                    <small class="text-white-50" style="font-size: 10px;">Pelam (Joma)</small>
-                    <h6 id="totalGet" class="text-palam-light m-0 mt-1" style="font-size: 13px;">BDT 0</h6>
+                    <small class="text-white-50" style="font-size: 10px;">Total Get</small>
+                    <h6 id="totalGet" class="color-get m-0 mt-1" style="font-size: 12px;">BDT 0</h6>
                 </div>
             </div>
-            <div class="col-summary-item">
+            <div class="col-3 col-summary-item">
                 <div class="summary-box">
                     <small class="text-white-50" style="font-size: 10px;">Net Balance</small>
-                    <h6 id="netBalance" class="text-net-light m-0 mt-1" style="font-size: 13px;">BDT 0</h6>
+                    <h6 id="netBalance" class="color-net-red m-0 mt-1" style="font-size: 12px;">BDT 0</h6>
                 </div>
             </div>
-            <div class="col-summary-item">
-                <button class="btn btn-warning btn-sm fw-bold w-100 py-3" onclick="openCustomerModal()" style="font-size: 11px; line-height: 1.1;">
-                    + Add<br>Customer
-                </button>
+            <div class="col-3 col-summary-item">
+                <div class="d-flex flex-column gap-1">
+                    <button class="btn btn-warning btn-sm fw-bold w-100 py-1" onclick="openCustomerModal()" style="font-size: 13px;" title="Add Customer">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <button class="btn btn-info btn-sm fw-bold text-dark w-100 py-1" onclick="openDayReportModal()" style="font-size: 10px; line-height: 1.1;">
+                        Day Report
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -222,8 +235,19 @@
                         <input type="text" id="custName" class="form-control" placeholder="Enter name" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Phone Number (e.g. 8801...)</label>
-                        <input type="text" id="custPhone" class="form-control" placeholder="e.g. 8801644854515">
+                        <label class="form-label fw-semibold">Phone Number</label>
+                        <div class="input-group">
+                            <select id="custCountryCode" class="form-select" style="max-width: 120px;">
+                                <option value="880" selected>🇧🇩 +880</option>
+                                <option value="91">🇮🇳 +91</option>
+                                <option value="966">🇸🇦 +966</option>
+                                <option value="971">🇦🇪 +971</option>
+                                <option value="1">🇺🇸 +1</option>
+                                <option value="44">🇬🇧 +44</option>
+                                <option value="60">🇲🇾 +60</option>
+                            </select>
+                            <input type="text" id="custPhone" class="form-control" placeholder="e.g. 1340038111">
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Address</label>
@@ -237,7 +261,49 @@
 </div>
 
 
-<!-- 4. TRANSACTION ENTRY MODAL -->
+<!-- 4. EDIT CUSTOMER MODAL (Triggered on Long Press) -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title fs-6">✏️ Edit Customer Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCustomerForm">
+                    <input type="hidden" id="editCustId">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Customer Name *</label>
+                        <input type="text" id="editCustName" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phone Number</label>
+                        <div class="input-group">
+                            <select id="editCustCountryCode" class="form-select" style="max-width: 120px;">
+                                <option value="880">🇧🇩 +880</option>
+                                <option value="91">🇮🇳 +91</option>
+                                <option value="966">🇸🇦 +966</option>
+                                <option value="971">🇦🇪 +971</option>
+                                <option value="1">🇺🇸 +1</option>
+                                <option value="44">🇬🇧 +44</option>
+                                <option value="60">🇲🇾 +60</option>
+                            </select>
+                            <input type="text" id="editCustPhone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Address</label>
+                        <input type="text" id="editCustAddress" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-secondary w-100">Update Customer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 5. TRANSACTION ENTRY MODAL -->
 <div class="modal fade" id="transModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -255,8 +321,8 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Transaction Type</label>
                         <select id="transType" class="form-select" required>
-                            <option value="give">Dilam (Pabo / Sale Due)</option>
-                            <option value="get">Pelam (Joma / Receive Cash)</option>
+                            <option value="provide">Provide (Sale Due)</option>
+                            <option value="get">Get (Receive Cash / Payment)</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -275,7 +341,7 @@
 </div>
 
 
-<!-- 5. EXCEL REPORT MODAL -->
+<!-- 6. EXCEL STATEMENT REPORT MODAL -->
 <div class="modal fade" id="reportModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -292,16 +358,16 @@
                 <div class="card p-3 mb-3 bg-light border-0">
                     <div class="row text-center">
                         <div class="col-4">
-                            <small class="text-muted d-block">Total Dilam</small>
-                            <strong id="rptTotalGive" class="text-danger">BDT 0</strong>
+                            <small class="text-muted d-block">Total Provide</small>
+                            <strong id="rptTotalProvide" class="text-provide-dark">BDT 0</strong>
                         </div>
                         <div class="col-4">
-                            <small class="text-muted d-block">Total Pelam</small>
-                            <strong id="rptTotalGet" class="text-success">BDT 0</strong>
+                            <small class="text-muted d-block">Total Get</small>
+                            <strong id="rptTotalGet" class="text-get-dark">BDT 0</strong>
                         </div>
                         <div class="col-4">
                             <small class="text-muted d-block">Net Balance</small>
-                            <strong id="rptNetBalance" class="text-primary">BDT 0</strong>
+                            <strong id="rptNetBalance" class="text-danger">BDT 0</strong>
                         </div>
                     </div>
                 </div>
@@ -313,12 +379,70 @@
                                 <th>#</th>
                                 <th>Date</th>
                                 <th>Note / Description</th>
-                                <th>Dilam (BDT)</th>
-                                <th>Pelam (BDT)</th>
+                                <th>Provide (BDT)</th>
+                                <th>Get (BDT)</th>
                             </tr>
                         </thead>
                         <tbody id="reportTableBody">
-                            <!-- Dynamically loaded -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 7. DAY REPORT MODAL -->
+<div class="modal fade" id="dayReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fs-6 fw-bold">📅 Day Ledger Report</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="row mb-3 align-items-center bg-light p-2 rounded mx-0">
+                    <div class="col-md-4 col-12 mb-2 mb-md-0">
+                        <label class="form-label fw-bold mb-0">Select Date:</label>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        <input type="date" id="dayReportDate" class="form-control" onchange="renderDayReport()">
+                    </div>
+                </div>
+
+                <div class="card p-3 mb-3 bg-light border-0">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted d-block">Day Provide</small>
+                            <strong id="dayTotalProvide" class="text-provide-dark">BDT 0</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Day Get</small>
+                            <strong id="dayTotalGet" class="text-get-dark">BDT 0</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Day Net</small>
+                            <strong id="dayNetBalance" class="text-danger">BDT 0</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="excel-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Customer Name</th>
+                                <th>Type</th>
+                                <th>Note / Details</th>
+                                <th>Amount (BDT)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dayReportTableBody">
                         </tbody>
                     </table>
                 </div>
@@ -340,7 +464,9 @@
 
     const transModal = new bootstrap.Modal(document.getElementById('transModal'));
     const customerModal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
+    const editCustomerModal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
     const reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
+    const dayReportModal = new bootstrap.Modal(document.getElementById('dayReportModal'));
 
     window.onload = function() {
         const savedKey = localStorage.getItem('tally_user_key');
@@ -352,7 +478,6 @@
         }
     };
 
-    // Login Logic
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const identifier = document.getElementById('loginIdentifier').value.trim().toLowerCase();
@@ -422,6 +547,7 @@
     }
 
     function openCustomerModal() {
+        document.getElementById('addCustomerForm').reset();
         customerModal.show();
     }
 
@@ -436,17 +562,24 @@
         }
     }
 
+    // Save Customer with Country Code + Phone formatting
     document.getElementById('addCustomerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('custName').value.trim();
-        const phone = document.getElementById('custPhone').value.trim();
+        const countryCode = document.getElementById('custCountryCode').value;
+        let rawPhone = document.getElementById('custPhone').value.trim();
         const address = document.getElementById('custAddress').value.trim();
 
         if (!name) return;
 
+        rawPhone = rawPhone.replace(/^0+/, '');
+        const fullPhone = rawPhone ? (countryCode + rawPhone) : '';
+
         const newCust = {
             name: name,
-            phone: phone,
+            countryCode: countryCode,
+            phone: fullPhone,
+            rawPhone: rawPhone,
             address: address,
             createdAt: new Date().toISOString(),
             transactions: {}
@@ -463,12 +596,79 @@
         fetchCustomers();
     });
 
-    // Render Customer Cards
+    // Open Edit Customer Modal
+    function openEditCustomerModal(custId) {
+        const cust = customersData[custId];
+        if (!cust) return;
+
+        document.getElementById('editCustId').value = custId;
+        document.getElementById('editCustName').value = cust.name || '';
+        document.getElementById('editCustCountryCode').value = cust.countryCode || '880';
+        document.getElementById('editCustPhone').value = cust.rawPhone || (cust.phone ? cust.phone.replace(/^(880|91|966|971|1|44|60)/, '') : '');
+        document.getElementById('editCustAddress').value = cust.address || '';
+
+        editCustomerModal.show();
+    }
+
+    // Update Customer Details
+    document.getElementById('editCustomerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const custId = document.getElementById('editCustId').value;
+        const name = document.getElementById('editCustName').value.trim();
+        const countryCode = document.getElementById('editCustCountryCode').value;
+        let rawPhone = document.getElementById('editCustPhone').value.trim();
+        const address = document.getElementById('editCustAddress').value.trim();
+
+        if (!name) return;
+
+        rawPhone = rawPhone.replace(/^0+/, '');
+        const fullPhone = rawPhone ? (countryCode + rawPhone) : '';
+
+        const updatedData = {
+            name: name,
+            countryCode: countryCode,
+            phone: fullPhone,
+            rawPhone: rawPhone,
+            address: address
+        };
+
+        await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers/${custId}.json`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+
+        editCustomerModal.hide();
+        fetchCustomers();
+    });
+
+    // Helper functions for Touch & Mouse Long-Press
+    let pressTimer = null;
+    let isLongPress = false;
+
+    function handlePressStart(custId) {
+        isLongPress = false;
+        pressTimer = setTimeout(() => {
+            isLongPress = true;
+            openEditCustomerModal(custId);
+        }, 500); // 500ms for long press
+    }
+
+    function handlePressEnd() {
+        clearTimeout(pressTimer);
+    }
+
+    function handleAreaClick(custId) {
+        if (!isLongPress) {
+            openReportModal(custId);
+        }
+    }
+
     function renderCustomerCards() {
         const container = document.getElementById('customerCardContainer');
         container.innerHTML = '';
 
-        let grandTotalGive = 0;
+        let grandTotalProvide = 0;
         let grandTotalGet = 0;
 
         const keys = Object.keys(customersData);
@@ -479,20 +679,20 @@
 
         keys.forEach(key => {
             const cust = customersData[key];
-            let totalGive = 0;
+            let totalProvide = 0;
             let totalGet = 0;
 
             if (cust.transactions) {
                 Object.values(cust.transactions).forEach(t => {
-                    if (t.type === 'give') totalGive += Number(t.amount);
+                    if (t.type === 'give' || t.type === 'provide') totalProvide += Number(t.amount);
                     if (t.type === 'get') totalGet += Number(t.amount);
                 });
             }
 
-            grandTotalGive += totalGive;
+            grandTotalProvide += totalProvide;
             grandTotalGet += totalGet;
 
-            const balance = totalGive - totalGet;
+            const balance = totalProvide - totalGet;
             let balanceText = '';
             
             if (balance > 0) {
@@ -503,22 +703,28 @@
                 balanceText = `<span class="badge bg-secondary ms-2">due 0</span>`;
             }
 
-            // WhatsApp Native Link
+            // WhatsApp Deep Link
             let cleanPhone = cust.phone ? cust.phone.replace(/[^0-9]/g, '') : '';
             let waMsg = encodeURIComponent(`Dear ${cust.name}, your total due balance is BDT ${balance}. Please clear this amount at your earliest convenience. Thank you!`);
-            let waNativeLink = cleanPhone ? `whatsapp://send?phone=${cleanPhone}&text=${waMsg}` : `#`;
+            let waLink = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${waMsg}` : `#`;
 
             let waButton = cleanPhone ? 
-                `<a href="${waNativeLink}" class="btn btn-sm btn-success text-white me-1" title="Open WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>` :
+                `<a href="${waLink}" target="_blank" class="btn btn-sm btn-success text-white me-1" title="Open WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>` :
                 `<button class="btn btn-sm btn-secondary text-white me-1" disabled><i class="fa-brands fa-whatsapp"></i></button>`;
 
             container.innerHTML += `
                 <div class="customer-card">
-                    <div class="customer-click-area d-flex align-items-center" onclick="openReportModal('${key}')">
-                        <p class="customer-name">${cust.name}</p>
+                    <div class="customer-click-area d-flex align-items-center" 
+                         onmousedown="handlePressStart('${key}')" 
+                         onmouseup="handlePressEnd()" 
+                         onmouseleave="handlePressEnd()"
+                         ontouchstart="handlePressStart('${key}')" 
+                         ontouchend="handlePressEnd()"
+                         onclick="handleAreaClick('${key}')">
+                        <p class="customer-name" title="Click for report | Hold to edit">${cust.name}</p>
                         ${balanceText}
                     </div>
-                    <div>
+                    <div class="d-flex align-items-center">
                         ${waButton}
                         <button class="btn btn-sm btn-warning fw-bold text-dark" onclick="openTransModal('${key}', '${cust.name}')">+ Entry</button>
                     </div>
@@ -526,25 +732,32 @@
             `;
         });
 
-        document.getElementById('totalGive').innerText = `BDT ${grandTotalGive}`;
+        document.getElementById('totalProvide').innerText = `BDT ${grandTotalProvide}`;
         document.getElementById('totalGet').innerText = `BDT ${grandTotalGet}`;
-        const net = grandTotalGive - grandTotalGet;
-        document.getElementById('netBalance').innerText = `BDT ${net}`;
+        
+        const net = grandTotalProvide - grandTotalGet;
+        const netElem = document.getElementById('netBalance');
+        netElem.innerText = `BDT ${net}`;
+        
+        if (net !== 0) {
+            netElem.className = 'color-net-red m-0 mt-1';
+        } else {
+            netElem.className = 'color-net-green m-0 mt-1';
+        }
     }
 
-    // Open Report Modal
     function openReportModal(custId) {
         const cust = customersData[custId];
         if (!cust) return;
 
         document.getElementById('reportModalTitle').innerText = `📊 Statement: ${cust.name}`;
-        document.getElementById('rptCustPhone').innerText = cust.phone || 'No phone number provided';
+        document.getElementById('rptCustPhone').innerText = cust.phone ? '+' + cust.phone : 'No phone number provided';
         document.getElementById('rptCustAddress').innerText = cust.address || 'No address provided';
 
         const tbody = document.getElementById('reportTableBody');
         tbody.innerHTML = '';
 
-        let totalGive = 0;
+        let totalProvide = 0;
         let totalGet = 0;
 
         if (cust.transactions) {
@@ -554,10 +767,10 @@
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>`;
             } else {
                 transList.forEach((t, index) => {
-                    let giveAmt = t.type === 'give' ? Number(t.amount) : 0;
+                    let provideAmt = (t.type === 'give' || t.type === 'provide') ? Number(t.amount) : 0;
                     let getAmt = t.type === 'get' ? Number(t.amount) : 0;
 
-                    totalGive += giveAmt;
+                    totalProvide += provideAmt;
                     totalGet += getAmt;
 
                     tbody.innerHTML += `
@@ -565,8 +778,8 @@
                             <td>${index + 1}</td>
                             <td>${t.date || 'N/A'}</td>
                             <td>${t.note || '-'}</td>
-                            <td class="${giveAmt > 0 ? 'text-danger fw-bold' : ''}">${giveAmt > 0 ? 'BDT ' + giveAmt : '-'}</td>
-                            <td class="${getAmt > 0 ? 'text-success fw-bold' : ''}">${getAmt > 0 ? 'BDT ' + getAmt : '-'}</td>
+                            <td class="${provideAmt > 0 ? 'text-provide-dark' : ''}">${provideAmt > 0 ? 'BDT ' + provideAmt : '-'}</td>
+                            <td class="${getAmt > 0 ? 'text-get-dark' : ''}">${getAmt > 0 ? 'BDT ' + getAmt : '-'}</td>
                         </tr>
                     `;
                 });
@@ -575,26 +788,92 @@
             tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>`;
         }
 
-        document.getElementById('rptTotalGive').innerText = `BDT ${totalGive}`;
+        document.getElementById('rptTotalProvide').innerText = `BDT ${totalProvide}`;
         document.getElementById('rptTotalGet').innerText = `BDT ${totalGet}`;
-        const balance = totalGive - totalGet;
-        document.getElementById('rptNetBalance').innerText = `BDT ${balance}`;
+        
+        const balance = totalProvide - totalGet;
+        const rptNetElem = document.getElementById('rptNetBalance');
+        rptNetElem.innerText = `BDT ${balance}`;
+        if (balance !== 0) {
+            rptNetElem.className = 'text-danger fw-bold';
+        } else {
+            rptNetElem.className = 'text-success fw-bold';
+        }
 
         reportModal.show();
+    }
+
+    function openDayReportModal() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('dayReportDate').value = today;
+        renderDayReport();
+        dayReportModal.show();
+    }
+
+    function renderDayReport() {
+        const selectedDate = document.getElementById('dayReportDate').value;
+        const tbody = document.getElementById('dayReportTableBody');
+        tbody.innerHTML = '';
+
+        let dayProvide = 0;
+        let dayGet = 0;
+        let counter = 0;
+
+        const custKeys = Object.keys(customersData);
+
+        custKeys.forEach(key => {
+            const cust = customersData[key];
+            if (cust.transactions) {
+                Object.values(cust.transactions).forEach(t => {
+                    if (t.date === selectedDate) {
+                        counter++;
+                        let isProvide = (t.type === 'give' || t.type === 'provide');
+                        let amt = Number(t.amount);
+
+                        if (isProvide) dayProvide += amt;
+                        if (t.type === 'get') dayGet += amt;
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${counter}</td>
+                                <td><strong>${cust.name}</strong></td>
+                                <td>${isProvide ? '<span class="badge bg-primary">Provide</span>' : '<span class="badge bg-success">Get</span>'}</td>
+                                <td>${t.note || '-'}</td>
+                                <td class="fw-bold">BDT ${amt}</td>
+                            </tr>
+                        `;
+                    }
+                });
+            }
+        });
+
+        if (counter === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">No transactions found for ${selectedDate}.</td></tr>`;
+        }
+
+        document.getElementById('dayTotalProvide').innerText = `BDT ${dayProvide}`;
+        document.getElementById('dayTotalGet').innerText = `BDT ${dayGet}`;
+        
+        const dayNet = dayProvide - dayGet;
+        const dayNetElem = document.getElementById('dayNetBalance');
+        dayNetElem.innerText = `BDT ${dayNet}`;
+        if (dayNet !== 0) {
+            dayNetElem.className = 'text-danger fw-bold';
+        } else {
+            dayNetElem.className = 'text-success fw-bold';
+        }
     }
 
     function openTransModal(custId, custName) {
         document.getElementById('modalCustId').value = custId;
         document.getElementById('transModalTitle').innerText = `${custName} - Add Transaction`;
         
-        // Default current date (YYYY-MM-DD)
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('transDate').value = today;
 
         transModal.show();
     }
 
-    // Save Transaction
     document.getElementById('transForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const custId = document.getElementById('modalCustId').value;
