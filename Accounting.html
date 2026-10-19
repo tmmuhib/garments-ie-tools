@@ -1,928 +1,385 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Ledger</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Page Background: Grey 350 style (#d1d5db) */
-        body { 
-            background-color: #d1d5db; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            color: #1f2937;
-        }
-
-        /* Blue Styled Cards */
-        .card-custom { 
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            border-radius: 12px; 
-            border: none; 
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); 
-            color: #ffffff;
-        }
-
-        .auth-container { max-width: 400px; margin: 60px auto; padding: 0 15px; }
-
-        /* Colorful Letter Effect for 'Welcome to Shop' */
-        .colorful-welcome {
-            display: inline-block;
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-        }
-
-        .colorful-welcome span {
-            display: inline-block;
-            animation: bounceLetter 2s infinite ease-in-out;
-        }
-
-        /* Letter Color Schemes */
-        .c-1 { color: #ff4d4d; text-shadow: 0 0 6px rgba(255, 77, 77, 0.6); animation-delay: 0.0s !important; }
-        .c-2 { color: #ffaf40; text-shadow: 0 0 6px rgba(255, 175, 64, 0.6); animation-delay: 0.1s !important; }
-        .c-3 { color: #fffa65; text-shadow: 0 0 6px rgba(255, 250, 101, 0.6); animation-delay: 0.2s !important; }
-        .c-4 { color: #32ff7e; text-shadow: 0 0 6px rgba(50, 255, 126, 0.6); animation-delay: 0.3s !important; }
-        .c-5 { color: #18dcff; text-shadow: 0 0 6px rgba(24, 220, 255, 0.6); animation-delay: 0.4s !important; }
-        .c-6 { color: #7d5fff; text-shadow: 0 0 6px rgba(125, 95, 255, 0.6); animation-delay: 0.5s !important; }
-        .c-7 { color: #ff6b81; text-shadow: 0 0 6px rgba(255, 107, 129, 0.6); animation-delay: 0.6s !important; }
-
-        @keyframes bounceLetter {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
-        }
-
-        /* Customer Cards */
-        .customer-card {
-            background: #1e40af;
-            border: 1px solid #3b82f6;
-            border-radius: 10px;
-            padding: 12px 14px;
-            margin-bottom: 10px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #ffffff;
-        }
-
-        .customer-click-area {
-            cursor: pointer;
-            user-select: none;
-            -webkit-user-select: none;
-            max-width: 50%;
-        }
-
-        .customer-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
-            margin: 0;
-            text-decoration: none !important;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .col-summary-item {
-            padding: 0 2px;
-        }
-
-        .summary-box {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
-            border-radius: 8px;
-            padding: 8px 4px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        /* Color definitions */
-        .color-get { color: #86efac !important; font-weight: bold; }       
-        .color-provide { color: #93c5fd !important; font-weight: bold; }   
-        .color-net-red { color: #f87171 !important; font-weight: bold; text-shadow: 0 0 6px rgba(248, 113, 113, 0.5); } 
-        .color-net-green { color: #4ade80 !important; font-weight: bold; } 
-
-        .text-get-dark { color: #16a34a !important; font-weight: bold; }
-        .text-provide-dark { color: #2563eb !important; font-weight: bold; }
-
-        /* Excel Table Grid Styling */
-        .excel-table {
-            border-collapse: collapse;
-            width: 100%;
-            background-color: #ffffff;
-            font-size: 13px;
-            color: #1f2937;
-        }
-        .excel-table th, .excel-table td {
-            border: 1px solid #9ca3af !important;
-            padding: 8px 10px;
-            text-align: left;
-        }
-        .excel-table th {
-            background-color: #1e40af;
-            color: #ffffff;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .excel-table tr:nth-child(even) { background-color: #f3f4f6; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Ledger</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+body{background:#d1d5db;font-family:Segoe UI,Tahoma,sans-serif;color:#1f2937}
+.card-custom{background:linear-gradient(135deg,#2563eb,#1d4ed8);border:0;border-radius:12px;color:#fff;box-shadow:0 4px 12px #2563eb40}
+.auth-container{max-width:420px;margin:60px auto;padding:0 15px}
+.customer-card{background:#1e40af;border:1px solid #3b82f6;border-radius:10px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;color:#fff;box-shadow:0 3px 8px #0002}
+.customer-click-area{cursor:pointer;user-select:none;min-width:0;max-width:55%}
+.customer-name{font-size:16px;font-weight:700;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.summary-box{background:#ffffff26;border-radius:8px;padding:8px 4px;border:1px solid #ffffff33;height:100%;display:flex;flex-direction:column;justify-content:center}
+.color-get{color:#86efac!important;font-weight:bold}.color-provide{color:#93c5fd!important;font-weight:bold}
+.excel-table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;color:#1f2937}
+.excel-table th,.excel-table td{border:1px solid #9ca3af!important;padding:8px 10px;text-align:left}
+.excel-table th{background:#1e40af;color:#fff;font-weight:700;text-transform:uppercase}
+.excel-table tr:nth-child(even){background:#f3f4f6}
+.colorful-welcome{font-size:18px;font-weight:800;letter-spacing:.5px}
+.colorful-welcome span{display:inline-block;animation:bounce 2s infinite ease-in-out}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.c1{color:#ff4d4d}.c2{color:#ffaf40}.c3{color:#fffa65}.c4{color:#32ff7e}.c5{color:#18dcff}.c6{color:#7d5fff}.c7{color:#ff6b81}
+@media(max-width:576px){.customer-card{padding:9px;gap:5px}.customer-name{font-size:14px}.customer-click-area{max-width:48%}.customer-card .btn{font-size:11px;padding:5px}.colorful-welcome{font-size:15px}}
+</style>
 </head>
 <body>
-
-<!-- 1. LOGIN SECTION -->
 <div id="authSection" class="container auth-container">
-    <div class="card card-custom p-4">
-        <h3 class="text-center text-white mb-3">Ledger Login</h3>
-        <div id="loginError" class="alert alert-danger py-2 mb-3" style="display: none; font-size: 14px;"></div>
-        
-        <form id="loginForm">
-            <div class="mb-3">
-                <label class="form-label fw-semibold text-white">Email / Phone / Name / ID</label>
-                <input type="text" id="loginIdentifier" class="form-control" placeholder="e.g. sktex@gmail.com or 01644854515" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-semibold text-white">Password</label>
-                <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
-            </div>
-            <button type="submit" id="loginBtn" class="btn btn-warning fw-bold text-dark w-100 py-2">Login</button>
-        </form>
-    </div>
+  <div class="card card-custom p-4">
+    <h3 class="text-center mb-3">Ledger Login</h3>
+    <div id="loginError" class="alert alert-danger py-2" style="display:none"></div>
+    <form id="loginForm">
+      <div class="mb-3"><label class="form-label fw-semibold">Firebase Auth Email</label><input id="loginIdentifier" type="email" autocomplete="username" class="form-control" required placeholder="Enter your email"></div>
+      <div class="mb-3"><label class="form-label fw-semibold">Password</label><input id="loginPassword" type="password" class="form-control" required placeholder="Password"></div>
+      <button id="loginBtn" class="btn btn-warning fw-bold w-100 py-2">Login</button>
+    </form>
+    <small class="mt-3">Sign in using the email and password of your Firebase Authentication account.</small>
+  </div>
 </div>
 
-
-<!-- 2. MAIN DASHBOARD SECTION -->
-<div id="dashboardSection" class="container py-3" style="display: none;">
-    
-    <!-- Topbar: Multi-colored animated "Welcome to Shop" & User Name -->
-    <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded card-custom">
-        <div class="colorful-welcome">
-            <span class="c-1">W</span><span class="c-2">e</span><span class="c-3">l</span><span class="c-4">c</span><span class="c-5">o</span><span class="c-6">m</span><span class="c-7">e</span>
-            <span style="width: 5px;"></span>
-            <span class="c-1">t</span><span class="c-2">o</span>
-            <span style="width: 5px;"></span>
-            <span class="c-3">S</span><span class="c-4">h</span><span class="c-5">o</span><span class="c-6">p</span>
-        </div>
-        <div class="text-white fw-semibold" style="font-size: 14px;">
-            👤 <span id="displayName">User</span>
-        </div>
+<div id="dashboardSection" class="container py-3" style="display:none">
+  <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded card-custom">
+    <div class="colorful-welcome"><span class="c1">W</span><span class="c2">e</span><span class="c3">l</span><span class="c4">c</span><span class="c5">o</span><span class="c6">m</span><span class="c7">e</span> to <span class="c3">S</span><span class="c4">h</span><span class="c5">o</span><span class="c6">p</span></div>
+    <div class="fw-semibold">👤 <span id="displayName">User</span> <button class="btn btn-sm btn-outline-light ms-2" onclick="logout()">Logout</button></div>
+  </div>
+  <div class="card card-custom p-2 mb-3">
+    <div class="row text-center g-1 align-items-center">
+      <div class="col-3"><div class="summary-box"><small>Total Provide</small><strong id="totalProvide" class="color-provide">BDT 0</strong></div></div>
+      <div class="col-3"><div class="summary-box"><small>Total Get</small><strong id="totalGet" class="color-get">BDT 0</strong></div></div>
+      <div class="col-3"><div class="summary-box"><small>Net Balance</small><strong id="netBalance">BDT 0</strong></div></div>
+      <div class="col-3 d-flex flex-column gap-1"><button class="btn btn-warning btn-sm fw-bold" onclick="openCustomerModal()"><i class="fa fa-plus"></i> Customer</button><button class="btn btn-info btn-sm" onclick="openDayReportModal()">Day Report</button></div>
     </div>
-
-    <!-- Overall Summary Card -->
-    <div class="card card-custom p-2 mb-3">
-        <div class="row text-center g-1 align-items-center">
-            <div class="col-3 col-summary-item">
-                <div class="summary-box">
-                    <small class="text-white-50" style="font-size: 10px;">Total Provide</small>
-                    <h6 id="totalProvide" class="color-provide m-0 mt-1" style="font-size: 12px;">BDT 0</h6>
-                </div>
-            </div>
-            <div class="col-3 col-summary-item">
-                <div class="summary-box">
-                    <small class="text-white-50" style="font-size: 10px;">Total Get</small>
-                    <h6 id="totalGet" class="color-get m-0 mt-1" style="font-size: 12px;">BDT 0</h6>
-                </div>
-            </div>
-            <div class="col-3 col-summary-item">
-                <div class="summary-box">
-                    <small class="text-white-50" style="font-size: 10px;">Net Balance</small>
-                    <h6 id="netBalance" class="color-net-red m-0 mt-1" style="font-size: 12px;">BDT 0</h6>
-                </div>
-            </div>
-            <div class="col-3 col-summary-item">
-                <div class="d-flex flex-column gap-1">
-                    <button class="btn btn-warning btn-sm fw-bold w-100 py-1" onclick="openCustomerModal()" style="font-size: 13px;" title="Add Customer">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                    <button class="btn btn-info btn-sm fw-bold text-dark w-100 py-1" onclick="openDayReportModal()" style="font-size: 10px; line-height: 1.1;">
-                        Day Report
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Customer Card List Section -->
-    <div class="row">
-        <div class="col-12 px-0">
-            <div class="card card-custom p-3">
-                <div id="customerCardContainer">
-                    <!-- Dynamically loaded customer cards -->
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
+  <div class="card card-custom p-3"><div id="customerCardContainer"><div class="text-center py-3">Loading customers…</div></div></div>
+  <div id="appError" class="alert alert-danger mt-3" style="display:none"></div>
 </div>
 
+<!-- Add customer -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header bg-primary text-white"><h5 class="modal-title">+ Add New Customer</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+<div class="modal-body"><form id="addCustomerForm">
+<div class="mb-3"><label class="form-label">Customer Name *</label><input id="custName" class="form-control" required></div>
+<div class="mb-3"><label class="form-label">Phone Number</label><div class="input-group"><select id="custCountryCode" class="form-select" style="max-width:120px"><option value="880" selected>🇧🇩 +880</option><option value="91">🇮🇳 +91</option><option value="966">🇸🇦 +966</option><option value="971">🇦🇪 +971</option><option value="1">🇺🇸 +1</option><option value="44">🇬🇧 +44</option><option value="60">🇲🇾 +60</option></select><input id="custPhone" class="form-control" placeholder="Phone number"></div></div>
+<div class="mb-3"><label class="form-label">Address</label><input id="custAddress" class="form-control"></div><button class="btn btn-primary w-100">Save Customer</button>
+</form></div></div></div></div>
 
-<!-- 3. ADD CUSTOMER MODAL -->
-<div class="modal fade" id="addCustomerModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fs-6">+ Add New Customer</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addCustomerForm">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Customer Name *</label>
-                        <input type="text" id="custName" class="form-control" placeholder="Enter name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Phone Number</label>
-                        <div class="input-group">
-                            <select id="custCountryCode" class="form-select" style="max-width: 120px;">
-                                <option value="880" selected>🇧🇩 +880</option>
-                                <option value="91">🇮🇳 +91</option>
-                                <option value="966">🇸🇦 +966</option>
-                                <option value="971">🇦🇪 +971</option>
-                                <option value="1">🇺🇸 +1</option>
-                                <option value="44">🇬🇧 +44</option>
-                                <option value="60">🇲🇾 +60</option>
-                            </select>
-                            <input type="text" id="custPhone" class="form-control" placeholder="e.g. 1340038111">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Address</label>
-                        <input type="text" id="custAddress" class="form-control" placeholder="Enter address">
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Save Customer</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Edit customer -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header bg-secondary text-white"><h5 class="modal-title">✏️ Edit Customer Details</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+<div class="modal-body"><form id="editCustomerForm"><input type="hidden" id="editCustId">
+<div class="mb-3"><label class="form-label">Customer Name *</label><input id="editCustName" class="form-control" required></div>
+<div class="mb-3"><label class="form-label">Phone Number</label><div class="input-group"><select id="editCustCountryCode" class="form-select" style="max-width:120px"><option value="880">🇧🇩 +880</option><option value="91">🇮🇳 +91</option><option value="966">🇸🇦 +966</option><option value="971">🇦🇪 +971</option><option value="1">🇺🇸 +1</option><option value="44">🇬🇧 +44</option><option value="60">🇲🇾 +60</option></select><input id="editCustPhone" class="form-control"></div></div>
+<div class="mb-3"><label class="form-label">Address</label><input id="editCustAddress" class="form-control"></div><button class="btn btn-secondary w-100">Update Customer</button>
+</form></div></div></div></div>
 
+<!-- Transaction -->
+<div class="modal fade" id="transModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header bg-primary text-white"><h5 class="modal-title" id="transModalTitle">Add Transaction</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+<div class="modal-body"><form id="transForm"><input type="hidden" id="modalCustId">
+<div class="mb-3"><label class="form-label">Transaction Date</label><input type="date" id="transDate" class="form-control" required></div>
+<div class="mb-3"><label class="form-label">Transaction Type</label><select id="transType" class="form-select" required><option value="provide">Provide (Sale Due)</option><option value="get">Get (Receive Cash / Payment)</option></select></div>
+<div class="mb-3"><label class="form-label">Amount (BDT)</label><input type="number" id="transAmount" class="form-control" min="1" step="0.01" required></div>
+<div class="mb-3"><label class="form-label">Note / Details (Optional)</label><input id="transNote" class="form-control"></div><button class="btn btn-success w-100">Save Entry</button>
+</form></div></div></div></div>
 
-<!-- 4. EDIT CUSTOMER MODAL (Triggered on Long Press) -->
-<div class="modal fade" id="editCustomerModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title fs-6">✏️ Edit Customer Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editCustomerForm">
-                    <input type="hidden" id="editCustId">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Customer Name *</label>
-                        <input type="text" id="editCustName" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Phone Number</label>
-                        <div class="input-group">
-                            <select id="editCustCountryCode" class="form-select" style="max-width: 120px;">
-                                <option value="880">🇧🇩 +880</option>
-                                <option value="91">🇮🇳 +91</option>
-                                <option value="966">🇸🇦 +966</option>
-                                <option value="971">🇦🇪 +971</option>
-                                <option value="1">🇺🇸 +1</option>
-                                <option value="44">🇬🇧 +44</option>
-                                <option value="60">🇲🇾 +60</option>
-                            </select>
-                            <input type="text" id="editCustPhone" class="form-control">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Address</label>
-                        <input type="text" id="editCustAddress" class="form-control">
-                    </div>
-                    <button type="submit" class="btn btn-secondary w-100">Update Customer</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Customer report -->
+<div class="modal fade" id="reportModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+<div class="modal-header bg-primary text-white"><h5 class="modal-title" id="reportModalTitle">📊 Customer Account Statement</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+<div class="modal-body p-3"><div class="mb-3 p-2 bg-light rounded border"><p class="m-0"><strong>Phone:</strong> <span id="rptCustPhone">N/A</span></p><p class="m-0"><strong>Address:</strong> <span id="rptCustAddress">N/A</span></p></div>
+<div class="card p-3 mb-3 bg-light border-0"><div class="row text-center"><div class="col-4"><small>Total Provide</small><br><strong id="rptTotalProvide" class="text-primary">BDT 0</strong></div><div class="col-4"><small>Total Get</small><br><strong id="rptTotalGet" class="text-success">BDT 0</strong></div><div class="col-4"><small>Net Balance</small><br><strong id="rptNetBalance">BDT 0</strong></div></div></div>
+<div class="table-responsive"><table class="excel-table"><thead><tr><th>#</th><th>Date</th><th>Note / Description</th><th>Provide (BDT)</th><th>Get (BDT)</th></tr></thead><tbody id="reportTableBody"></tbody></table></div></div>
+<div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button></div></div></div></div>
 
+<!-- Day report -->
+<div class="modal fade" id="dayReportModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+<div class="modal-header bg-primary text-white"><h5 class="modal-title">📅 Day Ledger Report</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+<div class="modal-body p-3"><div class="mb-3"><label class="form-label fw-bold">Select Date:</label><input type="date" id="dayReportDate" class="form-control"></div>
+<div class="card p-3 mb-3 bg-light border-0"><div class="row text-center"><div class="col-4"><small>Day Provide</small><br><strong id="dayTotalProvide" class="text-primary">BDT 0</strong></div><div class="col-4"><small>Day Get</small><br><strong id="dayTotalGet" class="text-success">BDT 0</strong></div><div class="col-4"><small>Day Net</small><br><strong id="dayNetBalance">BDT 0</strong></div></div></div>
+<div class="table-responsive"><table class="excel-table"><thead><tr><th>#</th><th>Customer Name</th><th>Type</th><th>Note / Details</th><th>Amount (BDT)</th></tr></thead><tbody id="dayReportTableBody"></tbody></table></div></div>
+<div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button></div></div></div></div>
 
-<!-- 5. TRANSACTION ENTRY MODAL -->
-<div class="modal fade" id="transModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fs-6" id="transModalTitle">Add Transaction</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="transForm">
-                    <input type="hidden" id="modalCustId">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Transaction Date</label>
-                        <input type="date" id="transDate" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Transaction Type</label>
-                        <select id="transType" class="form-select" required>
-                            <option value="provide">Provide (Sale Due)</option>
-                            <option value="get">Get (Receive Cash / Payment)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Amount (BDT)</label>
-                        <input type="number" id="transAmount" class="form-control" placeholder="0" required min="1">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Note / Details (Optional)</label>
-                        <input type="text" id="transNote" class="form-control" placeholder="e.g. Item purchase">
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Save Entry</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- 6. EXCEL STATEMENT REPORT MODAL -->
-<div class="modal fade" id="reportModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fs-6 fw-bold" id="reportModalTitle">📊 Customer Account Statement</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-3">
-                <div class="mb-3 p-2 bg-light rounded border">
-                    <p class="m-0"><strong>Phone:</strong> <span id="rptCustPhone">N/A</span></p>
-                    <p class="m-0"><strong>Address:</strong> <span id="rptCustAddress">N/A</span></p>
-                </div>
-
-                <div class="card p-3 mb-3 bg-light border-0">
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <small class="text-muted d-block">Total Provide</small>
-                            <strong id="rptTotalProvide" class="text-provide-dark">BDT 0</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Total Get</small>
-                            <strong id="rptTotalGet" class="text-get-dark">BDT 0</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Net Balance</small>
-                            <strong id="rptNetBalance" class="text-danger">BDT 0</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="excel-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Date</th>
-                                <th>Note / Description</th>
-                                <th>Provide (BDT)</th>
-                                <th>Get (BDT)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportTableBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- 7. DAY REPORT MODAL -->
-<div class="modal fade" id="dayReportModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fs-6 fw-bold">📅 Day Ledger Report</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-3">
-                <div class="row mb-3 align-items-center bg-light p-2 rounded mx-0">
-                    <div class="col-md-4 col-12 mb-2 mb-md-0">
-                        <label class="form-label fw-bold mb-0">Select Date:</label>
-                    </div>
-                    <div class="col-md-8 col-12">
-                        <input type="date" id="dayReportDate" class="form-control" onchange="renderDayReport()">
-                    </div>
-                </div>
-
-                <div class="card p-3 mb-3 bg-light border-0">
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <small class="text-muted d-block">Day Provide</small>
-                            <strong id="dayTotalProvide" class="text-provide-dark">BDT 0</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Day Get</small>
-                            <strong id="dayTotalGet" class="text-get-dark">BDT 0</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Day Net</small>
-                            <strong id="dayNetBalance" class="text-danger">BDT 0</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="excel-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Customer Name</th>
-                                <th>Type</th>
-                                <th>Note / Details</th>
-                                <th>Amount (BDT)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dayReportTableBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- JS Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
-    const FIREBASE_URL = "https://tma2z-4d472-default-rtdb.firebaseio.com//users";
-    let currentUserKey = "";
-    let currentUserName = "";
-    let customersData = {};
+'use strict';
 
-    const transModal = new bootstrap.Modal(document.getElementById('transModal'));
-    const customerModal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
-    const editCustomerModal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
-    const reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
-    const dayReportModal = new bootstrap.Modal(document.getElementById('dayReportModal'));
+/* Firebase setup: copy the Web App config from Firebase Console > Project settings > Your apps.
+   Keep your existing Realtime Database Rules unchanged. */
+const firebaseConfig = {
+  apiKey: "PASTE_YOUR_FIREBASE_WEB_API_KEY_HERE",
+  authDomain: "tma2z-4d472.firebaseapp.com",
+  databaseURL: "https://tma2z-4d472-default-rtdb.firebaseio.com",
+  projectId: "tma2z-4d472",
+  appId: "PASTE_YOUR_FIREBASE_WEB_APP_ID_HERE"
+};
 
-    window.onload = function() {
-        const savedKey = localStorage.getItem('tally_user_key');
-        const savedName = localStorage.getItem('tally_user_name');
-        if (savedKey) {
-            currentUserKey = savedKey;
-            currentUserName = savedName || savedKey;
-            showDashboard();
-        }
-    };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const FIREBASE_URL = "https://tma2z-4d472-default-rtdb.firebaseio.com/users";
+let currentUserKey = "";
+let currentUserName = "";
+let customersData = {};
 
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const identifier = document.getElementById('loginIdentifier').value.trim().toLowerCase();
-        const password = document.getElementById('loginPassword').value.trim();
-        const errorBox = document.getElementById('loginError');
-        const loginBtn = document.getElementById('loginBtn');
+const modal = id => bootstrap.Modal.getOrCreateInstance(document.getElementById(id));
+const money = n => "BDT " + Number(n || 0).toLocaleString("en-BD", {maximumFractionDigits:2});
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+};
+const el = id => document.getElementById(id);
 
-        errorBox.style.display = 'none';
-        loginBtn.innerText = 'Checking...';
-        loginBtn.disabled = true;
+async function dbRequest(path, options = {}) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Please sign in first.");
+  const token = await user.getIdToken();
+  const cleanPath = String(path || "").replace(/^\/+|\/+$/g, "");
+  const url = `${FIREBASE_URL}${cleanPath ? "/" + cleanPath : ""}.json?auth=${encodeURIComponent(token)}`;
+  const response = await fetch(url, {
+    ...options,
+    headers: {"Content-Type":"application/json", ...(options.headers || {})}
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Firebase request failed (${response.status}). ${detail}`);
+  }
+  return response.status === 204 ? null : response.json();
+}
 
-        try {
-            const response = await fetch(`${FIREBASE_URL}.json`);
-            const users = await response.json();
+function showError(message) {
+  const box = el("appError");
+  box.textContent = message;
+  box.style.display = "block";
+}
+function clearError() { el("appError").style.display = "none"; }
 
-            if (!users) throw new Error("No user found.");
+el("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const email = el("loginIdentifier").value.trim();
+  const password = el("loginPassword").value;
+  const errorBox = el("loginError");
+  const button = el("loginBtn");
+  errorBox.style.display = "none";
+  button.disabled = true;
+  button.textContent = "Signing in…";
+  try {
+    if (firebaseConfig.apiKey.startsWith("PASTE_") || firebaseConfig.appId.startsWith("PASTE_")) {
+      throw new Error("First add your Firebase Web App apiKey and appId in firebaseConfig at the top of the script.");
+    }
+    const credential = await auth.signInWithEmailAndPassword(email, password);
+    currentUserKey = credential.user.uid;
+    // Rules allow a regular user to read only /users/{auth.uid}; the database key must match this UID.
+    const profile = await dbRequest(encodeURIComponent(currentUserKey));
+    if (!profile) throw new Error("No /users/" + currentUserKey + " profile exists. The users record key must match this Firebase Authentication UID.");
+    currentUserName = profile.name || profile.userName || profile.username || profile.email || credential.user.email || currentUserKey;
+    showDashboard();
+  } catch (error) {
+    const code = error && error.code ? error.code : "";
+    errorBox.textContent = code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found"
+      ? "Email or password is incorrect."
+      : error.message || "Login failed.";
+    errorBox.style.display = "block";
+  } finally {
+    button.disabled = false;
+    button.textContent = "Login";
+  }
+});
 
-            let foundKey = null;
-            let foundUserData = null;
+function showDashboard() {
+  el("authSection").style.display = "none";
+  el("dashboardSection").style.display = "block";
+  el("displayName").textContent = currentUserName;
+  fetchCustomers();
+}
+async function logout() {
+  try { await auth.signOut(); } catch (error) { console.error("Sign out failed", error); }
+  currentUserKey = ""; currentUserName = ""; customersData = {};
+  el("dashboardSection").style.display = "none";
+  el("authSection").style.display = "block";
+  el("loginPassword").value = "";
+}
 
-            for (let key in users) {
-                let user = users[key];
-                let uId = (user.id || key).toLowerCase();
-                let uEmail = (user.email || "").toLowerCase();
-                let uPhone = (user.phone || "").toLowerCase();
-                let uName = (user.name || "").toLowerCase();
+function customerPath(id = "") {
+  return `${encodeURIComponent(currentUserKey)}/tally_customers${id ? "/" + encodeURIComponent(id) : ""}`;
+}
+function openCustomerModal() { el("addCustomerForm").reset(); modal("addCustomerModal").show(); }
 
-                if (uId === identifier || uEmail === identifier || uPhone === identifier || uName === identifier) {
-                    foundKey = key;
-                    foundUserData = user;
-                    break;
-                }
-            }
+el("addCustomerForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const name = el("custName").value.trim();
+  const countryCode = el("custCountryCode").value;
+  const rawPhone = el("custPhone").value.trim().replace(/\D/g,"").replace(/^0+/,"");
+  const address = el("custAddress").value.trim();
+  if (!name) return;
+  try {
+    await dbRequest(customerPath(), {method:"POST", body:JSON.stringify({
+      name, countryCode, phone:rawPhone ? countryCode + rawPhone : "", rawPhone, address,
+      createdAt:new Date().toISOString(), transactions:{}
+    })});
+    modal("addCustomerModal").hide();
+    await fetchCustomers();
+  } catch (error) { alert("Could not save customer: " + error.message); }
+});
 
-            if (foundKey && foundUserData) {
-                if (foundUserData.passwordHash === password) {
-                    currentUserKey = foundKey;
-                    currentUserName = foundUserData.name || foundKey;
-                    
-                    localStorage.setItem('tally_user_key', currentUserKey);
-                    localStorage.setItem('tally_user_name', currentUserName);
-                    
-                    showDashboard();
-                } else {
-                    errorBox.innerText = "Invalid Password!";
-                    errorBox.style.display = 'block';
-                }
-            } else {
-                errorBox.innerText = "Account not found with this credential!";
-                errorBox.style.display = 'block';
-            }
-        } catch (err) {
-            console.error(err);
-            errorBox.innerText = "Connection error!";
-            errorBox.style.display = 'block';
-        } finally {
-            loginBtn.innerText = 'Login';
-            loginBtn.disabled = false;
-        }
+function openEditCustomerModal(id) {
+  const cust = customersData[id]; if (!cust) return;
+  el("editCustId").value = id;
+  el("editCustName").value = cust.name || "";
+  el("editCustCountryCode").value = cust.countryCode || "880";
+  el("editCustPhone").value = cust.rawPhone || "";
+  el("editCustAddress").value = cust.address || "";
+  modal("editCustomerModal").show();
+}
+el("editCustomerForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const id = el("editCustId").value;
+  const name = el("editCustName").value.trim();
+  const countryCode = el("editCustCountryCode").value;
+  const rawPhone = el("editCustPhone").value.trim().replace(/\D/g,"").replace(/^0+/,"");
+  const address = el("editCustAddress").value.trim();
+  if (!name) return;
+  try {
+    await dbRequest(customerPath(id), {method:"PATCH", body:JSON.stringify({
+      name, countryCode, phone:rawPhone ? countryCode + rawPhone : "", rawPhone, address
+    })});
+    modal("editCustomerModal").hide();
+    await fetchCustomers();
+  } catch (error) { alert("Could not update customer: " + error.message); }
+});
+
+async function fetchCustomers() {
+  clearError();
+  try {
+    const data = await dbRequest(customerPath());
+    customersData = data && typeof data === "object" ? data : {};
+    renderCustomerCards();
+  } catch (error) {
+    showError("Could not load customers. Check Firebase Rules / Authentication. " + error.message);
+    el("customerCardContainer").innerHTML = '<div class="text-center py-3">Unable to load customers.</div>';
+  }
+}
+function totals(cust) {
+  let provide = 0, get = 0;
+  Object.values(cust.transactions || {}).forEach(t => {
+    const amount = Number(t.amount) || 0;
+    if (t.type === "give" || t.type === "provide") provide += amount;
+    else if (t.type === "get") get += amount;
+  });
+  return {provide, get, balance:provide-get};
+}
+function renderCustomerCards() {
+  const container = el("customerCardContainer");
+  container.replaceChildren();
+  let grandProvide = 0, grandGet = 0;
+  const entries = Object.entries(customersData);
+  if (!entries.length) {
+    container.innerHTML = '<div class="text-center text-white-50 py-3">No customers added yet.</div>';
+  }
+  for (const [id, cust] of entries) {
+    const t = totals(cust); grandProvide += t.provide; grandGet += t.get;
+    const card = document.createElement("div"); card.className = "customer-card";
+    const clickArea = document.createElement("div");
+    clickArea.className = "customer-click-area";
+    clickArea.title = "Click for statement; long-press to edit";
+    const name = document.createElement("p"); name.className = "customer-name"; name.textContent = cust.name || "Unnamed customer";
+    const balance = document.createElement("span");
+    balance.className = "badge ms-1 " + (t.balance > 0 ? "bg-danger" : t.balance < 0 ? "bg-success" : "bg-secondary");
+    balance.textContent = t.balance > 0 ? `Due ${money(t.balance)}` : t.balance < 0 ? `Advance ${money(Math.abs(t.balance))}` : "Due 0";
+    clickArea.append(name, balance);
+    let timer, longPressed = false;
+    const start = () => { longPressed = false; timer = setTimeout(() => { longPressed = true; openEditCustomerModal(id); }, 600); };
+    const end = () => clearTimeout(timer);
+    clickArea.addEventListener("mousedown", start); clickArea.addEventListener("touchstart", start, {passive:true});
+    ["mouseup","mouseleave","touchend","touchcancel"].forEach(ev => clickArea.addEventListener(ev,end));
+    clickArea.addEventListener("click", () => { if (!longPressed) openReportModal(id); });
+    const actions = document.createElement("div"); actions.className = "d-flex align-items-center flex-shrink-0";
+    const phone = String(cust.phone || "").replace(/\D/g,"");
+    const wa = document.createElement("button"); wa.className = "btn btn-sm btn-success text-white me-1"; wa.title = "Open WhatsApp";
+    wa.innerHTML = '<i class="fa-brands fa-whatsapp"></i>'; wa.disabled = !phone;
+    wa.addEventListener("click", () => {
+      const msg = `Welcome to ${currentUserName}'s Shop. Your total due balance is ${money(t.balance)}. Please check your account. Thank you!`;
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
     });
-
-    function showDashboard() {
-        document.getElementById('authSection').style.display = 'none';
-        document.getElementById('dashboardSection').style.display = 'block';
-        document.getElementById('displayName').innerText = currentUserName;
-        fetchCustomers();
-    }
-
-    function openCustomerModal() {
-        document.getElementById('addCustomerForm').reset();
-        customerModal.show();
-    }
-
-    async function fetchCustomers() {
-        try {
-            const res = await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers.json`);
-            const data = await res.json();
-            customersData = data || {};
-            renderCustomerCards();
-        } catch (err) {
-            console.error("Data Load Error:", err);
-        }
-    }
-
-    document.getElementById('addCustomerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('custName').value.trim();
-        const countryCode = document.getElementById('custCountryCode').value;
-        let rawPhone = document.getElementById('custPhone').value.trim();
-        const address = document.getElementById('custAddress').value.trim();
-
-        if (!name) return;
-
-        rawPhone = rawPhone.replace(/^0+/, '');
-        const fullPhone = rawPhone ? (countryCode + rawPhone) : '';
-
-        const newCust = {
-            name: name,
-            countryCode: countryCode,
-            phone: fullPhone,
-            rawPhone: rawPhone,
-            address: address,
-            createdAt: new Date().toISOString(),
-            transactions: {}
-        };
-
-        await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers.json`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newCust)
-        });
-
-        document.getElementById('addCustomerForm').reset();
-        customerModal.hide();
-        fetchCustomers();
+    const sms = document.createElement("a"); sms.className = "btn btn-sm btn-info text-dark me-1"; sms.title = "Send SMS";
+    sms.innerHTML = '<i class="fa-solid fa-comment-sms"></i>';
+    sms.href = phone ? `sms:+${phone}?body=${encodeURIComponent(`Welcome to ${currentUserName}'s Shop. Your due balance is ${money(t.balance)}.`)}` : "#";
+    if (!phone) sms.addEventListener("click", e => e.preventDefault());
+    const entry = document.createElement("button"); entry.className = "btn btn-sm btn-warning fw-bold text-dark"; entry.textContent = "+ Entry";
+    entry.addEventListener("click", () => openTransModal(id, cust.name || "Customer"));
+    actions.append(wa,sms,entry); card.append(clickArea,actions); container.append(card);
+  }
+  el("totalProvide").textContent = money(grandProvide);
+  el("totalGet").textContent = money(grandGet);
+  el("netBalance").textContent = money(grandProvide-grandGet);
+  el("netBalance").className = (grandProvide-grandGet) === 0 ? "text-success" : "text-danger";
+}
+function openReportModal(id) {
+  const cust = customersData[id]; if (!cust) return;
+  el("reportModalTitle").textContent = `📊 Statement: ${cust.name || "Customer"}`;
+  el("rptCustPhone").textContent = cust.phone ? "+"+cust.phone : "No phone number provided";
+  el("rptCustAddress").textContent = cust.address || "No address provided";
+  const tbody = el("reportTableBody"); tbody.replaceChildren();
+  let provide = 0, get = 0;
+  const transactions = Object.values(cust.transactions || {}).sort((a,b) => String(a.date||"").localeCompare(String(b.date||"")));
+  if (!transactions.length) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>';
+  transactions.forEach((t,i) => {
+    const p = t.type === "provide" || t.type === "give" ? Number(t.amount)||0 : 0;
+    const g = t.type === "get" ? Number(t.amount)||0 : 0; provide += p; get += g;
+    const tr = document.createElement("tr");
+    [i+1,t.date||"N/A",t.note||"-",p ? money(p):"-",g ? money(g):"-"].forEach(value => {const td=document.createElement("td");td.textContent=value;tr.append(td);});
+    tbody.append(tr);
+  });
+  el("rptTotalProvide").textContent = money(provide);
+  el("rptTotalGet").textContent = money(get);
+  el("rptNetBalance").textContent = money(provide-get);
+  el("rptNetBalance").className = provide-get === 0 ? "text-success fw-bold" : "text-danger fw-bold";
+  modal("reportModal").show();
+}
+function openTransModal(id, name) {
+  el("transForm").reset(); el("modalCustId").value = id;
+  el("transModalTitle").textContent = `${name} - Add Transaction`;
+  el("transDate").value = today(); modal("transModal").show();
+}
+el("transForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const id = el("modalCustId").value;
+  const transaction = {
+    type:el("transType").value, amount:Number(el("transAmount").value),
+    note:el("transNote").value.trim(), date:el("transDate").value
+  };
+  try {
+    await dbRequest(customerPath(id)+"/transactions", {method:"POST",body:JSON.stringify(transaction)});
+    modal("transModal").hide(); await fetchCustomers();
+  } catch (error) { alert("Could not save transaction: " + error.message); }
+});
+function openDayReportModal() {
+  el("dayReportDate").value = today(); renderDayReport(); modal("dayReportModal").show();
+}
+el("dayReportDate").addEventListener("change", renderDayReport);
+function renderDayReport() {
+  const selected = el("dayReportDate").value;
+  const tbody = el("dayReportTableBody"); tbody.replaceChildren();
+  let provide=0,get=0,count=0;
+  Object.values(customersData).forEach(cust => {
+    Object.values(cust.transactions || {}).forEach(t => {
+      if (t.date !== selected) return;
+      const amount = Number(t.amount)||0, isProvide = t.type === "provide" || t.type === "give";
+      if (isProvide) provide += amount; else if (t.type === "get") get += amount;
+      count++;
+      const tr = document.createElement("tr");
+      [count,cust.name||"Customer",isProvide?"Provide":"Get",t.note||"-",money(amount)].forEach(value=>{const td=document.createElement("td");td.textContent=value;tr.append(td);});
+      tbody.append(tr);
     });
-
-    function openEditCustomerModal(custId) {
-        const cust = customersData[custId];
-        if (!cust) return;
-
-        document.getElementById('editCustId').value = custId;
-        document.getElementById('editCustName').value = cust.name || '';
-        document.getElementById('editCustCountryCode').value = cust.countryCode || '880';
-        document.getElementById('editCustPhone').value = cust.rawPhone || (cust.phone ? cust.phone.replace(/^(880|91|966|971|1|44|60)/, '') : '');
-        document.getElementById('editCustAddress').value = cust.address || '';
-
-        editCustomerModal.show();
-    }
-
-    document.getElementById('editCustomerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const custId = document.getElementById('editCustId').value;
-        const name = document.getElementById('editCustName').value.trim();
-        const countryCode = document.getElementById('editCustCountryCode').value;
-        let rawPhone = document.getElementById('editCustPhone').value.trim();
-        const address = document.getElementById('editCustAddress').value.trim();
-
-        if (!name) return;
-
-        rawPhone = rawPhone.replace(/^0+/, '');
-        const fullPhone = rawPhone ? (countryCode + rawPhone) : '';
-
-        const updatedData = {
-            name: name,
-            countryCode: countryCode,
-            phone: fullPhone,
-            rawPhone: rawPhone,
-            address: address
-        };
-
-        await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers/${custId}.json`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedData)
-        });
-
-        editCustomerModal.hide();
-        fetchCustomers();
-    });
-
-    let pressTimer = null;
-    let isLongPress = false;
-
-    function handlePressStart(custId) {
-        isLongPress = false;
-        pressTimer = setTimeout(() => {
-            isLongPress = true;
-            openEditCustomerModal(custId);
-        }, 500);
-    }
-
-    function handlePressEnd() {
-        clearTimeout(pressTimer);
-    }
-
-    function handleAreaClick(custId) {
-        if (!isLongPress) {
-            openReportModal(custId);
-        }
-    }
-
-    function openWhatsApp(cleanPhone, msgText) {
-        if (!cleanPhone) return;
-        const encodedMsg = encodeURIComponent(msgText);
-        const intentUrl = `intent://send?phone=${cleanPhone}&text=${encodedMsg}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
-        const whatsappSchemeUrl = `whatsapp://send?phone=${cleanPhone}&text=${encodedMsg}`;
-        const webUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
-
-        try {
-            window.location.href = intentUrl;
-        } catch (e) {
-            window.location.href = whatsappSchemeUrl;
-        }
-
-        setTimeout(() => {
-            window.location.href = webUrl;
-        }, 1200);
-    }
-
-    function renderCustomerCards() {
-        const container = document.getElementById('customerCardContainer');
-        container.innerHTML = '';
-
-        let grandTotalProvide = 0;
-        let grandTotalGet = 0;
-
-        const keys = Object.keys(customersData);
-        if (keys.length === 0) {
-            container.innerHTML = '<div class="text-center text-white-50 py-3">No customers added yet.</div>';
-            return;
-        }
-
-        keys.forEach(key => {
-            const cust = customersData[key];
-            let totalProvide = 0;
-            let totalGet = 0;
-
-            if (cust.transactions) {
-                Object.values(cust.transactions).forEach(t => {
-                    if (t.type === 'give' || t.type === 'provide') totalProvide += Number(t.amount);
-                    if (t.type === 'get') totalGet += Number(t.amount);
-                });
-            }
-
-            grandTotalProvide += totalProvide;
-            grandTotalGet += totalGet;
-
-            const balance = totalProvide - totalGet;
-            let balanceText = '';
-            
-            if (balance > 0) {
-                balanceText = `<span class="badge bg-danger ms-2">due ${balance}</span>`;
-            } else if (balance < 0) {
-                balanceText = `<span class="badge bg-success ms-2">advance ${Math.abs(balance)}</span>`;
-            } else {
-                balanceText = `<span class="badge bg-secondary ms-2">due 0</span>`;
-            }
-
-            let cleanPhone = cust.phone ? cust.phone.replace(/[^0-9]/g, '') : '';
-            
-            // Shop Name & Due Amount Bold formatting
-            let msgText = `Welcome to *Shop* (${currentUserName}), your total due balance is *BDT ${balance}*. Please clear this amount at your earliest convenience. Thank you!`;
-            let waMsg = encodeURIComponent(msgText);
-
-            let smsMsgText = `Welcome to Shop (${currentUserName}), your total due balance is BDT ${balance}. Please clear this amount at your earliest convenience. Thank you!`;
-            let smsLink = cleanPhone ? `sms:+${cleanPhone}?body=${encodeURIComponent(smsMsgText)}` : `#`;
-
-            let waButton = cleanPhone ? 
-                `<button class="btn btn-sm btn-success text-white me-1" onclick="openWhatsApp('${cleanPhone}', \`${msgText}\`)" title="Open WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>` :
-                `<button class="btn btn-sm btn-secondary text-white me-1" disabled><i class="fa-brands fa-whatsapp"></i></button>`;
-
-            let smsButton = cleanPhone ? 
-                `<a href="${smsLink}" class="btn btn-sm btn-info text-dark me-1" title="Send Native SIM SMS"><i class="fa-solid fa-comment-sms"></i></a>` :
-                `<button class="btn btn-sm btn-secondary text-white me-1" disabled><i class="fa-solid fa-comment-sms"></i></button>`;
-
-            container.innerHTML += `
-                <div class="customer-card">
-                    <div class="customer-click-area d-flex align-items-center" 
-                         onmousedown="handlePressStart('${key}')" 
-                         onmouseup="handlePressEnd()" 
-                         onmouseleave="handlePressEnd()"
-                         ontouchstart="handlePressStart('${key}')" 
-                         ontouchend="handlePressEnd()"
-                         onclick="handleAreaClick('${key}')">
-                        <p class="customer-name" title="Click for report | Hold to edit">${cust.name}</p>
-                        ${balanceText}
-                    </div>
-                    <div class="d-flex align-items-center">
-                        ${waButton}
-                        ${smsButton}
-                        <button class="btn btn-sm btn-warning fw-bold text-dark" onclick="openTransModal('${key}', '${cust.name}')">+ Entry</button>
-                    </div>
-                </div>
-            `;
-        });
-
-        document.getElementById('totalProvide').innerText = `BDT ${grandTotalProvide}`;
-        document.getElementById('totalGet').innerText = `BDT ${grandTotalGet}`;
-        
-        const net = grandTotalProvide - grandTotalGet;
-        const netElem = document.getElementById('netBalance');
-        netElem.innerText = `BDT ${net}`;
-        
-        if (net !== 0) {
-            netElem.className = 'color-net-red m-0 mt-1';
-        } else {
-            netElem.className = 'color-net-green m-0 mt-1';
-        }
-    }
-
-    function openReportModal(custId) {
-        const cust = customersData[custId];
-        if (!cust) return;
-
-        document.getElementById('reportModalTitle').innerText = `📊 Statement: ${cust.name}`;
-        document.getElementById('rptCustPhone').innerText = cust.phone ? '+' + cust.phone : 'No phone number provided';
-        document.getElementById('rptCustAddress').innerText = cust.address || 'No address provided';
-
-        const tbody = document.getElementById('reportTableBody');
-        tbody.innerHTML = '';
-
-        let totalProvide = 0;
-        let totalGet = 0;
-
-        if (cust.transactions) {
-            const transList = Object.values(cust.transactions);
-            
-            if (transList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>`;
-            } else {
-                transList.forEach((t, index) => {
-                    let provideAmt = (t.type === 'give' || t.type === 'provide') ? Number(t.amount) : 0;
-                    let getAmt = t.type === 'get' ? Number(t.amount) : 0;
-
-                    totalProvide += provideAmt;
-                    totalGet += getAmt;
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${t.date || 'N/A'}</td>
-                            <td>${t.note || '-'}</td>
-                            <td class="${provideAmt > 0 ? 'text-provide-dark' : ''}">${provideAmt > 0 ? 'BDT ' + provideAmt : '-'}</td>
-                            <td class="${getAmt > 0 ? 'text-get-dark' : ''}">${getAmt > 0 ? 'BDT ' + getAmt : '-'}</td>
-                        </tr>
-                    `;
-                });
-            }
-        } else {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>`;
-        }
-
-        document.getElementById('rptTotalProvide').innerText = `BDT ${totalProvide}`;
-        document.getElementById('rptTotalGet').innerText = `BDT ${totalGet}`;
-        
-        const balance = totalProvide - totalGet;
-        const rptNetElem = document.getElementById('rptNetBalance');
-        rptNetElem.innerText = `BDT ${balance}`;
-        if (balance !== 0) {
-            rptNetElem.className = 'text-danger fw-bold';
-        } else {
-            rptNetElem.className = 'text-success fw-bold';
-        }
-
-        reportModal.show();
-    }
-
-    function openDayReportModal() {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('dayReportDate').value = today;
-        renderDayReport();
-        dayReportModal.show();
-    }
-
-    function renderDayReport() {
-        const selectedDate = document.getElementById('dayReportDate').value;
-        const tbody = document.getElementById('dayReportTableBody');
-        tbody.innerHTML = '';
-
-        let dayProvide = 0;
-        let dayGet = 0;
-        let counter = 0;
-
-        const custKeys = Object.keys(customersData);
-
-        custKeys.forEach(key => {
-            const cust = customersData[key];
-            if (cust.transactions) {
-                Object.values(cust.transactions).forEach(t => {
-                    if (t.date === selectedDate) {
-                        counter++;
-                        let isProvide = (t.type === 'give' || t.type === 'provide');
-                        let amt = Number(t.amount);
-
-                        if (isProvide) dayProvide += amt;
-                        if (t.type === 'get') dayGet += amt;
-
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${counter}</td>
-                                <td><strong>${cust.name}</strong></td>
-                                <td>${isProvide ? '<span class="badge bg-primary">Provide</span>' : '<span class="badge bg-success">Get</span>'}</td>
-                                <td>${t.note || '-'}</td>
-                                <td class="fw-bold">BDT ${amt}</td>
-                            </tr>
-                        `;
-                    }
-                });
-            }
-        });
-
-        if (counter === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">No transactions found for ${selectedDate}.</td></tr>`;
-        }
-
-        document.getElementById('dayTotalProvide').innerText = `BDT ${dayProvide}`;
-        document.getElementById('dayTotalGet').innerText = `BDT ${dayGet}`;
-        
-        const dayNet = dayProvide - dayGet;
-        const dayNetElem = document.getElementById('dayNetBalance');
-        dayNetElem.innerText = `BDT ${dayNet}`;
-        if (dayNet !== 0) {
-            dayNetElem.className = 'text-danger fw-bold';
-        } else {
-            dayNetElem.className = 'text-success fw-bold';
-        }
-    }
-
-    function openTransModal(custId, custName) {
-        document.getElementById('modalCustId').value = custId;
-        document.getElementById('transModalTitle').innerText = `${custName} - Add Transaction`;
-        
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('transDate').value = today;
-
-        transModal.show();
-    }
-
-    document.getElementById('transForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const custId = document.getElementById('modalCustId').value;
-        const transDate = document.getElementById('transDate').value;
-        const type = document.getElementById('transType').value;
-        const amount = document.getElementById('transAmount').value;
-        const note = document.getElementById('transNote').value;
-
-        const transaction = {
-            type: type,
-            amount: amount,
-            note: note,
-            date: transDate
-        };
-
-        await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers/${custId}/transactions.json`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(transaction)
-        });
-
-        document.getElementById('transForm').reset();
-        transModal.hide();
-        fetchCustomers();
-    });
+  });
+  if (!count) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">No transactions found for ${selected || "this date"}.</td></tr>`;
+  el("dayTotalProvide").textContent = money(provide);
+  el("dayTotalGet").textContent = money(get);
+  el("dayNetBalance").textContent = money(provide-get);
+  el("dayNetBalance").className = provide-get===0 ? "text-success fw-bold" : "text-danger fw-bold";
+}
 </script>
-
 </body>
 </html>
