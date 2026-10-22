@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TMChat - Safe Pro Call</title>
+    <title>TMChat - Pro Call with Permission Settings</title>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS CDN -->
@@ -172,8 +172,9 @@
                 <p class="text-wa-subtext text-xs">Public groups and broadcasts available here.</p>
             </section>
 
-            <section id="view-settings" class="absolute inset-0 flex flex-col p-4 overflow-y-auto hidden">
-                <div class="bg-wa-panel p-4 rounded-xl border border-wa-border space-y-4">
+            <!-- SETTINGS VIEW WITH PERMISSION SETUP OPTION -->
+            <section id="view-settings" class="absolute inset-0 flex flex-col p-4 overflow-y-auto hidden space-y-3">
+                <div class="bg-wa-panel p-4 rounded-xl border border-wa-border space-y-3">
                     <div class="flex items-center gap-3 border-b border-wa-border/50 pb-3">
                         <div id="settings-avatar" class="w-12 h-12 rounded-full bg-wa-green text-white font-bold flex items-center justify-center text-lg">U</div>
                         <div>
@@ -181,6 +182,28 @@
                             <p id="settings-email" class="text-xs text-wa-subtext">email@domain.com</p>
                         </div>
                     </div>
+                </div>
+
+                <!-- PERMISSION SETUP WIDGET -->
+                <div class="bg-wa-panel p-4 rounded-xl border border-wa-border space-y-3">
+                    <h3 class="font-bold text-wa-text text-xs uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-wa-green"></i> Camera & Mic Permissions
+                    </h3>
+                    <p class="text-[11px] text-wa-subtext leading-relaxed">
+                        If camera or microphone access is blocked or showing errors, click below to test or re-request permissions directly.
+                    </p>
+                    <div class="flex gap-2">
+                        <button onclick="requestPermissionsManually()" class="flex-1 bg-wa-green hover:bg-emerald-600 text-white font-semibold py-2 rounded-lg text-xs transition shadow">
+                            <i class="fa-solid fa-video mr-1"></i> Grant Permissions
+                        </button>
+                        <button onclick="openPermissionHelp()" class="bg-wa-card hover:bg-wa-hover text-wa-text px-3 py-2 rounded-lg text-xs transition border border-wa-border">
+                            <i class="fa-solid fa-circle-question"></i>
+                        </button>
+                    </div>
+                    <div id="permission-status-text" class="text-[10px] text-wa-subtext italic">Status: Not tested yet</div>
+                </div>
+
+                <div class="bg-wa-panel p-3 rounded-xl border border-wa-border">
                     <button onclick="logout()" class="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 font-semibold py-2 rounded-lg text-xs transition">
                         <i class="fa-solid fa-right-from-bracket mr-1"></i> Sign Out
                     </button>
@@ -342,7 +365,7 @@
                 listenGlobalCalls();
             } else {
                 currentUser = null;
-                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('main-header').classList.add('hidden');
                 document.getElementById('main-views').classList.add('hidden');
             }
@@ -558,7 +581,45 @@
             reader.readAsDataURL(file);
         }
 
-        // ================= WEBRTC & ROBUST SAFE MEDIA ACCESS =================
+        // ================= MANUAL PERMISSION SETUP FROM SETTINGS =================
+
+        async function requestPermissionsManually() {
+            const statusEl = document.getElementById('permission-status-text');
+            statusEl.innerText = "Status: Requesting camera & microphone access...";
+            statusEl.className = "text-[10px] text-yellow-400 italic";
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                statusEl.innerText = "Status: MediaDevices API not supported on this browser/app.";
+                statusEl.className = "text-[10px] text-red-400 italic";
+                return;
+            }
+
+            try {
+                const testStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                // Stop tracks immediately after testing success
+                testStream.getTracks().forEach(track => track.stop());
+                statusEl.innerText = "Status: Camera & Microphone permissions granted successfully!";
+                statusEl.className = "text-[10px] text-emerald-400 font-semibold";
+            } catch (err) {
+                console.warn("Manual permission request failed:", err);
+                try {
+                    // Try audio-only fallback test
+                    const audioTest = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+                    audioTest.getTracks().forEach(track => track.stop());
+                    statusEl.innerText = "Status: Microphone allowed, but Camera blocked/unavailable.";
+                    statusEl.className = "text-[10px] text-yellow-400 font-semibold";
+                } catch (audioErr) {
+                    statusEl.innerText = "Status: Blocked! Please check browser address bar settings to allow Camera & Mic.";
+                    statusEl.className = "text-[10px] text-red-400 font-semibold";
+                }
+            }
+        }
+
+        function openPermissionHelp() {
+            alert("How to enable permissions:\n\n1. Look at the address bar or top-left corner near the URL.\n2. Click the lock/site settings icon (🔒 or ⚙️).\n3. Turn on 'Camera' and 'Microphone' access.\n4. Refresh the page and try calling again!");
+        }
+
+        // ================= WEBRTC & BULLETPROOF MEDIA FALLBACK =================
 
         function createPeerConnection(chatId) {
             if (peerConnection) {
@@ -583,19 +644,20 @@
         }
 
         async function acquireMediaStream(type) {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return null;
+            }
+
             try {
-                // Try requesting video and audio
                 return await navigator.mediaDevices.getUserMedia({ 
                     video: type === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false, 
                     audio: true 
                 });
-            } catch (err) {
-                console.warn("Video/Audio failed, falling back to audio-only...", err);
+            } catch (err1) {
                 try {
-                    // Fallback to audio only if camera is blocked/unavailable
                     return await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-                } catch (audioErr) {
-                    throw new Error("Microphone permission denied or device not found.");
+                } catch (err2) {
+                    return null; 
                 }
             }
         }
@@ -605,7 +667,7 @@
             
             document.getElementById('call-modal').classList.remove('hidden');
             document.getElementById('call-user-name').innerText = document.getElementById('active-name').innerText;
-            document.getElementById('call-status-badge').innerText = "Connecting media...";
+            document.getElementById('call-status-badge').innerText = "Connecting call...";
 
             if(type === 'audio') {
                 document.getElementById('audio-call-indicator').classList.remove('hidden');
@@ -617,7 +679,9 @@
             try {
                 localStream = await acquireMediaStream(type);
                 const localVid = document.getElementById('local-video');
-                if (localVid) localVid.srcObject = localStream;
+                if (localVid && localStream) {
+                    localVid.srcObject = localStream;
+                }
 
                 rtcCallRef = db.ref('chats/' + activeChatId + '/call');
                 await rtcCallRef.remove();
@@ -666,8 +730,7 @@
                 });
 
             } catch(err) {
-                alert("Microphone/Camera permission is required to make calls. Please check browser settings.");
-                closeCallUI();
+                console.error("Call initialization error:", err);
             }
         }
 
@@ -703,7 +766,7 @@
             rtcCallRef = db.ref('chats/' + chatId + '/call');
 
             document.getElementById('call-user-name').innerText = data.callerName || "Call Active";
-            document.getElementById('call-status-badge').innerText = "Connecting media...";
+            document.getElementById('call-status-badge').innerText = "Connecting call...";
 
             if(data.mediaType === 'audio') {
                 document.getElementById('audio-call-indicator').classList.remove('hidden');
@@ -715,7 +778,9 @@
             try {
                 localStream = await acquireMediaStream(data.mediaType);
                 const localVid = document.getElementById('local-video');
-                if (localVid) localVid.srcObject = localStream;
+                if (localVid && localStream) {
+                    localVid.srcObject = localStream;
+                }
 
                 createPeerConnection(chatId);
 
@@ -744,8 +809,7 @@
                 document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
 
             } catch(err) {
-                alert("Microphone/Camera permission error: " + err.message);
-                closeCallUI();
+                console.error("Accept call error:", err);
             }
         }
 
@@ -882,11 +946,13 @@
             try {
                 localStream = await acquireMediaStream('video');
                 const localVid = document.getElementById('local-video');
-                if(localVid) localVid.srcObject = localStream;
-                const videoTrack = localStream.getVideoTracks()[0];
-                if (peerConnection && videoTrack) {
-                    const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
-                    if (sender) sender.replaceTrack(videoTrack);
+                if(localVid && localStream) localVid.srcObject = localStream;
+                if(localStream) {
+                    const videoTrack = localStream.getVideoTracks()[0];
+                    if (peerConnection && videoTrack) {
+                        const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+                        if (sender) sender.replaceTrack(videoTrack);
+                    }
                 }
             } catch(e) {}
         }
