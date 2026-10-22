@@ -73,6 +73,13 @@
         #remote-video.audio-only { visibility:hidden; }
         @media (max-width: 360px) { #pip-call { width:160px; } #pip-video-stage { height:112px; } #pip-local-video { width:48px; height:64px; } }
         @media (orientation:landscape) { #local-video { width:clamp(90px,16vw,170px); height:clamp(68px,24vh,130px); } }
+    
+        .msg-bubble { max-width:82%; min-width:72px; }
+        .msg-text { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.45; }
+        .msg-action-menu { position:fixed; z-index:12000; background:#202c33; border:1px solid #00a884; border-radius:12px; padding:6px; box-shadow:0 8px 24px #0009; display:flex; gap:6px; }
+        .msg-action-menu button,.friend-action-menu button { padding:8px 10px; border-radius:8px; background:#111b21; color:#e9edef; font-size:12px; }
+        .friend-action-menu { position:fixed; z-index:12000; background:#202c33; border:1px solid #00a884; border-radius:12px; padding:6px; box-shadow:0 8px 24px #0009; display:grid; gap:5px; }
+        .reply-preview { display:none; padding:5px 9px; margin:0 8px 4px; border-left:3px solid #00a884; background:#202c33; border-radius:6px; font-size:11px; }
     </style>
 </head>
 <body class="w-full h-full flex flex-col justify-between overflow-hidden">
@@ -218,6 +225,7 @@
                 <!-- Messages -->
             </div>
 
+            <div id="reply-preview" class="reply-preview"></div>
             <div class="bg-wa-panel p-2 flex items-center gap-2 border-t border-wa-border shrink-0 mb-1">
                 <input type="file" id="attachment-input" class="hidden" onchange="handleAttachment(event)">
                 <button onclick="document.getElementById('attachment-input').click()" class="text-wa-subtext text-lg p-2 hover:text-wa-text"><i class="fa-solid fa-paperclip"></i></button>
@@ -326,6 +334,7 @@
         let callMediaType = 'video';
         let activeCallId = null;
         let callStateListener = null;
+        let callStateCallback = null;
         let remoteIceListener = null;
         let pendingRemoteCandidates = [];
         let remoteDescriptionReady = false;
@@ -369,6 +378,7 @@
 
                 initDashboard();
                 listenGlobalCalls();
+                listenForMessageNotifications();
             } else {
                 currentUser = null;
                 document.getElementById('auth-screen').classList.remove('hidden');
@@ -404,6 +414,7 @@
         }
 
         function initDashboard() {
+            enableBrowserNotifications();
             db.ref('users/' + currentUser.uid + '/status').set('online');
             db.ref('users/' + currentUser.uid + '/status').onDisconnect().set('offline');
 
@@ -411,6 +422,25 @@
             db.ref('friends/' + currentUser.uid).on('value', snap => {
                 myFriendsCache = snap.val() || {};
                 renderFriendsList();
+            });
+        }
+
+        let notificationListeners = {};
+        function enableBrowserNotifications(){ if ('Notification' in window && Notification.permission==='default') Notification.requestPermission().catch(()=>{}); }
+        function notifyUser(title,body){
+            try { if ('Notification' in window && Notification.permission==='granted' && document.visibilityState==='hidden') new Notification(title,{body,tag:'tmchat-'+Date.now()}); } catch(e){}
+            if (navigator.vibrate) navigator.vibrate([150,80,150]);
+        }
+        function listenForMessageNotifications(){
+            db.ref('friends/'+currentUser.uid).on('value',snap=>{
+                const friends=snap.val()||{}; Object.keys(friends).forEach(uid=>{
+                    const chatId=currentUser.uid<uid?`${currentUser.uid}_${uid}`:`${uid}_${currentUser.uid}`;
+                    if(notificationListeners[chatId])return;
+                    const ref=db.ref('chats/'+chatId+'/messages'); let initial=true;
+                    const cb=child=>{const msg=child.val();if(!msg||msg.sender===currentUser.uid)return;if(initial)return;if(activeChatId===chatId&&document.visibilityState==='visible')return;db.ref('users/'+uid+'/name').once('value').then(n=>notifyUser(n.val()||'New message',String(msg.text||'New message').slice(0,120)));};
+                    ref.limitToLast(1).on('child_added',cb); notificationListeners[chatId]={ref,cb};
+                    setTimeout(()=>{initial=false;},900);
+                });
             });
         }
 
@@ -431,38 +461,42 @@
         function renderFriendsList() {
             const listEl = document.getElementById('friends-list');
             listEl.innerHTML = '';
-            
-            const friendUids = Object.keys(myFriendsCache);
-            if (friendUids.length === 0) {
+            const friendUids = Object.keys(myFriendsCache || {});
+            if (!friendUids.length) {
                 listEl.innerHTML = `<p class="text-center text-wa-subtext text-xs py-8">No friends added yet.<br>Go to <b>Find</b> tab to search & add friends!</p>`;
                 return;
             }
-
+            const pinned = getPinnedFriends();
+            friendUids.sort((a,b) => (pinned.includes(b)?1:0)-(pinned.includes(a)?1:0));
             friendUids.forEach(friendUid => {
                 db.ref('users/' + friendUid).once('value').then(userSnap => {
+                    if (!myFriendsCache || !myFriendsCache[friendUid]) return;
                     const friendUser = userSnap.val() || {};
                     const friendName = friendUser.name || (friendUser.email ? friendUser.email.split('@')[0] : 'User');
                     const chatId = currentUser.uid < friendUid ? `${currentUser.uid}_${friendUid}` : `${friendUid}_${currentUser.uid}`;
-
                     const item = document.createElement('div');
                     item.className = "flex items-center justify-between p-3 bg-wa-panel border border-wa-border/50 rounded-xl active:bg-wa-card cursor-pointer transition";
+                    item.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-wa-green text-white font-bold flex items-center justify-center text-sm relative">${escapeHtml(friendName.charAt(0).toUpperCase())}<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-wa-panel ${friendUser.status === 'online' ? 'bg-emerald-500' : 'bg-gray-500'}"></span></div><div><h4 class="font-semibold text-wa-text text-xs">${escapeHtml(friendName)} ${pinned.includes(friendUid)?'📌':''}</h4><p class="text-[10px] text-wa-subtext">${escapeHtml(friendUser.status || 'offline')}</p></div></div><button class="bg-wa-green/20 text-wa-green px-3 py-1.5 rounded-lg text-xs font-semibold"><i class="fa-solid fa-comment mr-1"></i> Chat</button>`;
                     item.onclick = () => openChatScreen(chatId, friendName, friendUid);
-                    item.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-wa-green text-white font-bold flex items-center justify-center text-sm relative">
-                                ${friendName.charAt(0).toUpperCase()}
-                                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-wa-panel ${friendUser.status === 'online' ? 'bg-emerald-500' : 'bg-gray-500'}"></span>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-wa-text text-xs">${friendName}</h4>
-                                <p class="text-[10px] text-wa-subtext">${friendUser.status || 'offline'}</p>
-                            </div>
-                        </div>
-                        <button class="bg-wa-green/20 text-wa-green px-3 py-1.5 rounded-lg text-xs font-semibold"><i class="fa-solid fa-comment mr-1"></i> Chat</button>
-                    `;
+                    let holdTimer;
+                    item.addEventListener('contextmenu', e => { e.preventDefault(); showFriendActions(e.clientX,e.clientY,friendUid,friendName,chatId); });
+                    item.addEventListener('touchstart', e => { const t=e.touches[0]; holdTimer=setTimeout(()=>showFriendActions(t.clientX,t.clientY,friendUid,friendName,chatId),550); }, {passive:true});
+                    ['touchend','touchmove','touchcancel'].forEach(ev=>item.addEventListener(ev,()=>clearTimeout(holdTimer),{passive:true}));
                     listEl.appendChild(item);
                 });
             });
+        }
+        function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        function getPinnedFriends() { try { return JSON.parse(localStorage.getItem('tmchat_pinned_'+(currentUser?.uid||'')) || '[]'); } catch(_) { return []; } }
+        function showFriendActions(x,y,uid,name,chatId) {
+            document.querySelectorAll('.friend-action-menu').forEach(n=>n.remove());
+            const m=document.createElement('div'); m.className='friend-action-menu';
+            const add=(label,fn)=>{const b=document.createElement('button');b.textContent=label;b.onclick=()=>{m.remove();fn();};m.appendChild(b);};
+            add(getPinnedFriends().includes(uid)?'Unpin to top':'Pin to top',()=>{let a=getPinnedFriends();a=a.includes(uid)?a.filter(v=>v!==uid):[uid,...a];localStorage.setItem('tmchat_pinned_'+currentUser.uid,JSON.stringify(a));renderFriendsList();});
+            add('Clear all chat',()=>{if(confirm('Clear all messages in this chat for everyone?')) db.ref('chats/'+chatId+'/messages').remove();});
+            add('Delete friend',()=>{if(confirm('Remove this friend from your list?')){db.ref('friends/'+currentUser.uid+'/'+uid).remove();db.ref('friends/'+uid+'/'+currentUser.uid).remove();}});
+            document.body.appendChild(m); m.style.left=Math.max(8,Math.min(x,innerWidth-190))+'px';m.style.top=Math.max(8,Math.min(y,innerHeight-180))+'px';
+            setTimeout(()=>document.addEventListener('click',()=>m.remove(),{once:true}),0);
         }
 
         function searchUsersInDB(query) {
@@ -519,55 +553,56 @@
             openChatScreen(chatId, targetName, targetUid);
         }
 
+        let messageListenerRef = null;
+        let replyToMessage = null;
+        const expandedMessages = new Set();
         function openChatScreen(chatId, otherName, otherUid) {
             activeChatId = chatId;
             document.getElementById('active-chat-screen').classList.remove('hidden');
             document.getElementById('active-name').innerText = otherName;
             document.getElementById('active-avatar').innerText = otherName.charAt(0).toUpperCase();
-
-            db.ref('users/' + otherUid + '/status').on('value', snap => {
-                document.getElementById('active-status').innerText = snap.val() || 'offline';
-            });
-
+            db.ref('users/' + otherUid + '/status').off();
+            db.ref('users/' + otherUid + '/status').on('value', snap => { document.getElementById('active-status').innerText = snap.val() || 'offline'; });
+            if (messageListenerRef) messageListenerRef.off();
             const msgBox = document.getElementById('messages-box');
-            db.ref('chats/' + chatId + '/messages').on('value', snap => {
+            messageListenerRef = db.ref('chats/' + chatId + '/messages');
+            messageListenerRef.on('value', snap => {
                 msgBox.innerHTML = '';
-                if(snap.exists()) {
-                    snap.forEach(mSnap => {
-                        const msg = mSnap.val();
-                        const isMe = msg.sender === currentUser.uid;
-                        const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        
-                        const div = document.createElement('div');
-                        div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-1.5`;
-                        div.innerHTML = `
-                            <div class="max-w-[82%] rounded-2xl px-3 py-1.5 shadow text-xs ${isMe ? 'bg-wa-lightgreen' : 'bg-wa-incoming'}">
-                                <p class="text-wa-text break-words">${msg.text}</p>
-                                <div class="text-[9px] text-wa-subtext text-right mt-0.5">${time}</div>
-                            </div>
-                        `;
-                        msgBox.appendChild(div);
-                    });
-                    msgBox.scrollTop = msgBox.scrollHeight;
-                }
+                if(snap.exists()) snap.forEach(mSnap => {
+                    const msg = mSnap.val() || {}, key=mSnap.key, isMe=msg.sender===currentUser.uid;
+                    const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                    const div=document.createElement('div'); div.className=`flex ${isMe?'justify-end':'justify-start'} mb-1.5`;
+                    const bubble=document.createElement('div'); bubble.className=`msg-bubble rounded-2xl px-3 py-1.5 shadow text-xs ${isMe?'bg-wa-lightgreen':'bg-wa-incoming'}`;
+                    const text=document.createElement('p'); text.className='msg-text text-wa-text';
+                    const lines=String(msg.text||'').split('\n'); const expanded=expandedMessages.has(key); text.textContent=lines.slice(0,expanded?lines.length:10).join('\n'); bubble.appendChild(text);
+                    if(lines.length>10){const more=document.createElement('button');more.className='text-wa-green text-[11px] mt-1';more.textContent=expanded?'Show less':`More (${Math.min(10,lines.length-10)} lines)`;more.onclick=()=>{if(expanded)expandedMessages.delete(key);else expandedMessages.add(key);messageListenerRef.once('value').then(()=>{});renderMessagesSnapshotLast();};bubble.appendChild(more);}
+                    if(msg.replyText){const rp=document.createElement('div');rp.className='text-[10px] opacity-70 border-l-2 border-wa-green pl-2 mb-1';rp.textContent='↪ '+msg.replyText;bubble.prepend(rp);}
+                    const meta=document.createElement('div');meta.className='text-[9px] text-wa-subtext text-right mt-0.5';meta.textContent=time;bubble.appendChild(meta);
+                    let hold; const actions=(x,y)=>showMessageActions(x,y,key,msg,chatId,isMe);
+                    bubble.addEventListener('contextmenu',e=>{e.preventDefault();actions(e.clientX,e.clientY);});
+                    bubble.addEventListener('touchstart',e=>{const t=e.touches[0];hold=setTimeout(()=>actions(t.clientX,t.clientY),550);},{passive:true});
+                    ['touchend','touchmove','touchcancel'].forEach(ev=>bubble.addEventListener(ev,()=>clearTimeout(hold),{passive:true}));
+                    let sx=0; bubble.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true}); bubble.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>65){replyToMessage={key,text:String(msg.text||'').slice(0,100)};const p=document.getElementById('reply-preview');if(p){p.style.display='block';p.textContent='Replying to: '+replyToMessage.text;}document.getElementById('message-input').focus();}},{passive:true});
+                    div.appendChild(bubble);msgBox.appendChild(div);
+                });
+                msgBox.scrollTop=msgBox.scrollHeight;
             });
         }
-
-        function closeChatScreen() {
-            document.getElementById('active-chat-screen').classList.add('hidden');
-            activeChatId = null;
+        let lastRenderedMessages = null;
+        function renderMessagesSnapshotLast(){ if(messageListenerRef) messageListenerRef.once('value').then(snap=>{lastRenderedMessages=snap; const chat=activeChatId; const name=document.getElementById('active-name').innerText; const uid=(chat||'').split('_').find(v=>v!==currentUser.uid); if(chat) openChatScreen(chat,name,uid||''); }); }
+        function showMessageActions(x,y,key,msg,chatId,isMe){
+            document.querySelectorAll('.msg-action-menu').forEach(n=>n.remove()); const m=document.createElement('div');m.className='msg-action-menu';
+            const add=(label,fn)=>{const b=document.createElement('button');b.textContent=label;b.onclick=()=>{m.remove();fn();};m.appendChild(b);};
+            add('Reply',()=>{replyToMessage={key,text:String(msg.text||'').slice(0,100)};const p=document.getElementById('reply-preview');if(p){p.style.display='block';p.textContent='Replying to: '+replyToMessage.text;}document.getElementById('message-input').focus();});
+            if(isMe){add('Edit',()=>{const v=prompt('Edit message',msg.text||'');if(v!==null&&v.trim())db.ref(`chats/${chatId}/messages/${key}`).update({text:v.trim(),edited:true});});add('Delete',()=>{if(confirm('Delete this message?'))db.ref(`chats/${chatId}/messages/${key}`).remove();});}
+            document.body.appendChild(m);m.style.left=Math.max(8,Math.min(x,innerWidth-220))+'px';m.style.top=Math.max(8,Math.min(y,innerHeight-70))+'px';setTimeout(()=>document.addEventListener('click',()=>m.remove(),{once:true}),0);
         }
-
+        function closeChatScreen() { if(messageListenerRef){messageListenerRef.off();messageListenerRef=null;} document.getElementById('active-chat-screen').classList.add('hidden'); activeChatId = null; }
         function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if(!text || !activeChatId) return;
-
-            const msgData = { sender: currentUser.uid, text: text, timestamp: Date.now() };
-            db.ref('chats/' + activeChatId + '/messages').push(msgData);
-            db.ref('chats/' + activeChatId).update({ lastMessage: text, lastTime: Date.now() });
-
-            input.value = '';
+            const input=document.getElementById('message-input'); const text=input.value.trim(); if(!text||!activeChatId)return;
+            const msgData={sender:currentUser.uid,text,timestamp:Date.now()}; if(replyToMessage){msgData.replyTo=replyToMessage.key;msgData.replyText=replyToMessage.text;}
+            db.ref('chats/'+activeChatId+'/messages').push(msgData).catch(e=>alert('Message failed: '+e.message));
+            db.ref('chats/'+activeChatId).update({lastMessage:text,lastTime:Date.now()}); input.value='';replyToMessage=null;const p=document.getElementById('reply-preview');if(p){p.style.display='none';p.textContent='';}
         }
 
         function handleAttachment(e) {
@@ -717,16 +752,23 @@
 
         function listenForCallDisconnection(chatId) {
             const ref = getCallRef(chatId);
-            if (callStateListener) callStateListener.off();
+            // Remove ONLY our call-session callback. Calling ref.off() without a callback
+            // also removes the global incoming-call listener on this same Firebase path;
+            // that is why the next call needed a page refresh.
+            if (callStateListener && callStateCallback) {
+                callStateListener.off('value', callStateCallback);
+            }
             callStateListener = ref;
-            callStateListener.on('value', snap => {
+            callStateCallback = snap => {
                 const data = snap.val();
+                // Ignore delayed updates from a previous call after a new call has started.
                 if (data && activeCallId && data.callId && data.callId !== activeCallId) return;
                 if (!data || data.status === 'ended' || data.status === 'rejected') {
                     if (callChatId === chatId && !callClosing) closeCallUI();
                     if (incomingCallData && incomingCallData.chatId === chatId) {
                         document.getElementById('incoming-call-modal').classList.add('hidden');
                         incomingCallData = null;
+                        stopIncomingRingtone();
                     }
                     return;
                 }
@@ -735,7 +777,8 @@
                     setRemoteDescriptionAndFlush(data.answer).then(() => setCallStatus('Connecting...'))
                         .catch(err => console.error('Applying answer failed:', err));
                 }
-            });
+            };
+            callStateListener.on('value', callStateCallback);
         }
 
         function showCallUI(type, name, status) {
@@ -759,7 +802,7 @@
 
         async function startCall(type) {
             if (!currentUser || !activeChatId) { alert('Open a friend chat first.'); return; }
-            if (peerConnection || localStream || callChatId) { alert('A call is already active.'); return; }
+            if (peerConnection || localStream || (callChatId && !callClosing)) { alert('A call is already active.'); return; }
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert('Camera/microphone requires HTTPS or localhost in a supported browser.'); return;
             }
@@ -862,7 +905,7 @@
                             return;
                         }
                         if (data.type === 'offer' && data.caller !== currentUser.uid && data.status === 'ringing') {
-                            if (callChatId || peerConnection || incomingCallData) return;
+                            if (callClosing || callChatId || peerConnection || localStream || incomingCallData) return;
                             incomingCallData = { data, chatId };
                             document.getElementById('incoming-call-modal').classList.remove('hidden');
                             startIncomingRingtone();
@@ -1116,24 +1159,46 @@
 
         async function endCall() {
             if (callClosing) return;
+            // Capture this session before clearing local state. Never write a hangup update
+            // blindly: the user may start a new call on the same chat immediately.
             const ref = rtcCallRef;
             const endingCallId = activeCallId;
+            const endingChatId = callChatId;
             callClosing = true;
-            if (ref) {
-                try {
-                    await ref.update({ status: 'ended', endReason: 'Call ended', endedBy: currentUser ? currentUser.uid : null, endedAt: Date.now() });
-                } catch (err) { console.warn('Could not send hangup signal:', err); }
-            }
+
+            // Close local media/UI immediately so the next call button is usable without
+            // waiting for a slow Firebase round trip on mobile data.
             await closeCallUI();
-            // Never let delayed cleanup of an old call delete a new call on the same chat path.
+
             if (ref && endingCallId) {
-                setTimeout(() => {
-                    ref.transaction(current => {
-                        if (current && current.callId === endingCallId && (current.status === 'ended' || current.status === 'rejected')) return null;
-                        return; // abort if another call has replaced this one
-                    }).catch(err => console.warn('Call cleanup failed:', err));
-                }, 1800);
+                // Only mark the exact call that was ended. This transaction cannot accidentally
+                // end a newer call that has already replaced the old call record.
+                ref.transaction(current => {
+                    if (current && current.callId === endingCallId) {
+                        return { ...current, status: 'ended', endReason: 'Call ended',
+                            endedBy: currentUser ? currentUser.uid : null, endedAt: Date.now() };
+                    }
+                    return; // abort if a newer call is already in this node
+                }).then(result => {
+                    if (result.committed) {
+                        // Remove stale ended data in the background, but only if it is still
+                        // the same ended call. A new call is never deleted by this cleanup.
+                        setTimeout(() => {
+                            ref.transaction(current => {
+                                if (current && current.callId === endingCallId &&
+                                    (current.status === 'ended' || current.status === 'rejected')) return null;
+                                return;
+                            }).catch(err => console.warn('Call cleanup failed:', err));
+                        }, 700);
+                    }
+                }).catch(err => console.warn('Could not send hangup signal:', err));
             }
+            // Keep global incoming-call listeners alive; only per-session listeners are removed.
+            if (endingChatId) {
+                const modal = document.getElementById('incoming-call-modal');
+                if (modal) modal.classList.add('hidden');
+            }
+            callClosing = false;
         }
 
         async function closeCallUI() {
@@ -1145,7 +1210,9 @@
             }
             screenShareSender = null;
             updateShareButtons(false);
-            if (callStateListener) { callStateListener.off(); callStateListener = null; }
+            if (callStateListener && callStateCallback) callStateListener.off('value', callStateCallback);
+            callStateListener = null;
+            callStateCallback = null;
             if (remoteIceListener) { remoteIceListener.off(); remoteIceListener = null; }
             if (rtcCallRef) {
                 rtcCallRef.child('callerCandidates').off();
