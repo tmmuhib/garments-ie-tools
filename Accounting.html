@@ -1,928 +1,898 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Ledger</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Page Background: Grey 350 style (#d1d5db) */
-        body { 
-            background-color: #d1d5db; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            color: #1f2937;
-        }
-
-        /* Blue Styled Cards */
-        .card-custom { 
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            border-radius: 12px; 
-            border: none; 
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); 
-            color: #ffffff;
-        }
-
-        .auth-container { max-width: 400px; margin: 60px auto; padding: 0 15px; }
-
-        /* Colorful Letter Effect for 'Welcome to Shop' */
-        .colorful-welcome {
-            display: inline-block;
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-        }
-
-        .colorful-welcome span {
-            display: inline-block;
-            animation: bounceLetter 2s infinite ease-in-out;
-        }
-
-        /* Letter Color Schemes */
-        .c-1 { color: #ff4d4d; text-shadow: 0 0 6px rgba(255, 77, 77, 0.6); animation-delay: 0.0s !important; }
-        .c-2 { color: #ffaf40; text-shadow: 0 0 6px rgba(255, 175, 64, 0.6); animation-delay: 0.1s !important; }
-        .c-3 { color: #fffa65; text-shadow: 0 0 6px rgba(255, 250, 101, 0.6); animation-delay: 0.2s !important; }
-        .c-4 { color: #32ff7e; text-shadow: 0 0 6px rgba(50, 255, 126, 0.6); animation-delay: 0.3s !important; }
-        .c-5 { color: #18dcff; text-shadow: 0 0 6px rgba(24, 220, 255, 0.6); animation-delay: 0.4s !important; }
-        .c-6 { color: #7d5fff; text-shadow: 0 0 6px rgba(125, 95, 255, 0.6); animation-delay: 0.5s !important; }
-        .c-7 { color: #ff6b81; text-shadow: 0 0 6px rgba(255, 107, 129, 0.6); animation-delay: 0.6s !important; }
-
-        @keyframes bounceLetter {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
-        }
-
-        /* Customer Cards */
-        .customer-card {
-            background: #1e40af;
-            border: 1px solid #3b82f6;
-            border-radius: 10px;
-            padding: 12px 14px;
-            margin-bottom: 10px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #ffffff;
-        }
-
-        .customer-click-area {
-            cursor: pointer;
-            user-select: none;
-            -webkit-user-select: none;
-            max-width: 50%;
-        }
-
-        .customer-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
-            margin: 0;
-            text-decoration: none !important;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .col-summary-item {
-            padding: 0 2px;
-        }
-
-        .summary-box {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
-            border-radius: 8px;
-            padding: 8px 4px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        /* Color definitions */
-        .color-get { color: #86efac !important; font-weight: bold; }       
-        .color-provide { color: #93c5fd !important; font-weight: bold; }   
-        .color-net-red { color: #f87171 !important; font-weight: bold; text-shadow: 0 0 6px rgba(248, 113, 113, 0.5); } 
-        .color-net-green { color: #4ade80 !important; font-weight: bold; } 
-
-        .text-get-dark { color: #16a34a !important; font-weight: bold; }
-        .text-provide-dark { color: #2563eb !important; font-weight: bold; }
-
-        /* Excel Table Grid Styling */
-        .excel-table {
-            border-collapse: collapse;
-            width: 100%;
-            background-color: #ffffff;
-            font-size: 13px;
-            color: #1f2937;
-        }
-        .excel-table th, .excel-table td {
-            border: 1px solid #9ca3af !important;
-            padding: 8px 10px;
-            text-align: left;
-        }
-        .excel-table th {
-            background-color: #1e40af;
-            color: #ffffff;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .excel-table tr:nth-child(even) { background-color: #f3f4f6; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Digital Tali Khata</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .unique-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      transition: all 0.2s ease;
+    }
+    .unique-card:hover {
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+  </style>
 </head>
-<body>
+<body class="bg-gradient-to-br from-gray-50 to-emerald-50 min-h-screen pb-20 text-gray-800">
 
-<!-- 1. LOGIN SECTION -->
-<div id="authSection" class="container auth-container">
-    <div class="card card-custom p-4">
-        <h3 class="text-center text-white mb-3">Ledger Login</h3>
-        <div id="loginError" class="alert alert-danger py-2 mb-3" style="display: none; font-size: 14px;"></div>
-        
-        <form id="loginForm">
-            <div class="mb-3">
-                <label class="form-label fw-semibold text-white">Email / Phone / Name / ID</label>
-                <input type="text" id="loginIdentifier" class="form-control" placeholder="e.g. sktex@gmail.com or 01644854515" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-semibold text-white">Password</label>
-                <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
-            </div>
-            <button type="submit" id="loginBtn" class="btn btn-warning fw-bold text-dark w-100 py-2">Login</button>
-        </form>
-    </div>
-</div>
-
-
-<!-- 2. MAIN DASHBOARD SECTION -->
-<div id="dashboardSection" class="container py-3" style="display: none;">
-    
-    <!-- Topbar: Multi-colored animated "Welcome to Shop" & User Name -->
-    <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded card-custom">
-        <div class="colorful-welcome">
-            <span class="c-1">W</span><span class="c-2">e</span><span class="c-3">l</span><span class="c-4">c</span><span class="c-5">o</span><span class="c-6">m</span><span class="c-7">e</span>
-            <span style="width: 5px;"></span>
-            <span class="c-1">t</span><span class="c-2">o</span>
-            <span style="width: 5px;"></span>
-            <span class="c-3">S</span><span class="c-4">h</span><span class="c-5">o</span><span class="c-6">p</span>
+  <!-- Header -->
+  <header class="bg-emerald-700 text-white sticky top-0 z-40 shadow-md">
+    <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fas fa-book-open text-2xl text-yellow-300"></i>
+        <div>
+          <h1 id="shop-name-display" class="text-base font-bold leading-none">Digital Tali Khata</h1>
+          <span id="user-phone-display" class="text-[11px] text-emerald-200">Shop Ledger</span>
         </div>
-        <div class="text-white fw-semibold" style="font-size: 14px;">
-            👤 <span id="displayName">User</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button onclick="app.switchTab('reports')" class="bg-emerald-800 hover:bg-emerald-900 text-white text-xs px-2.5 py-1.5 rounded-lg border border-emerald-600 transition flex items-center space-x-1">
+          <i class="fas fa-file-alt"></i>
+          <span>Report</span>
+        </button>
+        <button id="logout-btn" onclick="app.logout()" class="hidden bg-emerald-800 hover:bg-emerald-900 text-white text-xs px-2.5 py-1.5 rounded-lg border border-emerald-600 transition">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-md mx-auto p-4">
+
+    <!-- LOGIN SCREEN -->
+    <div id="screen-login" class="bg-white rounded-2xl shadow-lg p-6 my-6 border border-gray-100">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold">
+          <i class="fas fa-store"></i>
         </div>
+        <h2 class="text-xl font-bold text-gray-800">Shopkeeper Login</h2>
+        <p class="text-xs text-gray-500 mt-1">Enter your email and password to sign in</p>
+      </div>
+
+      <div id="login-alert" class="hidden mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs rounded"></div>
+
+      <form onsubmit="app.handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Email Address</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+              <i class="fas fa-envelope"></i>
+            </span>
+            <input type="email" id="login-email" required placeholder="user@gmail.com" class="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+              <i class="fas fa-lock"></i>
+            </span>
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm">
+          </div>
+        </div>
+
+        <button type="submit" id="btn-login" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center space-x-2">
+          <span>Login</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <button onclick="app.handleGoogleLogin()" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-sm">
+          <i class="fab fa-google text-red-500 text-base"></i>
+          <span>Sign in with Google</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Overall Summary Card -->
-    <div class="card card-custom p-2 mb-3">
-        <div class="row text-center g-1 align-items-center">
-            <div class="col-3 col-summary-item">
-                <div class="summary-box">
-                    <small class="text-white-50" style="font-size: 10px;">Total Provide</small>
-                    <h6 id="totalProvide" class="color-provide m-0 mt-1" style="font-size: 12px;">BDT 0</h6>
-                </div>
-            </div>
-            <div class="col-3 col-summary-item">
-                <div class="summary-box">
-                    <small class="text-white-50" style="font-size: 10px;">Total Get</small>
-                    <h6 id="totalGet" class="color-get m-0 mt-1" style="font-size: 12px;">BDT 0</h6>
-                </div>
-            </div>
-            <div class="col-3 col-summary-item">
-                <div class="summary-box">
-                    <small class="text-white-50" style="font-size: 10px;">Net Balance</small>
-                    <h6 id="netBalance" class="color-net-red m-0 mt-1" style="font-size: 12px;">BDT 0</h6>
-                </div>
-            </div>
-            <div class="col-3 col-summary-item">
-                <div class="d-flex flex-column gap-1">
-                    <button class="btn btn-warning btn-sm fw-bold w-100 py-1" onclick="openCustomerModal()" style="font-size: 13px;" title="Add Customer">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                    <button class="btn btn-info btn-sm fw-bold text-dark w-100 py-1" onclick="openDayReportModal()" style="font-size: 10px; line-height: 1.1;">
-                        Day Report
-                    </button>
-                </div>
-            </div>
+    <!-- MAIN APP SCREEN -->
+    <div id="screen-app" class="hidden space-y-4">
+
+      <!-- USER PROFILE BAR -->
+      <div id="user-profile-card" class="bg-white/80 backdrop-blur-md p-3 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-xs shadow">
+            <i class="fas fa-user-check"></i>
+          </div>
+          <div>
+            <h3 id="profile-name" class="font-bold text-xs text-gray-800">--</h3>
+            <p id="profile-phone" class="text-[11px] text-emerald-600 font-semibold"><i class="fas fa-phone-alt text-[9px] mr-1"></i>--</p>
+          </div>
         </div>
-    </div>
+        <button onclick="app.openCustomerModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center space-x-1 shadow-sm">
+          <i class="fas fa-user-plus"></i>
+          <span>Add Customer</span>
+        </button>
+      </div>
 
-    <!-- Customer Card List Section -->
-    <div class="row">
-        <div class="col-12 px-0">
-            <div class="card card-custom p-3">
-                <div id="customerCardContainer">
-                    <!-- Dynamically loaded customer cards -->
-                </div>
-            </div>
+      <!-- DASHBOARD CARDS WITH CURRENCY CONVERT (CNV) BUTTON -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="unique-card p-3.5 rounded-2xl border-l-4 border-red-500">
+          <div class="flex justify-between items-start mb-1">
+            <span class="text-xs font-bold text-red-600">Total Due (You'll Get)</span>
+            <button onclick="app.toggleCurrency()" class="text-[10px] bg-red-100 hover:bg-red-200 text-red-700 font-bold px-1.5 py-0.5 rounded transition" title="Convert Currency">CNV</button>
+          </div>
+          <div class="text-lg font-black text-red-700" id="total-pabo">৳0</div>
         </div>
-    </div>
-</div>
-
-
-<!-- 3. ADD CUSTOMER MODAL -->
-<div class="modal fade" id="addCustomerModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fs-6">+ Add New Customer</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addCustomerForm">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Customer Name *</label>
-                        <input type="text" id="custName" class="form-control" placeholder="Enter name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Phone Number</label>
-                        <div class="input-group">
-                            <select id="custCountryCode" class="form-select" style="max-width: 120px;">
-                                <option value="880" selected>🇧🇩 +880</option>
-                                <option value="91">🇮🇳 +91</option>
-                                <option value="966">🇸🇦 +966</option>
-                                <option value="971">🇦🇪 +971</option>
-                                <option value="1">🇺🇸 +1</option>
-                                <option value="44">🇬🇧 +44</option>
-                                <option value="60">🇲🇾 +60</option>
-                            </select>
-                            <input type="text" id="custPhone" class="form-control" placeholder="e.g. 1340038111">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Address</label>
-                        <input type="text" id="custAddress" class="form-control" placeholder="Enter address">
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Save Customer</button>
-                </form>
-            </div>
+        <div class="unique-card p-3.5 rounded-2xl border-l-4 border-emerald-500">
+          <div class="flex justify-between items-start mb-1">
+            <span class="text-xs font-bold text-emerald-600">Total Advance (Provide)</span>
+            <button onclick="app.toggleCurrency()" class="text-[10px] bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold px-1.5 py-0.5 rounded transition" title="Convert Currency">CNV</button>
+          </div>
+          <div class="text-lg font-black text-emerald-700" id="total-debo">৳0</div>
         </div>
-    </div>
-</div>
+      </div>
 
-
-<!-- 4. EDIT CUSTOMER MODAL (Triggered on Long Press) -->
-<div class="modal fade" id="editCustomerModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title fs-6">✏️ Edit Customer Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editCustomerForm">
-                    <input type="hidden" id="editCustId">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Customer Name *</label>
-                        <input type="text" id="editCustName" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Phone Number</label>
-                        <div class="input-group">
-                            <select id="editCustCountryCode" class="form-select" style="max-width: 120px;">
-                                <option value="880">🇧🇩 +880</option>
-                                <option value="91">🇮🇳 +91</option>
-                                <option value="966">🇸🇦 +966</option>
-                                <option value="971">🇦🇪 +971</option>
-                                <option value="1">🇺🇸 +1</option>
-                                <option value="44">🇬🇧 +44</option>
-                                <option value="60">🇲🇾 +60</option>
-                            </select>
-                            <input type="text" id="editCustPhone" class="form-control">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Address</label>
-                        <input type="text" id="editCustAddress" class="form-control">
-                    </div>
-                    <button type="submit" class="btn btn-secondary w-100">Update Customer</button>
-                </form>
-            </div>
+      <!-- TAB 1: CUSTOMERS LIST -->
+      <div id="tab-customers" class="space-y-3">
+        <div class="relative">
+          <input type="text" id="customer-search" value="" oninput="app.renderCustomers()" placeholder="Search customer (Name/Phone)..." class="w-full pl-9 pr-3 py-2 bg-white/95 border border-gray-200 rounded-xl text-xs shadow-sm">
+          <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
         </div>
-    </div>
-</div>
 
+        <div id="customer-list-container" class="space-y-2.5"></div>
+      </div>
 
-<!-- 5. TRANSACTION ENTRY MODAL -->
-<div class="modal fade" id="transModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fs-6" id="transModalTitle">Add Transaction</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <!-- TAB 2: MONTHLY EXCEL REPORT WITH DYNAMIC MONTH DROPDOWN & SUBTOTAL HEADER -->
+      <div id="tab-reports" class="hidden space-y-4">
+        <button onclick="app.switchTab('customers')" class="text-xs text-emerald-700 font-bold flex items-center space-x-1 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+          <i class="fas fa-arrow-left"></i>
+          <span>Back to Customers</span>
+        </button>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 space-y-4">
+          <div class="flex justify-between items-center border-b pb-3">
+            <div>
+              <h3 class="font-bold text-sm text-gray-800"><i class="fas fa-table text-yellow-600 mr-1.5"></i>Monthly Statement Report</h3>
+              <p class="text-[11px] text-gray-500">Select available transaction month</p>
             </div>
-            <div class="modal-body">
-                <form id="transForm">
-                    <input type="hidden" id="modalCustId">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Transaction Date</label>
-                        <input type="date" id="transDate" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Transaction Type</label>
-                        <select id="transType" class="form-select" required>
-                            <option value="provide">Provide (Sale Due)</option>
-                            <option value="get">Get (Receive Cash / Payment)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Amount (BDT)</label>
-                        <input type="number" id="transAmount" class="form-control" placeholder="0" required min="1">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Note / Details (Optional)</label>
-                        <input type="text" id="transNote" class="form-control" placeholder="e.g. Item purchase">
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Save Entry</button>
-                </form>
+            <!-- Dynamic Month Dropdown (Format: Jan-26) -->
+            <select id="report-month-dropdown" onchange="app.renderReports()" class="border rounded-lg text-xs p-2 bg-gray-50 font-sans font-bold text-emerald-700 shadow-sm">
+              <option value="">Select Month</option>
+            </select>
+          </div>
+
+          <!-- SUBTOTAL HEADER LINE -->
+          <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex justify-between items-center text-xs font-bold text-gray-800 shadow-sm">
+            <span><i class="fas fa-calculator text-amber-600 mr-1.5"></i>Subtotal (Selected Month):</span>
+            <div class="space-x-3">
+              <span class="text-blue-700">Get: <span id="header-subtotal-get">৳0</span></span>
+              <span class="text-red-700">Provide: <span id="header-subtotal-provide">৳0</span></span>
             </div>
+          </div>
+
+          <!-- Excel Table with Customer Name Column -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse border border-black bg-white">
+              <thead>
+                <tr class="bg-[#EAB308] text-black font-bold border-b border-black">
+                  <th class="p-2 border border-black whitespace-nowrap w-24">Date</th>
+                  <th class="p-2 border border-black whitespace-nowrap">Customer</th>
+                  <th class="p-2 border border-black text-right whitespace-nowrap w-20">Get</th>
+                  <th class="p-2 border border-black text-right whitespace-nowrap w-20">Provide</th>
+                  <th class="p-2 border border-black whitespace-nowrap">Description</th>
+                </tr>
+              </thead>
+              <tbody id="report-table-body" class="text-black font-normal">
+                <!-- Dynamically populated -->
+              </tbody>
+              <tfoot class="bg-gray-100 font-bold border-t border-black text-black">
+                <tr>
+                  <td colspan="2" class="p-2 border border-black text-right font-bold">Total:</td>
+                  <td id="table-footer-get" class="p-2 border border-black text-right font-bold text-blue-700">৳0</td>
+                  <td id="table-footer-provide" class="p-2 border border-black text-right font-bold text-red-700">৳0</td>
+                  <td class="p-2 border border-black"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
-    </div>
-</div>
+      </div>
 
+      <!-- TAB 3: CUSTOMER DETAIL VIEW -->
+      <div id="tab-detail" class="hidden space-y-4">
+        <button onclick="app.switchTab('customers')" class="text-xs text-emerald-700 font-bold flex items-center space-x-1 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+          <i class="fas fa-arrow-left"></i>
+          <span>Back to Customers</span>
+        </button>
 
-<!-- 6. EXCEL STATEMENT REPORT MODAL -->
-<div class="modal fade" id="reportModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fs-6 fw-bold" id="reportModalTitle">📊 Customer Account Statement</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 space-y-4">
+          <div class="flex justify-between items-start border-b pb-3">
+            <div>
+              <h2 id="detail-customer-name" class="font-bold text-base text-gray-800">--</h2>
+              <p id="detail-customer-phone" class="text-xs text-gray-500">--</p>
+              <p id="detail-customer-address" class="text-[11px] text-gray-400">--</p>
             </div>
-            <div class="modal-body p-3">
-                <div class="mb-3 p-2 bg-light rounded border">
-                    <p class="m-0"><strong>Phone:</strong> <span id="rptCustPhone">N/A</span></p>
-                    <p class="m-0"><strong>Address:</strong> <span id="rptCustAddress">N/A</span></p>
-                </div>
-
-                <div class="card p-3 mb-3 bg-light border-0">
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <small class="text-muted d-block">Total Provide</small>
-                            <strong id="rptTotalProvide" class="text-provide-dark">BDT 0</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Total Get</small>
-                            <strong id="rptTotalGet" class="text-get-dark">BDT 0</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Net Balance</small>
-                            <strong id="rptNetBalance" class="text-danger">BDT 0</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="excel-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Date</th>
-                                <th>Note / Description</th>
-                                <th>Provide (BDT)</th>
-                                <th>Get (BDT)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportTableBody">
-                        </tbody>
-                    </table>
-                </div>
+            <div class="text-right">
+              <span class="text-[10px] text-gray-400 uppercase font-bold block">Current Balance</span>
+              <span id="detail-customer-balance" class="text-base font-black">৳0</span>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+          </div>
+
+          <!-- Transaction History as Excel Table -->
+          <div>
+            <h3 class="font-bold text-xs text-gray-700 mb-2">Transaction History</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse border border-black bg-white">
+                <thead>
+                  <tr class="bg-[#EAB308] text-black font-bold border-b border-black">
+                    <th class="p-2 border border-black whitespace-nowrap w-28">Date</th>
+                    <th class="p-2 border border-black text-right whitespace-nowrap w-24">Get</th>
+                    <th class="p-2 border border-black text-right whitespace-nowrap w-24">Provide</th>
+                    <th class="p-2 border border-black whitespace-nowrap">Description</th>
+                    <th class="p-2 border border-black text-center whitespace-nowrap w-16">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="detail-transactions-table-body" class="text-black font-normal">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
             </div>
+          </div>
         </div>
+      </div>
+
     </div>
-</div>
+  </main>
 
-
-<!-- 7. DAY REPORT MODAL -->
-<div class="modal fade" id="dayReportModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fs-6 fw-bold">📅 Day Ledger Report</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-3">
-                <div class="row mb-3 align-items-center bg-light p-2 rounded mx-0">
-                    <div class="col-md-4 col-12 mb-2 mb-md-0">
-                        <label class="form-label fw-bold mb-0">Select Date:</label>
-                    </div>
-                    <div class="col-md-8 col-12">
-                        <input type="date" id="dayReportDate" class="form-control" onchange="renderDayReport()">
-                    </div>
-                </div>
-
-                <div class="card p-3 mb-3 bg-light border-0">
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <small class="text-muted d-block">Day Provide</small>
-                            <strong id="dayTotalProvide" class="text-provide-dark">BDT 0</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Day Get</small>
-                            <strong id="dayTotalGet" class="text-get-dark">BDT 0</strong>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Day Net</small>
-                            <strong id="dayNetBalance" class="text-danger">BDT 0</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="excel-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Customer Name</th>
-                                <th>Type</th>
-                                <th>Note / Details</th>
-                                <th>Amount (BDT)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dayReportTableBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-            </div>
+  <!-- MODAL: ADD / EDIT CUSTOMER -->
+  <div id="modal-customer" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 id="customer-modal-title" class="font-bold text-sm text-gray-800">Add Customer</h3>
+        <button onclick="app.closeModal('modal-customer')" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+      </div>
+      <form onsubmit="app.handleSaveCustomer(event)" class="space-y-3">
+        <input type="hidden" id="cust-edit-id">
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-600 mb-1">Customer Name *</label>
+          <input type="text" id="cust-name" required placeholder="e.g. John Doe" class="w-full px-3 py-2 border rounded-xl text-xs">
         </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-600 mb-1">Mobile Number *</label>
+          <input type="tel" id="cust-phone" required placeholder="018XXXXXXXX" class="w-full px-3 py-2 border rounded-xl text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-600 mb-1">Address (Optional)</label>
+          <input type="text" id="cust-address" placeholder="e.g. Shop No 4, Barisal" class="w-full px-3 py-2 border rounded-xl text-xs">
+        </div>
+        <div class="flex space-x-2 pt-2">
+          <button type="button" onclick="app.closeModal('modal-customer')" class="flex-1 bg-gray-100 text-xs py-2 rounded-xl font-bold">Cancel</button>
+          <button type="submit" class="flex-1 bg-emerald-600 text-white text-xs py-2 rounded-xl font-bold shadow">Save</button>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
 
-<!-- JS Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    const FIREBASE_URL = "https://tmmeet-2cfad-default-rtdb.firebaseio.com/users";
-    let currentUserKey = "";
-    let currentUserName = "";
-    let customersData = {};
+  <!-- MODAL: ADD / EDIT TRANSACTION ENTRY WITH HAND CASH FIXED -->
+  <div id="modal-transaction" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 id="tx-modal-title" class="font-bold text-sm text-gray-800">Transaction Entry</h3>
+        <button onclick="app.closeModal('modal-transaction')" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+      </div>
+      <form onsubmit="app.handleSaveTransaction(event)" class="space-y-3">
+        <input type="hidden" id="tx-edit-id">
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-600 mb-1">Entry Type *</label>
+          <select id="tx-type" required onchange="app.handleTransactionTypeChange()" class="w-full px-3 py-2 border rounded-xl text-xs font-semibold">
+            <option value="provide">Provide (Give / Debit)</option>
+            <option value="get">Get (Receive / Credit)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-600 mb-1">Date</label>
+          <input type="date" id="tx-date" required class="w-full px-3 py-2 border rounded-xl text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-600 mb-1">Amount (<span class="currency-symbol">৳</span>) *</label>
+          <input type="number" id="tx-amount" required min="1" placeholder="0.00" class="w-full px-3 py-2 border rounded-xl text-sm font-bold">
+        </div>
+        <div id="tx-desc-container">
+          <!-- Dynamic Description/Dropdown -->
+        </div>
+        <div class="flex space-x-2 pt-2">
+          <button type="button" onclick="app.closeModal('modal-transaction')" class="flex-1 bg-gray-100 text-xs py-2 rounded-xl font-bold">Cancel</button>
+          <button type="submit" id="tx-submit-btn" class="flex-1 bg-emerald-600 text-white text-xs py-2 rounded-xl font-bold shadow">Save Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-    const transModal = new bootstrap.Modal(document.getElementById('transModal'));
-    const customerModal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
-    const editCustomerModal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
-    const reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
-    const dayReportModal = new bootstrap.Modal(document.getElementById('dayReportModal'));
+  <!-- MODAL: LONG PRESS OPTIONS (EDIT / DELETE CUSTOMER) -->
+  <div id="modal-longpress" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3 shadow-xl text-center">
+      <h3 class="font-bold text-sm text-gray-800 border-b pb-2">Customer Actions</h3>
+      <button onclick="app.editCustomerFromLongPress()" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold py-2.5 rounded-xl border border-blue-200">
+        <i class="fas fa-edit mr-1"></i> Edit Customer
+      </button>
+      <button onclick="app.deleteCustomerFromLongPress()" class="w-full bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold py-2.5 rounded-xl border border-red-200">
+        <i class="fas fa-trash mr-1"></i> Delete Customer
+      </button>
+      <button onclick="app.closeModal('modal-longpress')" class="w-full bg-gray-100 text-xs py-2 rounded-xl font-bold mt-2">Cancel</button>
+    </div>
+  </div>
 
-    window.onload = function() {
-        const savedKey = localStorage.getItem('tally_user_key');
-        const savedName = localStorage.getItem('tally_user_name');
-        if (savedKey) {
-            currentUserKey = savedKey;
-            currentUserName = savedName || savedKey;
-            showDashboard();
-        }
+  <!-- FIREBASE INTEGRATION MODULE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, get, set, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDvK59-OiliO6lC8NkRbO7uK5ESEEMg_e4",
+      authDomain: "tma2z-4d472.firebaseapp.com",
+      databaseURL: "https://tma2z-4d472-default-rtdb.firebaseio.com",
+      projectId: "tma2z-4d472",
+      storageBucket: "tma2z-4d472.firebasestorage.app",
+      messagingSenderId: "637327747107",
+      appId: "1:637327747107:web:39686aaa75a525cb22e996",
+      measurementId: "G-WDDGXTDFFW"
     };
 
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const identifier = document.getElementById('loginIdentifier').value.trim().toLowerCase();
-        const password = document.getElementById('loginPassword').value.trim();
-        const errorBox = document.getElementById('loginError');
-        const loginBtn = document.getElementById('loginBtn');
+    const firebaseApp = initializeApp(firebaseConfig);
+    const auth = getAuth(firebaseApp);
+    const db = getDatabase(firebaseApp);
 
-        errorBox.style.display = 'none';
-        loginBtn.innerText = 'Checking...';
+    window.app = {
+      currentUser: null,
+      userData: null,
+      customers: {},
+      transactions: {},
+      selectedCustomerId: null,
+      longPressTargetId: null,
+      currencyUSD: false,
+      conversionRate: 120,
+
+      init() {
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            this.currentUser = user;
+            document.getElementById('screen-login').classList.add('hidden');
+            document.getElementById('screen-app').classList.remove('hidden');
+            document.getElementById('logout-btn').classList.remove('hidden');
+            
+            await this.loadUserProfile(user.uid);
+            this.fetchData();
+          } else {
+            document.getElementById('screen-login').classList.remove('hidden');
+            document.getElementById('screen-app').classList.add('hidden');
+            document.getElementById('logout-btn').classList.add('hidden');
+          }
+        });
+      },
+
+      toggleCurrency() {
+        this.currencyUSD = !this.currencyUSD;
+        document.querySelectorAll('.currency-symbol').forEach(el => {
+          el.innerText = this.currencyUSD ? '$' : '৳';
+        });
+        this.renderCustomers();
+        this.renderReports();
+        if(this.selectedCustomerId) this.renderCustomerDetail(this.selectedCustomerId);
+      },
+
+      formatAmt(val) {
+        let num = parseFloat(val || 0);
+        if (this.currencyUSD) {
+          num = num / this.conversionRate;
+          return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        return '৳' + num.toLocaleString();
+      },
+
+      async loadUserProfile(uid) {
+        try {
+          const snapshot = await get(ref(db, `users/${uid}`));
+          const uData = snapshot.val();
+
+          if (uData) {
+            this.userData = uData;
+            const userName = uData.name || uData.userName || uData.username || this.currentUser.email.split('@')[0];
+            const userPhone = uData.phone || uData.number || 'No phone number';
+
+            document.getElementById('shop-name-display').innerText = userName;
+            document.getElementById('user-phone-display').innerText = userPhone;
+            document.getElementById('profile-name').innerText = userName;
+            document.getElementById('profile-phone').innerText = userPhone;
+          } else {
+            const fallbackName = this.currentUser.email.split('@')[0];
+            document.getElementById('shop-name-display').innerText = fallbackName;
+            document.getElementById('user-phone-display').innerText = 'No phone number';
+            document.getElementById('profile-name').innerText = fallbackName;
+            document.getElementById('profile-phone').innerText = 'No phone number';
+          }
+        } catch(e) {
+          console.error("Profile load error:", e);
+        }
+      },
+
+      async handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+        const alertBox = document.getElementById('login-alert');
+        const loginBtn = document.getElementById('btn-login');
+
+        alertBox.classList.add('hidden');
+        loginBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>Logging in...</span>`;
         loginBtn.disabled = true;
 
         try {
-            const response = await fetch(`${FIREBASE_URL}.json`);
-            const users = await response.json();
-
-            if (!users) throw new Error("No user found.");
-
-            let foundKey = null;
-            let foundUserData = null;
-
-            for (let key in users) {
-                let user = users[key];
-                let uId = (user.id || key).toLowerCase();
-                let uEmail = (user.email || "").toLowerCase();
-                let uPhone = (user.phone || "").toLowerCase();
-                let uName = (user.name || "").toLowerCase();
-
-                if (uId === identifier || uEmail === identifier || uPhone === identifier || uName === identifier) {
-                    foundKey = key;
-                    foundUserData = user;
-                    break;
-                }
-            }
-
-            if (foundKey && foundUserData) {
-                if (foundUserData.passwordHash === password) {
-                    currentUserKey = foundKey;
-                    currentUserName = foundUserData.name || foundKey;
-                    
-                    localStorage.setItem('tally_user_key', currentUserKey);
-                    localStorage.setItem('tally_user_name', currentUserName);
-                    
-                    showDashboard();
-                } else {
-                    errorBox.innerText = "Invalid Password!";
-                    errorBox.style.display = 'block';
-                }
-            } else {
-                errorBox.innerText = "Account not found with this credential!";
-                errorBox.style.display = 'block';
-            }
+          await signInWithEmailAndPassword(auth, email, password);
         } catch (err) {
-            console.error(err);
-            errorBox.innerText = "Connection error!";
-            errorBox.style.display = 'block';
+          alertBox.innerText = "Login failed: " + err.message;
+          alertBox.classList.remove('hidden');
         } finally {
-            loginBtn.innerText = 'Login';
-            loginBtn.disabled = false;
+          loginBtn.innerHTML = `<span>Login</span> <i class="fas fa-arrow-right"></i>`;
+          loginBtn.disabled = false;
         }
-    });
+      },
 
-    function showDashboard() {
-        document.getElementById('authSection').style.display = 'none';
-        document.getElementById('dashboardSection').style.display = 'block';
-        document.getElementById('displayName').innerText = currentUserName;
-        fetchCustomers();
-    }
-
-    function openCustomerModal() {
-        document.getElementById('addCustomerForm').reset();
-        customerModal.show();
-    }
-
-    async function fetchCustomers() {
+      async handleGoogleLogin() {
         try {
-            const res = await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers.json`);
-            const data = await res.json();
-            customersData = data || {};
-            renderCustomerCards();
+          const provider = new GoogleAuthProvider();
+          await signInWithPopup(auth, provider);
+        } catch(err) {
+          alert("Google Sign-In failed: " + err.message);
+        }
+      },
+
+      async logout() {
+        await signOut(auth);
+        location.reload();
+      },
+
+      async fetchData() {
+        if (!this.currentUser) return;
+
+        try {
+          const snapCust = await get(ref(db, `tally/customers`));
+          const snapTx = await get(ref(db, `tally/transactions`));
+
+          this.customers = snapCust.val() || {};
+          this.transactions = snapTx.val() || {};
+
+          this.populateMonthDropdown();
+          this.renderCustomers();
+          this.renderReports();
         } catch (err) {
-            console.error("Data Load Error:", err);
+          console.error("Data Load Error:", err);
         }
-    }
+      },
 
-    document.getElementById('addCustomerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('custName').value.trim();
-        const countryCode = document.getElementById('custCountryCode').value;
-        let rawPhone = document.getElementById('custPhone').value.trim();
-        const address = document.getElementById('custAddress').value.trim();
+      populateMonthDropdown() {
+        const dropdown = document.getElementById('report-month-dropdown');
+        const monthsSet = new Set();
 
-        if (!name) return;
-
-        rawPhone = rawPhone.replace(/^0+/, '');
-        const fullPhone = rawPhone ? (countryCode + rawPhone) : '';
-
-        const newCust = {
-            name: name,
-            countryCode: countryCode,
-            phone: fullPhone,
-            rawPhone: rawPhone,
-            address: address,
-            createdAt: new Date().toISOString(),
-            transactions: {}
-        };
-
-        await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers.json`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newCust)
+        Object.values(this.transactions).forEach(tx => {
+          if (tx.date) {
+            const d = new Date(tx.date);
+            if (!isNaN(d)) {
+              const year = String(d.getFullYear()).slice(-2);
+              const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+              const mStr = `${monthNames[d.getMonth()]}-${year}`;
+              monthsSet.add({ val: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, label: mStr });
+            }
+          }
         });
 
-        document.getElementById('addCustomerForm').reset();
-        customerModal.hide();
-        fetchCustomers();
-    });
+        const currentVal = dropdown.value;
+        dropdown.innerHTML = '';
 
-    function openEditCustomerModal(custId) {
-        const cust = customersData[custId];
-        if (!cust) return;
-
-        document.getElementById('editCustId').value = custId;
-        document.getElementById('editCustName').value = cust.name || '';
-        document.getElementById('editCustCountryCode').value = cust.countryCode || '880';
-        document.getElementById('editCustPhone').value = cust.rawPhone || (cust.phone ? cust.phone.replace(/^(880|91|966|971|1|44|60)/, '') : '');
-        document.getElementById('editCustAddress').value = cust.address || '';
-
-        editCustomerModal.show();
-    }
-
-    document.getElementById('editCustomerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const custId = document.getElementById('editCustId').value;
-        const name = document.getElementById('editCustName').value.trim();
-        const countryCode = document.getElementById('editCustCountryCode').value;
-        let rawPhone = document.getElementById('editCustPhone').value.trim();
-        const address = document.getElementById('editCustAddress').value.trim();
-
-        if (!name) return;
-
-        rawPhone = rawPhone.replace(/^0+/, '');
-        const fullPhone = rawPhone ? (countryCode + rawPhone) : '';
-
-        const updatedData = {
-            name: name,
-            countryCode: countryCode,
-            phone: fullPhone,
-            rawPhone: rawPhone,
-            address: address
-        };
-
-        await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers/${custId}.json`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedData)
-        });
-
-        editCustomerModal.hide();
-        fetchCustomers();
-    });
-
-    let pressTimer = null;
-    let isLongPress = false;
-
-    function handlePressStart(custId) {
-        isLongPress = false;
-        pressTimer = setTimeout(() => {
-            isLongPress = true;
-            openEditCustomerModal(custId);
-        }, 500);
-    }
-
-    function handlePressEnd() {
-        clearTimeout(pressTimer);
-    }
-
-    function handleAreaClick(custId) {
-        if (!isLongPress) {
-            openReportModal(custId);
+        if (monthsSet.size === 0) {
+          const now = new Date();
+          const year = String(now.getFullYear()).slice(-2);
+          const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          const defaultVal = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+          const defaultLabel = `${monthNames[now.getMonth()]}-${year}`;
+          dropdown.innerHTML = `<option value="${defaultVal}">${defaultLabel}</option>`;
+        } else {
+          Array.from(monthsSet).forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.val;
+            opt.innerText = m.label;
+            dropdown.appendChild(opt);
+          });
+          if (currentVal) dropdown.value = currentVal;
         }
-    }
+      },
 
-    function openWhatsApp(cleanPhone, msgText) {
-        if (!cleanPhone) return;
-        const encodedMsg = encodeURIComponent(msgText);
-        const intentUrl = `intent://send?phone=${cleanPhone}&text=${encodedMsg}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
-        const whatsappSchemeUrl = `whatsapp://send?phone=${cleanPhone}&text=${encodedMsg}`;
-        const webUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
-
-        try {
-            window.location.href = intentUrl;
-        } catch (e) {
-            window.location.href = whatsappSchemeUrl;
-        }
-
-        setTimeout(() => {
-            window.location.href = webUrl;
-        }, 1200);
-    }
-
-    function renderCustomerCards() {
-        const container = document.getElementById('customerCardContainer');
+      renderCustomers() {
+        const container = document.getElementById('customer-list-container');
+        const searchInput = document.getElementById('customer-search');
+        const search = searchInput ? searchInput.value.toLowerCase().trim() : '';
         container.innerHTML = '';
 
-        let grandTotalProvide = 0;
-        let grandTotalGet = 0;
+        let totalPabo = 0;
+        let totalDebo = 0;
 
-        const keys = Object.keys(customersData);
-        if (keys.length === 0) {
-            container.innerHTML = '<div class="text-center text-white-50 py-3">No customers added yet.</div>';
-            return;
+        const customerKeys = Object.keys(this.customers);
+
+        if (customerKeys.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-8 unique-card rounded-2xl border border-dashed border-gray-300">
+              <i class="fas fa-users-slash text-3xl text-gray-300 mb-2"></i>
+              <p class="text-xs text-gray-500">No customers found!</p>
+            </div>`;
+          document.getElementById('total-pabo').innerText = this.formatAmt(0);
+          document.getElementById('total-debo').innerText = this.formatAmt(0);
+          return;
         }
 
-        keys.forEach(key => {
-            const cust = customersData[key];
-            let totalProvide = 0;
-            let totalGet = 0;
+        customerKeys.forEach(id => {
+          const cust = this.customers[id];
+          if (search && !cust.name.toLowerCase().includes(search) && !cust.phone.includes(search)) return;
 
-            if (cust.transactions) {
-                Object.values(cust.transactions).forEach(t => {
-                    if (t.type === 'give' || t.type === 'provide') totalProvide += Number(t.amount);
-                    if (t.type === 'get') totalGet += Number(t.amount);
-                });
+          let balance = 0;
+          Object.values(this.transactions).forEach(tx => {
+            if (tx.customerId === id) {
+              if (tx.type === 'provide') balance += parseFloat(tx.amount || 0);
+              if (tx.type === 'get') balance -= parseFloat(tx.amount || 0);
             }
+          });
 
-            grandTotalProvide += totalProvide;
-            grandTotalGet += totalGet;
+          if (balance > 0) totalPabo += balance;
+          if (balance < 0) totalDebo += Math.abs(balance);
 
-            const balance = totalProvide - totalGet;
-            let balanceText = '';
-            
-            if (balance > 0) {
-                balanceText = `<span class="badge bg-danger ms-2">due ${balance}</span>`;
-            } else if (balance < 0) {
-                balanceText = `<span class="badge bg-success ms-2">advance ${Math.abs(balance)}</span>`;
-            } else {
-                balanceText = `<span class="badge bg-secondary ms-2">due 0</span>`;
-            }
+          const card = document.createElement('div');
+          card.className = "unique-card p-3.5 rounded-2xl flex items-center justify-between select-none";
 
-            let cleanPhone = cust.phone ? cust.phone.replace(/[^0-9]/g, '') : '';
-            
-            // Shop Name & Due Amount Bold formatting
-            let msgText = `Welcome to *Shop* (${currentUserName}), your total due balance is *BDT ${balance}*. Please clear this amount at your earliest convenience. Thank you!`;
-            let waMsg = encodeURIComponent(msgText);
+          let pressTimer;
+          card.onmousedown = () => { pressTimer = setTimeout(() => app.openLongPressModal(id), 600); };
+          card.onmouseup = () => clearTimeout(pressTimer);
+          card.ontouchstart = () => { pressTimer = setTimeout(() => app.openLongPressModal(id), 600); };
+          card.ontouchend = () => clearTimeout(pressTimer);
 
-            let smsMsgText = `Welcome to Shop (${currentUserName}), your total due balance is BDT ${balance}. Please clear this amount at your earliest convenience. Thank you!`;
-            let smsLink = cleanPhone ? `sms:+${cleanPhone}?body=${encodeURIComponent(smsMsgText)}` : `#`;
+          card.innerHTML = `
+            <div class="flex items-center space-x-2 cursor-pointer flex-1 truncate" onclick="app.openCustomerDetail('${id}')">
+              <h4 class="font-bold text-xs text-gray-800 truncate">${cust.name}</h4>
+              <span class="text-[11px] font-black whitespace-nowrap ${balance >= 0 ? 'text-red-600' : 'text-emerald-600'}">
+                ${this.formatAmt(Math.abs(balance))} (${balance >= 0 ? 'Get' : 'Provide'})
+              </span>
+            </div>
 
-            let waButton = cleanPhone ? 
-                `<button class="btn btn-sm btn-success text-white me-1" onclick="openWhatsApp('${cleanPhone}', \`${msgText}\`)" title="Open WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>` :
-                `<button class="btn btn-sm btn-secondary text-white me-1" disabled><i class="fa-brands fa-whatsapp"></i></button>`;
-
-            let smsButton = cleanPhone ? 
-                `<a href="${smsLink}" class="btn btn-sm btn-info text-dark me-1" title="Send Native SIM SMS"><i class="fa-solid fa-comment-sms"></i></a>` :
-                `<button class="btn btn-sm btn-secondary text-white me-1" disabled><i class="fa-solid fa-comment-sms"></i></button>`;
-
-            container.innerHTML += `
-                <div class="customer-card">
-                    <div class="customer-click-area d-flex align-items-center" 
-                         onmousedown="handlePressStart('${key}')" 
-                         onmouseup="handlePressEnd()" 
-                         onmouseleave="handlePressEnd()"
-                         ontouchstart="handlePressStart('${key}')" 
-                         ontouchend="handlePressEnd()"
-                         onclick="handleAreaClick('${key}')">
-                        <p class="customer-name" title="Click for report | Hold to edit">${cust.name}</p>
-                        ${balanceText}
-                    </div>
-                    <div class="d-flex align-items-center">
-                        ${waButton}
-                        ${smsButton}
-                        <button class="btn btn-sm btn-warning fw-bold text-dark" onclick="openTransModal('${key}', '${cust.name}')">+ Entry</button>
-                    </div>
-                </div>
-            `;
+            <div class="flex items-center space-x-1.5 flex-shrink-0 ml-2">
+              <button onclick="event.stopPropagation(); app.openCustomerDetail('${id}')" class="w-7 h-7 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-100 transition shadow-sm" title="Report">
+                <i class="fas fa-file-invoice text-[10px]"></i>
+              </button>
+              <a href="https://wa.me/88${cust.phone}" target="_blank" onclick="event.stopPropagation()" class="w-7 h-7 bg-green-100 text-green-600 rounded-full flex items-center justify-center hover:bg-green-200 transition shadow-sm" title="WhatsApp">
+                <i class="fab fa-whatsapp text-xs"></i>
+              </a>
+              <a href="sms:${cust.phone}" onclick="event.stopPropagation()" class="w-7 h-7 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-200 transition shadow-sm" title="Message">
+                <i class="fas fa-comment-alt text-[10px]"></i>
+              </a>
+              <a href="tel:${cust.phone}" onclick="event.stopPropagation()" class="w-7 h-7 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center hover:bg-emerald-200 transition shadow-sm" title="Call">
+                <i class="fas fa-phone-alt text-[10px]"></i>
+              </a>
+              <button onclick="event.stopPropagation(); app.openTransactionModalDirect('${id}')" class="w-7 h-7 bg-amber-500 text-white rounded-full flex items-center justify-center hover:bg-amber-600 transition shadow-sm" title="New Entry">
+                <i class="fas fa-plus text-xs"></i>
+              </button>
+            </div>
+          `;
+          container.appendChild(card);
         });
 
-        document.getElementById('totalProvide').innerText = `BDT ${grandTotalProvide}`;
-        document.getElementById('totalGet').innerText = `BDT ${grandTotalGet}`;
-        
-        const net = grandTotalProvide - grandTotalGet;
-        const netElem = document.getElementById('netBalance');
-        netElem.innerText = `BDT ${net}`;
-        
-        if (net !== 0) {
-            netElem.className = 'color-net-red m-0 mt-1';
-        } else {
-            netElem.className = 'color-net-green m-0 mt-1';
-        }
-    }
+        document.getElementById('total-pabo').innerText = this.formatAmt(totalPabo);
+        document.getElementById('total-debo').innerText = this.formatAmt(totalDebo);
+      },
 
-    function openReportModal(custId) {
-        const cust = customersData[custId];
+      openLongPressModal(custId) {
+        this.longPressTargetId = custId;
+        this.openModal('modal-longpress');
+      },
+
+      editCustomerFromLongPress() {
+        this.closeModal('modal-longpress');
+        this.openCustomerModal(this.longPressTargetId);
+      },
+
+      async deleteCustomerFromLongPress() {
+        this.closeModal('modal-longpress');
+        if (!confirm("Are you sure you want to delete this customer and all their transactions?")) return;
+        try {
+          await remove(ref(db, `tally/customers/${this.longPressTargetId}`));
+          
+          const txUpdates = {};
+          Object.entries(this.transactions).forEach(([txId, tx]) => {
+            if (tx.customerId === this.longPressTargetId) {
+              txUpdates[`tally/transactions/${txId}`] = null;
+            }
+          });
+          if (Object.keys(txUpdates).length > 0) {
+            await set(ref(db), txUpdates);
+          }
+
+          this.fetchData();
+        } catch(err) {
+          alert("Failed to delete customer: " + err.message);
+        }
+      },
+
+      openCustomerModal(editId = null) {
+        document.getElementById('cust-edit-id').value = editId || '';
+        if (editId) {
+          document.getElementById('customer-modal-title').innerText = "Edit Customer";
+          const cust = this.customers[editId];
+          document.getElementById('cust-name').value = cust.name;
+          document.getElementById('cust-phone').value = cust.phone;
+          document.getElementById('cust-address').value = cust.address || '';
+        } else {
+          document.getElementById('customer-modal-title').innerText = "Add Customer";
+          document.getElementById('cust-name').value = '';
+          document.getElementById('cust-phone').value = '';
+          document.getElementById('cust-address').value = '';
+        }
+        this.openModal('modal-customer');
+      },
+
+      async handleSaveCustomer(e) {
+        e.preventDefault();
+        const editId = document.getElementById('cust-edit-id').value;
+        const name = document.getElementById('cust-name').value.trim();
+        const phone = document.getElementById('cust-phone').value.trim();
+        const address = document.getElementById('cust-address').value.trim();
+
+        try {
+          const custId = editId || ('cust_' + Date.now());
+          const custRef = ref(db, `tally/customers/${custId}`);
+          
+          await set(custRef, {
+            name, phone, address,
+            createdAt: editId ? (this.customers[editId].createdAt || new Date().toISOString()) : new Date().toISOString()
+          });
+
+          this.closeModal('modal-customer');
+          this.fetchData();
+          if (editId && this.selectedCustomerId === editId) {
+            this.openCustomerDetail(editId);
+          }
+        } catch (err) {
+          alert("Failed to save customer: " + err.message);
+        }
+      },
+
+      openCustomerDetail(id) {
+        this.selectedCustomerId = id;
+        this.switchTab('detail');
+        this.renderCustomerDetail(id);
+      },
+
+      renderCustomerDetail(id) {
+        const cust = this.customers[id];
         if (!cust) return;
 
-        document.getElementById('reportModalTitle').innerText = `📊 Statement: ${cust.name}`;
-        document.getElementById('rptCustPhone').innerText = cust.phone ? '+' + cust.phone : 'No phone number provided';
-        document.getElementById('rptCustAddress').innerText = cust.address || 'No address provided';
+        document.getElementById('detail-customer-name').innerText = cust.name;
+        document.getElementById('detail-customer-phone').innerText = cust.phone;
+        document.getElementById('detail-customer-address').innerText = cust.address || 'No address provided';
 
-        const tbody = document.getElementById('reportTableBody');
-        tbody.innerHTML = '';
+        const tableBody = document.getElementById('detail-transactions-table-body');
+        tableBody.innerHTML = '';
+
+        let balance = 0;
+        const txList = Object.entries(this.transactions)
+          .filter(([_, tx]) => tx.customerId === id)
+          .sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
+
+        if (txList.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 border border-black">No transaction records found</td></tr>`;
+        } else {
+          txList.forEach(([txId, tx]) => {
+            const amt = parseFloat(tx.amount || 0);
+            const isProvide = tx.type === 'provide';
+            const isGet = tx.type === 'get';
+
+            if (isProvide) balance += amt;
+            if (isGet) balance -= amt;
+
+            const d = new Date(tx.date);
+            const dateStr = !isNaN(d) ? `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}` : tx.date;
+
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-black text-black";
+            tr.innerHTML = `
+              <td class="p-2 border border-black font-mono text-[11px] whitespace-nowrap text-blue-700 underline">${dateStr}</td>
+              <td class="p-2 border border-black text-right font-bold whitespace-nowrap text-blue-700">${isGet ? this.formatAmt(amt) : ''}</td>
+              <td class="p-2 border border-black text-right font-bold whitespace-nowrap text-blue-700">${isProvide ? this.formatAmt(amt) : ''}</td>
+              <td class="p-2 border border-black text-blue-800 underline font-sans">${tx.note || '--'}</td>
+              <td class="p-2 border border-black text-center whitespace-nowrap">
+                <button onclick="app.openTransactionModal('${tx.type}', '${txId}')" class="text-blue-600 hover:text-blue-800 mr-1"><i class="fas fa-edit text-xs"></i></button>
+                <button onclick="app.deleteTransaction('${txId}')" class="text-red-600 hover:text-red-800"><i class="fas fa-trash text-xs"></i></button>
+              </td>
+            `;
+            tableBody.appendChild(tr);
+          });
+        }
+
+        const balDisplay = document.getElementById('detail-customer-balance');
+        balDisplay.innerText = this.formatAmt(Math.abs(balance));
+        balDisplay.className = `text-base font-black ${balance >= 0 ? 'text-red-600' : 'text-emerald-600'}`;
+      },
+
+      openTransactionModalDirect(custId) {
+        this.selectedCustomerId = custId;
+        this.openTransactionModal('provide');
+      },
+
+      handleTransactionTypeChange() {
+        const type = document.getElementById('tx-type').value;
+        const container = document.getElementById('tx-desc-container');
+        
+        if (type === 'get') {
+          container.innerHTML = `
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Description (Medium) *</label>
+            <select id="tx-note" required class="w-full px-3 py-2 border rounded-xl text-xs font-semibold bg-white">
+              <option value="Hand Cash">Hand Cash</option>
+              <option value="Mobile">Mobile</option>
+              <option value="Bank">Bank</option>
+            </select>
+          `;
+        } else {
+          container.innerHTML = `
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Note / Description (Optional)</label>
+            <input type="text" id="tx-note" placeholder="e.g. pototo / hand cash" class="w-full px-3 py-2 border rounded-xl text-xs">
+          `;
+        }
+      },
+
+      openTransactionModal(type, editTxId = null) {
+        document.getElementById('tx-type').value = type || 'provide';
+        document.getElementById('tx-edit-id').value = editTxId || '';
+        
+        const title = document.getElementById('tx-modal-title');
+        this.handleTransactionTypeChange();
+
+        if (editTxId) {
+          const tx = this.transactions[editTxId];
+          title.innerText = "Edit Transaction";
+          document.getElementById('tx-type').value = tx.type;
+          this.handleTransactionTypeChange();
+          document.getElementById('tx-date').value = tx.date;
+          document.getElementById('tx-amount').value = tx.amount;
+          document.getElementById('tx-note').value = tx.note || '';
+        } else {
+          title.innerText = "New Transaction Entry";
+          document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+          document.getElementById('tx-amount').value = '';
+        }
+
+        this.openModal('modal-transaction');
+      },
+
+      async handleSaveTransaction(e) {
+        e.preventDefault();
+        const editTxId = document.getElementById('tx-edit-id').value;
+        const type = document.getElementById('tx-type').value;
+        const date = document.getElementById('tx-date').value;
+        const amount = parseFloat(document.getElementById('tx-amount').value);
+        const note = document.getElementById('tx-note').value.trim();
+
+        if (!this.selectedCustomerId) {
+          return alert("Please select a customer first!");
+        }
+
+        try {
+          const txId = editTxId || ('tx_' + Date.now());
+          const txRef = ref(db, `tally/transactions/${txId}`);
+
+          await set(txRef, {
+            customerId: this.selectedCustomerId,
+            type, date, amount, note,
+            createdAt: editTxId ? (this.transactions[editTxId].createdAt || new Date().toISOString()) : new Date().toISOString()
+          });
+
+          this.closeModal('modal-transaction');
+          this.fetchData();
+          if (this.selectedCustomerId) {
+            this.renderCustomerDetail(this.selectedCustomerId);
+          }
+        } catch (err) {
+          alert("Failed to save transaction: " + err.message);
+        }
+      },
+
+      async deleteTransaction(txId) {
+        if (!confirm("Are you sure you want to delete this transaction?")) return;
+        try {
+          await remove(ref(db, `tally/transactions/${txId}`));
+          this.fetchData();
+          if (this.selectedCustomerId) {
+            this.renderCustomerDetail(this.selectedCustomerId);
+          }
+        } catch(err) {
+          alert("Failed to delete transaction: " + err.message);
+        }
+      },
+
+      renderReports() {
+        const dropdown = document.getElementById('report-month-dropdown');
+        const pickerVal = dropdown.value;
+        if (!pickerVal) return;
 
         let totalProvide = 0;
         let totalGet = 0;
 
-        if (cust.transactions) {
-            const transList = Object.values(cust.transactions);
+        const tableBody = document.getElementById('report-table-body');
+        tableBody.innerHTML = '';
+
+        const monthlyTx = Object.entries(this.transactions).filter(([_, tx]) => tx.date && tx.date.startsWith(pickerVal));
+
+        if (monthlyTx.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 border border-black">No transactions found in this month</td></tr>`;
+        } else {
+          monthlyTx.sort((a, b) => new Date(b[1].date) - new Date(a[1].date)).forEach(([_, tx]) => {
+            const amt = parseFloat(tx.amount || 0);
+
+            const isGet = tx.type === 'get';
+            const isProvide = tx.type === 'provide';
+
+            if (isProvide) totalProvide += amt;
+            if (isGet) totalGet += amt;
+
+            const d = new Date(tx.date);
+            const dateStr = !isNaN(d) ? `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}` : tx.date;
             
-            if (transList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>`;
-            } else {
-                transList.forEach((t, index) => {
-                    let provideAmt = (t.type === 'give' || t.type === 'provide') ? Number(t.amount) : 0;
-                    let getAmt = t.type === 'get' ? Number(t.amount) : 0;
+            const custObj = this.customers[tx.customerId];
+            const custName = custObj ? custObj.name : 'Unknown';
 
-                    totalProvide += provideAmt;
-                    totalGet += getAmt;
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${t.date || 'N/A'}</td>
-                            <td>${t.note || '-'}</td>
-                            <td class="${provideAmt > 0 ? 'text-provide-dark' : ''}">${provideAmt > 0 ? 'BDT ' + provideAmt : '-'}</td>
-                            <td class="${getAmt > 0 ? 'text-get-dark' : ''}">${getAmt > 0 ? 'BDT ' + getAmt : '-'}</td>
-                        </tr>
-                    `;
-                });
-            }
-        } else {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No transactions recorded yet.</td></tr>`;
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-black text-black";
+            tr.innerHTML = `
+              <td class="p-2 border border-black font-mono text-[11px] whitespace-nowrap text-blue-700 underline">${dateStr}</td>
+              <td class="p-2 border border-black font-semibold text-gray-800 whitespace-nowrap">${custName}</td>
+              <td class="p-2 border border-black text-right font-bold whitespace-nowrap text-blue-700">${isGet ? this.formatAmt(amt) : ''}</td>
+              <td class="p-2 border border-black text-right font-bold whitespace-nowrap text-blue-700">${isProvide ? this.formatAmt(amt) : ''}</td>
+              <td class="p-2 border border-black text-blue-800 underline font-sans">${tx.note || '--'}</td>
+            `;
+            tableBody.appendChild(tr);
+          });
         }
 
-        document.getElementById('rptTotalProvide').innerText = `BDT ${totalProvide}`;
-        document.getElementById('rptTotalGet').innerText = `BDT ${totalGet}`;
-        
-        const balance = totalProvide - totalGet;
-        const rptNetElem = document.getElementById('rptNetBalance');
-        rptNetElem.innerText = `BDT ${balance}`;
-        if (balance !== 0) {
-            rptNetElem.className = 'text-danger fw-bold';
-        } else {
-            rptNetElem.className = 'text-success fw-bold';
+        document.getElementById('table-footer-get').innerText = this.formatAmt(totalGet);
+        document.getElementById('table-footer-provide').innerText = this.formatAmt(totalProvide);
+        document.getElementById('header-subtotal-get').innerText = this.formatAmt(totalGet);
+        document.getElementById('header-subtotal-provide').innerText = this.formatAmt(totalProvide);
+      },
+
+      switchTab(tab) {
+        document.getElementById('tab-customers').classList.add('hidden');
+        document.getElementById('tab-reports').classList.add('hidden');
+        document.getElementById('tab-detail').classList.add('hidden');
+
+        if (tab === 'customers') {
+          document.getElementById('tab-customers').classList.remove('hidden');
+          const searchInput = document.getElementById('customer-search');
+          if (searchInput) searchInput.value = ''; // Search box clear kore dewa holo
+          this.renderCustomers();
+        } else if (tab === 'reports') {
+          document.getElementById('tab-reports').classList.remove('hidden');
+          this.populateMonthDropdown();
+          this.renderReports();
+        } else if (tab === 'detail') {
+          document.getElementById('tab-detail').classList.remove('hidden');
         }
+      },
 
-        reportModal.show();
-    }
+      openModal(id) { document.getElementById(id).classList.remove('hidden'); },
+      closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    };
 
-    function openDayReportModal() {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('dayReportDate').value = today;
-        renderDayReport();
-        dayReportModal.show();
-    }
-
-    function renderDayReport() {
-        const selectedDate = document.getElementById('dayReportDate').value;
-        const tbody = document.getElementById('dayReportTableBody');
-        tbody.innerHTML = '';
-
-        let dayProvide = 0;
-        let dayGet = 0;
-        let counter = 0;
-
-        const custKeys = Object.keys(customersData);
-
-        custKeys.forEach(key => {
-            const cust = customersData[key];
-            if (cust.transactions) {
-                Object.values(cust.transactions).forEach(t => {
-                    if (t.date === selectedDate) {
-                        counter++;
-                        let isProvide = (t.type === 'give' || t.type === 'provide');
-                        let amt = Number(t.amount);
-
-                        if (isProvide) dayProvide += amt;
-                        if (t.type === 'get') dayGet += amt;
-
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${counter}</td>
-                                <td><strong>${cust.name}</strong></td>
-                                <td>${isProvide ? '<span class="badge bg-primary">Provide</span>' : '<span class="badge bg-success">Get</span>'}</td>
-                                <td>${t.note || '-'}</td>
-                                <td class="fw-bold">BDT ${amt}</td>
-                            </tr>
-                        `;
-                    }
-                });
-            }
-        });
-
-        if (counter === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">No transactions found for ${selectedDate}.</td></tr>`;
-        }
-
-        document.getElementById('dayTotalProvide').innerText = `BDT ${dayProvide}`;
-        document.getElementById('dayTotalGet').innerText = `BDT ${dayGet}`;
-        
-        const dayNet = dayProvide - dayGet;
-        const dayNetElem = document.getElementById('dayNetBalance');
-        dayNetElem.innerText = `BDT ${dayNet}`;
-        if (dayNet !== 0) {
-            dayNetElem.className = 'text-danger fw-bold';
-        } else {
-            dayNetElem.className = 'text-success fw-bold';
-        }
-    }
-
-    function openTransModal(custId, custName) {
-        document.getElementById('modalCustId').value = custId;
-        document.getElementById('transModalTitle').innerText = `${custName} - Add Transaction`;
-        
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('transDate').value = today;
-
-        transModal.show();
-    }
-
-    document.getElementById('transForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const custId = document.getElementById('modalCustId').value;
-        const transDate = document.getElementById('transDate').value;
-        const type = document.getElementById('transType').value;
-        const amount = document.getElementById('transAmount').value;
-        const note = document.getElementById('transNote').value;
-
-        const transaction = {
-            type: type,
-            amount: amount,
-            note: note,
-            date: transDate
-        };
-
-        await fetch(`${FIREBASE_URL}/${currentUserKey}/tally_customers/${custId}/transactions.json`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(transaction)
-        });
-
-        document.getElementById('transForm').reset();
-        transModal.hide();
-        fetchCustomers();
-    });
-</script>
-
+    window.app.init();
+  </script>
 </body>
 </html>
