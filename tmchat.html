@@ -80,7 +80,10 @@
         .msg-action-menu button,.friend-action-menu button { padding:8px 10px; border-radius:8px; background:#111b21; color:#e9edef; font-size:12px; }
         .friend-action-menu { position:fixed; z-index:12000; background:#202c33; border:1px solid #00a884; border-radius:12px; padding:6px; box-shadow:0 8px 24px #0009; display:grid; gap:5px; }
         #message-input { resize:none; min-height:38px; max-height:110px; line-height:18px; overflow-y:hidden; align-self:flex-end; }
-        #active-chat-screen { min-height:0; }
+        #active-chat-screen { min-height:0; height:100dvh; }
+        #chat-composer { padding-bottom:max(8px, env(safe-area-inset-bottom)); }
+        #message-input { color:#f8fafc !important; caret-color:#00a884; -webkit-text-fill-color:#f8fafc; font-size:16px !important; line-height:21px; min-height:42px; max-height:110px; }
+        #message-input::placeholder { color:#8696a0; opacity:1; }
         .reply-preview { display:none; padding:5px 9px; margin:0 8px 4px; border-left:3px solid #00a884; background:#202c33; border-radius:6px; font-size:11px; }
     </style>
 </head>
@@ -228,7 +231,7 @@
             </div>
 
             <div id="reply-preview" class="reply-preview"></div>
-            <div class="bg-wa-panel p-2 flex items-center gap-2 border-t border-wa-border shrink-0 mb-1">
+            <div id="chat-composer" class="bg-wa-panel p-2 flex items-center gap-2 border-t border-wa-border shrink-0">
                 <input type="file" id="attachment-input" class="hidden" onchange="handleAttachment(event)">
                 <button onclick="document.getElementById('attachment-input').click()" class="text-wa-subtext text-lg p-2 hover:text-wa-text"><i class="fa-solid fa-paperclip"></i></button>
                 <textarea id="message-input" rows="1" oninput="autoResizeMessageInput(this)" onkeydown="handleMessageInputKeydown(event)" placeholder="Type a message..." class="flex-1 bg-wa-dark text-wa-text px-3 py-2.5 rounded-xl text-xs border border-wa-border focus:outline-none focus:border-wa-green"></textarea>
@@ -617,17 +620,23 @@
             }
         }
         function keepComposerAboveKeyboard() {
-            const app = document.getElementById('app-container');
-            if (!app) return;
             const vv = window.visualViewport;
-            if (vv && document.activeElement && document.activeElement.id === 'message-input') {
-                app.style.height = Math.max(180, vv.height) + 'px';
-                app.style.top = vv.offsetTop + 'px';
-                app.style.bottom = 'auto';
-            } else {
-                app.style.height = '100dvh';
-                app.style.top = '0px';
-                app.style.bottom = 'auto';
+            const chat = document.getElementById('active-chat-screen');
+            const input = document.getElementById('message-input');
+            const focused = input && document.activeElement === input;
+            if (chat && vv && focused) {
+                chat.style.position = 'fixed';
+                chat.style.top = Math.max(0, vv.offsetTop) + 'px';
+                chat.style.height = Math.max(180, vv.height) + 'px';
+                chat.style.bottom = 'auto';
+                chat.style.maxHeight = Math.max(180, vv.height) + 'px';
+                requestAnimationFrame(() => {
+                    const box = document.getElementById('messages-box');
+                    if (box) box.scrollTop = box.scrollHeight;
+                    input.scrollIntoView({block:'nearest', behavior:'auto'});
+                });
+            } else if (chat) {
+                chat.style.top = '0px'; chat.style.height = '100dvh'; chat.style.maxHeight = '100dvh'; chat.style.bottom = 'auto';
             }
         }
         if (window.visualViewport) {
@@ -635,6 +644,8 @@
             window.visualViewport.addEventListener('scroll', keepComposerAboveKeyboard);
         }
         window.addEventListener('resize', keepComposerAboveKeyboard);
+        document.addEventListener('focusin', e => { if(e.target && e.target.id==='message-input') setTimeout(keepComposerAboveKeyboard,80); });
+        document.addEventListener('focusout', e => { if(e.target && e.target.id==='message-input') setTimeout(keepComposerAboveKeyboard,180); });
 
         function sendMessage() {
             const input=document.getElementById('message-input'); const text=input.value.trim(); if(!text||!activeChatId)return;
@@ -897,12 +908,18 @@
 
         let ringtoneContext = null;
         let ringtoneTimer = null;
+        let ringtoneUnlocked = false;
+        function unlockRingtoneAudio() {
+            try { const Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx)return; if(!ringtoneContext||ringtoneContext.state==='closed') ringtoneContext=new Ctx(); ringtoneContext.resume().then(()=>{ringtoneUnlocked=true;}).catch(()=>{}); } catch(e){}
+        }
+        document.addEventListener('pointerdown', unlockRingtoneAudio, {once:true, passive:true});
+        document.addEventListener('touchstart', unlockRingtoneAudio, {once:true, passive:true});
         function startIncomingRingtone() {
             stopIncomingRingtone();
             try {
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 if (!AudioCtx) return;
-                ringtoneContext = new AudioCtx();
+                if (!ringtoneContext || ringtoneContext.state === 'closed') ringtoneContext = new AudioCtx();
                 const ringOnce = () => {
                     if (!ringtoneContext || ringtoneContext.state === 'closed') return;
                     [880, 660].forEach((frequency, index) => {
@@ -917,7 +934,7 @@
                         osc.stop(ringtoneContext.currentTime + index * 0.22 + 0.2);
                     });
                 };
-                ringtoneContext.resume().then(() => { ringOnce(); ringtoneTimer = setInterval(ringOnce, 1500); }).catch(() => {});
+                ringtoneContext.resume().then(() => { ringtoneUnlocked=true; ringOnce(); ringtoneTimer = setInterval(ringOnce, 1500); }).catch(() => { console.warn('Ringtone blocked until the user interacts with the page.'); });
             } catch (e) { console.warn('Ringtone unavailable:', e); }
         }
         function stopIncomingRingtone() {
