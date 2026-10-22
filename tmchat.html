@@ -342,7 +342,7 @@
                 listenGlobalCalls();
             } else {
                 currentUser = null;
-                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('main-header').classList.add('hidden');
                 document.getElementById('main-views').classList.add('hidden');
             }
@@ -558,7 +558,7 @@
             reader.readAsDataURL(file);
         }
 
-        // ================= WEBRTC & SAFE NULL-GUARDED MEDIA =================
+        // ================= WEBRTC & ROBUST SAFE MEDIA ACCESS =================
 
         function createPeerConnection(chatId) {
             if (peerConnection) {
@@ -582,6 +582,24 @@
             listenForCallDisconnection(chatId);
         }
 
+        async function acquireMediaStream(type) {
+            try {
+                // Try requesting video and audio
+                return await navigator.mediaDevices.getUserMedia({ 
+                    video: type === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false, 
+                    audio: true 
+                });
+            } catch (err) {
+                console.warn("Video/Audio failed, falling back to audio-only...", err);
+                try {
+                    // Fallback to audio only if camera is blocked/unavailable
+                    return await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+                } catch (audioErr) {
+                    throw new Error("Microphone permission denied or device not found.");
+                }
+            }
+        }
+
         async function startCall(type) {
             if(!activeChatId) return;
             
@@ -597,12 +615,7 @@
             }
 
             try {
-                const constraints = { 
-                    video: type === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false, 
-                    audio: true 
-                };
-
-                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                localStream = await acquireMediaStream(type);
                 const localVid = document.getElementById('local-video');
                 if (localVid) localVid.srcObject = localStream;
 
@@ -653,7 +666,7 @@
                 });
 
             } catch(err) {
-                alert("Camera or Microphone permission denied or not available. Please allow permissions in browser settings.");
+                alert("Microphone/Camera permission is required to make calls. Please check browser settings.");
                 closeCallUI();
             }
         }
@@ -700,12 +713,7 @@
             }
 
             try {
-                const constraints = { 
-                    video: data.mediaType === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false, 
-                    audio: true 
-                };
-
-                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                localStream = await acquireMediaStream(data.mediaType);
                 const localVid = document.getElementById('local-video');
                 if (localVid) localVid.srcObject = localStream;
 
@@ -736,7 +744,7 @@
                 document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
 
             } catch(err) {
-                alert("Camera or Microphone permission error: " + err.message);
+                alert("Microphone/Camera permission error: " + err.message);
                 closeCallUI();
             }
         }
@@ -872,11 +880,11 @@
             if(icon) icon.className = "fa-solid fa-desktop";
 
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localStream = await acquireMediaStream('video');
                 const localVid = document.getElementById('local-video');
                 if(localVid) localVid.srcObject = localStream;
                 const videoTrack = localStream.getVideoTracks()[0];
-                if (peerConnection) {
+                if (peerConnection && videoTrack) {
                     const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
                     if (sender) sender.replaceTrack(videoTrack);
                 }
