@@ -79,6 +79,8 @@
         .msg-action-menu { position:fixed; z-index:12000; background:#202c33; border:1px solid #00a884; border-radius:12px; padding:6px; box-shadow:0 8px 24px #0009; display:flex; gap:6px; }
         .msg-action-menu button,.friend-action-menu button { padding:8px 10px; border-radius:8px; background:#111b21; color:#e9edef; font-size:12px; }
         .friend-action-menu { position:fixed; z-index:12000; background:#202c33; border:1px solid #00a884; border-radius:12px; padding:6px; box-shadow:0 8px 24px #0009; display:grid; gap:5px; }
+        #message-input { resize:none; min-height:38px; max-height:110px; line-height:18px; overflow-y:hidden; align-self:flex-end; }
+        #active-chat-screen { min-height:0; }
         .reply-preview { display:none; padding:5px 9px; margin:0 8px 4px; border-left:3px solid #00a884; background:#202c33; border-radius:6px; font-size:11px; }
     </style>
 </head>
@@ -229,7 +231,7 @@
             <div class="bg-wa-panel p-2 flex items-center gap-2 border-t border-wa-border shrink-0 mb-1">
                 <input type="file" id="attachment-input" class="hidden" onchange="handleAttachment(event)">
                 <button onclick="document.getElementById('attachment-input').click()" class="text-wa-subtext text-lg p-2 hover:text-wa-text"><i class="fa-solid fa-paperclip"></i></button>
-                <input type="text" id="message-input" onkeydown="if(event.key==='Enter') sendMessage()" placeholder="Type a message..." class="flex-1 bg-wa-dark text-wa-text px-3 py-2.5 rounded-xl text-xs border border-wa-border focus:outline-none focus:border-wa-green">
+                <textarea id="message-input" rows="1" oninput="autoResizeMessageInput(this)" onkeydown="handleMessageInputKeydown(event)" placeholder="Type a message..." class="flex-1 bg-wa-dark text-wa-text px-3 py-2.5 rounded-xl text-xs border border-wa-border focus:outline-none focus:border-wa-green"></textarea>
                 <button onclick="sendMessage()" class="bg-wa-green text-white w-10 h-10 rounded-full flex items-center justify-center text-xs shadow active:scale-95 transition shrink-0"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
@@ -598,11 +600,47 @@
             document.body.appendChild(m);m.style.left=Math.max(8,Math.min(x,innerWidth-220))+'px';m.style.top=Math.max(8,Math.min(y,innerHeight-70))+'px';setTimeout(()=>document.addEventListener('click',()=>m.remove(),{once:true}),0);
         }
         function closeChatScreen() { if(messageListenerRef){messageListenerRef.off();messageListenerRef=null;} document.getElementById('active-chat-screen').classList.add('hidden'); activeChatId = null; }
+        function autoResizeMessageInput(input) {
+            if (!input) return;
+            input.style.height = 'auto';
+            const style = getComputedStyle(input);
+            const lineHeight = parseFloat(style.lineHeight) || 18;
+            const maxHeight = lineHeight * 5 + 20;
+            input.style.height = Math.min(input.scrollHeight, maxHeight) + 'px';
+            input.style.overflowY = input.scrollHeight > maxHeight ? 'auto' : 'hidden';
+            keepComposerAboveKeyboard();
+        }
+        function handleMessageInputKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        function keepComposerAboveKeyboard() {
+            const app = document.getElementById('app-container');
+            if (!app) return;
+            const vv = window.visualViewport;
+            if (vv && document.activeElement && document.activeElement.id === 'message-input') {
+                app.style.height = Math.max(180, vv.height) + 'px';
+                app.style.top = vv.offsetTop + 'px';
+                app.style.bottom = 'auto';
+            } else {
+                app.style.height = '100dvh';
+                app.style.top = '0px';
+                app.style.bottom = 'auto';
+            }
+        }
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', keepComposerAboveKeyboard);
+            window.visualViewport.addEventListener('scroll', keepComposerAboveKeyboard);
+        }
+        window.addEventListener('resize', keepComposerAboveKeyboard);
+
         function sendMessage() {
             const input=document.getElementById('message-input'); const text=input.value.trim(); if(!text||!activeChatId)return;
             const msgData={sender:currentUser.uid,text,timestamp:Date.now()}; if(replyToMessage){msgData.replyTo=replyToMessage.key;msgData.replyText=replyToMessage.text;}
             db.ref('chats/'+activeChatId+'/messages').push(msgData).catch(e=>alert('Message failed: '+e.message));
-            db.ref('chats/'+activeChatId).update({lastMessage:text,lastTime:Date.now()}); input.value='';replyToMessage=null;const p=document.getElementById('reply-preview');if(p){p.style.display='none';p.textContent='';}
+            db.ref('chats/'+activeChatId).update({lastMessage:text,lastTime:Date.now()}); input.value='';input.style.height='auto';input.style.overflowY='hidden';replyToMessage=null;const p=document.getElementById('reply-preview');if(p){p.style.display='none';p.textContent='';}
         }
 
         function handleAttachment(e) {
@@ -664,6 +702,8 @@
 
                 remoteVid.srcObject = stream;
                 pipVid.srcObject = stream;
+                remoteVid.autoplay = true; remoteVid.playsInline = true;
+                pipVid.autoplay = true; pipVid.playsInline = true;
                 const pipLocal = document.getElementById('pip-local-video');
                 if (pipLocal && localStream && pipLocal.srcObject !== localStream) pipLocal.srcObject = localStream;
                 remoteVid.play().catch(() => {});
@@ -772,6 +812,7 @@
                     }
                     return;
                 }
+                if (data.status === 'accepted') stopIncomingRingtone();
                 if (data.status === 'accepted' && data.answer && callRole === 'caller' &&
                     peerConnection && !peerConnection.currentRemoteDescription) {
                     setRemoteDescriptionAndFlush(data.answer).then(() => setCallStatus('Connecting...'))
@@ -897,11 +938,12 @@
 
                     getCallRef(chatId).on('value', callSnap => {
                         const data = callSnap.val();
-                        if (!data || data.status === 'ended' || data.status === 'rejected') {
+                        if (!data || data.status === 'ended' || data.status === 'rejected' || data.status === 'accepted') {
                             if (incomingCallData && incomingCallData.chatId === chatId) {
                                 document.getElementById('incoming-call-modal').classList.add('hidden');
                                 incomingCallData = null;
                             }
+                            stopIncomingRingtone();
                             return;
                         }
                         if (data.type === 'offer' && data.caller !== currentUser.uid && data.status === 'ringing') {
@@ -1019,7 +1061,7 @@
                 displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false });
                 const displayTrack = displayStream.getVideoTracks()[0];
                 if (!displayTrack) { displayStream = null; return; }
-                screenShareSender = videoSender || peerConnection.getSenders().find(sender => sender.track && sender.track.kind === 'video');
+                screenShareSender = videoSender || peerConnection.getSenders().find(sender => sender.track && sender.track.kind === 'video') || peerConnection.getTransceivers().map(t => t.sender).find(sender => sender && sender.track && sender.track.kind === 'video');
                 if (!screenShareSender) {
                     // An audio-only call has no negotiated video m-line; addTrack would require renegotiation.
                     displayStream.getTracks().forEach(t => t.stop()); displayStream = null;
@@ -1027,12 +1069,23 @@
                     return;
                 }
                 await screenShareSender.replaceTrack(displayTrack);
+                // Keep the selected screen stream playing locally and force both remote video surfaces
+                // to resume playback when the peer receives the replacement video track.
+                displayTrack.contentHint = 'motion';
+                displayTrack.enabled = true;
                 // Show the shared desktop locally; the other person sees it in the main video area.
                 const localVideo = document.getElementById('local-video');
                 localVideo.srcObject = displayStream;
                 localVideo.classList.remove('hidden');
                 localVideo.play().catch(() => {});
                 displayTrack.addEventListener('ended', () => { if (displayStream) stopScreenShare(); }, { once: true });
+                // Nudge remote playback on the next media frame after sender replacement.
+                setTimeout(() => {
+                    const remote = document.getElementById('remote-video');
+                    const pipRemote = document.getElementById('pip-remote-video');
+                    if (remote && remote.srcObject) remote.play().catch(() => {});
+                    if (pipRemote && pipRemote.srcObject) pipRemote.play().catch(() => {});
+                }, 250);
                 updateShareButtons(true);
                 setCallStatus('Sharing screen');
             } catch (err) {
