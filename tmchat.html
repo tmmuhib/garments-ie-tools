@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TMChat - Mobile Friendly</title>
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>TMChat - Mobile First WhatsApp Clone</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -17,160 +15,261 @@
                         wa: {
                             dark: '#111b21',
                             panel: '#202c33',
-                            hover: '#2a3942',
+                            header: '#202c33',
+                            border: '#222d34',
+                            chatBg: '#0b141a',
+                            bubbleIn: '#202c33',
+                            bubbleOut: '#005c4b',
                             green: '#00a884',
-                            lightgreen: '#005c4b',
-                            incoming: '#202c33',
+                            hover: '#2a3942',
                             text: '#e9edef',
-                            subtext: '#8696a0',
-                            border: '#374248'
+                            subtext: '#8696a0'
                         }
                     }
                 }
             }
         }
     </script>
-    <style>
-        body { background-color: #0b141a; color: #e9edef; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #374248; border-radius: 3px; }
-    </style>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs (v9 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
-<body class="h-screen w-screen overflow-hidden">
+<body class="bg-wa-dark text-wa-text h-full flex flex-col font-sans select-none overflow-hidden">
 
-    <!-- MAIN APP CONTAINER -->
-    <div id="app-container" class="w-full h-full flex relative overflow-hidden">
-        
-        <!-- AUTH SCREEN -->
-        <div id="auth-screen" class="absolute inset-0 z-50 bg-wa-dark flex items-center justify-center p-4">
-            <div class="bg-wa-panel p-6 rounded-xl shadow-2xl w-full max-w-sm border border-wa-border">
-                <div class="text-center mb-5">
-                    <div class="inline-flex items-center justify-center w-14 h-14 bg-wa-green text-white rounded-full text-2xl font-bold mb-2 shadow">
-                        <i class="fa-solid fa-comments"></i>
-                    </div>
-                    <h1 class="text-xl font-bold text-wa-text">TMChat</h1>
-                    <p id="auth-subtitle" class="text-wa-subtext text-xs mt-1">Sign in to start messaging</p>
-                </div>
+    <!-- MAIN APP WRAPPER -->
+    <div class="flex-1 flex flex-col h-full max-w-md mx-auto w-full bg-wa-dark relative overflow-hidden shadow-2xl border-x border-wa-border/50">
 
-                <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-3">
-                    <div id="name-field" class="hidden">
-                        <label class="block text-[10px] uppercase text-wa-subtext font-semibold mb-1">Full Name</label>
-                        <input type="text" id="auth-name" placeholder="John Doe" class="w-full bg-wa-dark text-wa-text px-3 py-2.5 rounded-lg border border-wa-border focus:outline-none focus:border-wa-green text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase text-wa-subtext font-semibold mb-1">Email</label>
-                        <input type="email" id="auth-email" required placeholder="user@example.com" class="w-full bg-wa-dark text-wa-text px-3 py-2.5 rounded-lg border border-wa-border focus:outline-none focus:border-wa-green text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase text-wa-subtext font-semibold mb-1">Password</label>
-                        <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-wa-dark text-wa-text px-3 py-2.5 rounded-lg border border-wa-border focus:outline-none focus:border-wa-green text-sm">
-                    </div>
-                    <button type="submit" id="auth-btn" class="w-full bg-wa-green hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-lg transition text-sm">Sign In</button>
-                </form>
-
-                <div class="text-center mt-4">
-                    <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-wa-green text-xs hover:underline">Don't have an account? Register</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- CHAT DASHBOARD -->
-        <div id="chat-dashboard" class="hidden w-full h-full flex relative">
+        <!-- ================= MAIN TABBED VIEW ================= -->
+        <div id="main-app-screen" class="flex-1 flex flex-col h-full">
             
-            <!-- SIDEBAR PANEL (FRIEND/CHAT LIST) -->
-            <div id="sidebar-panel" class="w-full md:w-[380px] h-full bg-wa-panel border-r border-wa-border flex flex-col flex-shrink-0 z-10">
-                
-                <!-- Header -->
-                <div class="h-14 bg-wa-panel px-4 flex items-center justify-between border-b border-wa-border">
-                    <div class="flex items-center gap-2">
-                        <div id="current-user-avatar" class="w-8 h-8 rounded-full bg-wa-green text-white font-bold flex items-center justify-center text-sm shadow">U</div>
-                        <span id="current-user-name" class="font-semibold text-wa-text text-sm truncate max-w-[120px]">Profile</span>
-                    </div>
-                    <div class="flex items-center gap-4 text-wa-subtext text-base">
-                        <button onclick="openSearchModal()" title="Add Friend" class="hover:text-wa-text p-1"><i class="fa-solid fa-user-plus"></i></button>
-                        <button onclick="logout()" title="Logout" class="hover:text-red-400 p-1"><i class="fa-solid fa-right-from-bracket"></i></button>
-                    </div>
+            <!-- Top Header Bar -->
+            <header class="bg-wa-header px-4 py-3 flex justify-between items-center border-b border-wa-border z-10 shadow-md">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-brands fa-whatsapp text-wa-green text-2xl"></i>
+                    <h1 class="text-lg font-bold text-wa-text tracking-wide">TMChat</h1>
                 </div>
-
-                <!-- Search -->
-                <div class="p-2 bg-wa-dark border-b border-wa-border">
-                    <input type="text" id="sidebar-search" oninput="filterChatList(this.value)" placeholder="Search friends..." class="w-full bg-wa-panel text-wa-text px-3 py-1.5 rounded-lg text-xs border border-wa-border focus:outline-none">
+                <div class="flex items-center space-x-4 text-wa-subtext">
+                    <button onclick="switchTab('find')" title="Find Friends" class="hover:text-wa-green transition"><i class="fa-solid fa-magnifying-glass text-lg"></i></button>
+                    <button onclick="openProfileModal()" title="Profile" class="hover:text-wa-green transition"><i class="fa-solid fa-circle-user text-xl"></i></button>
+                    <button onclick="logoutUser()" title="Logout" class="hover:text-red-400 transition"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
                 </div>
+            </header>
 
-                <!-- List View -->
-                <div id="chat-list" class="flex-1 overflow-y-auto divide-y divide-wa-border/40">
-                    <!-- Added Friends Show Here -->
-                </div>
-            </div>
+            <!-- Top Navigation Tabs (Mobile First Top Bar) -->
+            <nav class="bg-wa-header flex border-b border-wa-border text-xs font-semibold text-wa-subtext z-10">
+                <button id="tab-btn-friends" onclick="switchTab('friends')" class="flex-1 py-3 flex flex-col items-center justify-center space-y-1 border-b-2 border-wa-green text-wa-green transition">
+                    <i class="fa-solid fa-user-group text-sm"></i>
+                    <span>Friends</span>
+                </button>
+                <button id="tab-btn-chats" onclick="switchTab('chats')" class="flex-1 py-3 flex flex-col items-center justify-center space-y-1 border-b-2 border-transparent hover:text-wa-text transition">
+                    <i class="fa-solid fa-comments text-sm"></i>
+                    <span>Chats</span>
+                </button>
+                <button id="tab-btn-find" onclick="switchTab('find')" class="flex-1 py-3 flex flex-col items-center justify-center space-y-1 border-b-2 border-transparent hover:text-wa-text transition">
+                    <i class="fa-solid fa-user-plus text-sm"></i>
+                    <span>Find</span>
+                </button>
+                <button id="tab-btn-community" onclick="switchTab('community')" class="flex-1 py-3 flex flex-col items-center justify-center space-y-1 border-b-2 border-transparent hover:text-wa-text transition">
+                    <i class="fa-solid fa-users text-sm"></i>
+                    <span>Community</span>
+                </button>
+                <button id="tab-btn-settings" onclick="switchTab('settings')" class="flex-1 py-3 flex flex-col items-center justify-center space-y-1 border-b-2 border-transparent hover:text-wa-text transition">
+                    <i class="fa-solid fa-gear text-sm"></i>
+                    <span>Settings</span>
+                </button>
+            </nav>
 
-            <!-- MAIN CHAT AREA (Mobile friendly view toggle) -->
-            <div id="chat-main-area" class="w-full md:flex-1 h-full bg-wa-dark flex flex-col absolute md:relative inset-0 bg-wa-dark hidden md:flex z-20">
-                
-                <div id="empty-chat-state" class="hidden md:flex flex-1 flex-col items-center justify-center p-6 text-center">
-                    <div class="text-wa-subtext text-5xl mb-3"><i class="fa-brands fa-whatsapp"></i></div>
-                    <h2 class="text-xl font-light text-wa-text mb-1">TMChat Web</h2>
-                    <p class="text-wa-subtext text-xs">Select a friend to start messaging.</p>
-                </div>
+            <!-- Tab Contents Area -->
+            <div class="flex-1 overflow-y-auto bg-wa-dark relative">
 
-                <!-- Active Chat Container -->
-                <div id="active-chat-container" class="hidden flex-1 flex flex-col h-full w-full">
-                    <!-- Chat Header -->
-                    <div class="h-14 bg-wa-panel px-3 flex items-center justify-between border-b border-wa-border">
-                        <div class="flex items-center gap-2">
-                            <!-- Mobile Back Button -->
-                            <button onclick="backToChatList()" class="text-wa-subtext text-lg pr-2 hover:text-wa-text"><i class="fa-solid fa-arrow-left"></i></button>
-                            <div id="active-avatar" class="w-8 h-8 rounded-full bg-wa-green text-white font-bold flex items-center justify-center text-sm">?</div>
-                            <div>
-                                <h3 id="active-name" class="font-semibold text-wa-text text-sm leading-tight">Name</h3>
-                                <p id="active-status" class="text-[10px] text-wa-subtext">offline</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-4 text-wa-subtext text-base">
-                            <button onclick="startCall('audio')" class="hover:text-wa-text"><i class="fa-solid fa-phone"></i></button>
-                            <button onclick="startCall('video')" class="hover:text-wa-text"><i class="fa-solid fa-video"></i></button>
+                <!-- 1. FRIENDS TAB (Default view on file load) -->
+                <div id="tab-content-friends" class="p-3 space-y-2">
+                    <div class="text-[11px] font-bold text-wa-subtext uppercase tracking-wider px-2 py-1">My Friends</div>
+                    <div id="friends-list-container" class="divide-y divide-wa-border/40">
+                        <div class="text-center py-12 text-wa-subtext text-xs">
+                            <i class="fa-solid fa-circle-notch fa-spin text-wa-green text-2xl mb-2"></i><br>Loading Friends List...
                         </div>
                     </div>
+                </div>
 
-                    <!-- Messages Box -->
-                    <div id="messages-box" class="flex-1 overflow-y-auto p-3 space-y-2 bg-[#0b141a]">
-                        <!-- Messages -->
-                    </div>
-
-                    <!-- Input Area -->
-                    <div class="bg-wa-panel px-3 py-2 flex items-center gap-2 border-t border-wa-border">
-                        <input type="file" id="attachment-input" class="hidden" onchange="handleAttachment(event)">
-                        <button onclick="document.getElementById('attachment-input').click()" class="text-wa-subtext text-lg"><i class="fa-solid fa-paperclip"></i></button>
-                        <input type="text" id="message-input" onkeydown="if(event.key==='Enter') sendMessage()" placeholder="Message" class="flex-1 bg-wa-dark text-wa-text px-3 py-2 rounded-lg text-xs border border-wa-border focus:outline-none">
-                        <button onclick="sendMessage()" class="bg-wa-green text-white w-8 h-8 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-paper-plane"></i></button>
+                <!-- 2. CHATS TAB -->
+                <div id="tab-content-chats" class="hidden p-3 space-y-2">
+                    <div class="text-[11px] font-bold text-wa-subtext uppercase tracking-wider px-2 py-1">Active Conversations</div>
+                    <div id="chats-list-container" class="divide-y divide-wa-border/40">
+                        <div class="text-center py-12 text-wa-subtext text-xs">No active chats yet. Click on a friend to start chatting!</div>
                     </div>
                 </div>
+
+                <!-- 3. FIND TAB -->
+                <div id="tab-content-find" class="hidden p-4 space-y-4">
+                    <div class="bg-wa-panel p-3 rounded-xl border border-wa-border space-y-3">
+                        <h3 class="text-xs font-bold text-wa-green uppercase">Search Database Users</h3>
+                        <div class="flex space-x-2">
+                            <input type="text" id="find-user-input" onkeyup="searchUsersInDb()" placeholder="Type email or username..." class="flex-1 bg-wa-dark border border-wa-border rounded-lg px-3 py-2 text-xs text-wa-text focus:outline-none focus:border-wa-green">
+                            <button onclick="searchUsersInDb()" class="bg-wa-green text-slate-950 font-bold px-4 py-2 rounded-lg text-xs hover:bg-emerald-600 transition"><i class="fa-solid fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div id="find-results-container" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- 4. COMMUNITY TAB -->
+                <div id="tab-content-community" class="hidden p-6 text-center space-y-4">
+                    <div class="w-20 h-20 bg-wa-panel rounded-full flex items-center justify-center mx-auto text-wa-green text-3xl border border-wa-border">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-wa-text">TMChat Communities</h3>
+                    <p class="text-xs text-wa-subtext leading-relaxed">Stay connected with your favorite channels and groups. Community features are active and encrypted.</p>
+                </div>
+
+                <!-- 5. SETTINGS TAB -->
+                <div id="tab-content-settings" class="hidden p-4 space-y-3">
+                    <div class="bg-wa-panel rounded-xl p-4 border border-wa-border flex items-center space-x-3">
+                        <div id="settings-avatar" class="w-12 h-12 rounded-full bg-wa-green text-slate-950 flex items-center justify-center font-bold text-lg">T</div>
+                        <div class="flex-1 min-w-0">
+                            <h4 id="settings-username" class="text-sm font-semibold truncate text-wa-text">User Name</h4>
+                            <p id="settings-email" class="text-xs text-wa-subtext truncate">user@example.com</p>
+                        </div>
+                    </div>
+                    <div class="bg-wa-panel rounded-xl border border-wa-border divide-y divide-wa-border/50 text-xs">
+                        <button onclick="toggleRulesModal()" class="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-wa-hover">
+                            <span><i class="fa-solid fa-shield-halved text-wa-green mr-2"></i> Security & Participant Rules</span>
+                            <i class="fa-solid fa-chevron-right text-wa-subtext"></i>
+                        </button>
+                        <button onclick="showToast('End-to-End P2P Encryption Active')" class="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-wa-hover">
+                            <span><i class="fa-solid fa-lock text-wa-green mr-2"></i> Privacy & Encryption</span>
+                            <i class="fa-solid fa-chevron-right text-wa-subtext"></i>
+                        </button>
+                        <button onclick="logoutUser()" class="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-wa-hover text-red-400">
+                            <span><i class="fa-solid fa-right-from-bracket mr-2"></i> Logout Account</span>
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- SEARCH MODAL -->
-        <div id="search-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3">
-            <div class="bg-wa-panel w-full max-w-md rounded-xl shadow-2xl border border-wa-border flex flex-col max-h-[85vh]">
-                <div class="p-3 border-b border-wa-border flex items-center justify-between">
-                    <h3 class="font-bold text-wa-text text-sm"><i class="fa-solid fa-user-plus mr-1 text-wa-green"></i>Add Friends</h3>
-                    <button onclick="closeSearchModal()" class="text-wa-subtext text-lg"><i class="fa-solid fa-xmark"></i></button>
+        <!-- ================= FULL MOBILE CHAT SCREEN ================= -->
+        <div id="mobile-chat-screen" class="absolute inset-0 bg-wa-chatBg flex flex-col z-30 transform translate-x-full transition-transform duration-300 ease-in-out">
+            
+            <!-- Active Chat Mobile Header -->
+            <header class="bg-wa-header px-3 py-2.5 flex items-center justify-between border-b border-wa-border shadow-sm">
+                <div class="flex items-center space-x-2">
+                    <button onclick="closeChatScreen()" class="text-wa-subtext hover:text-wa-text text-lg p-1.5"><i class="fa-solid fa-arrow-left"></i></button>
+                    <div id="active-peer-avatar" class="w-9 h-9 rounded-full bg-slate-700 text-wa-text flex items-center justify-center font-bold text-xs shadow">?</div>
+                    <div class="flex flex-col">
+                        <h3 id="active-peer-name" class="font-semibold text-xs text-wa-text truncate max-w-[140px]">Select Peer</h3>
+                        <span id="active-peer-status" class="text-[10px] text-wa-subtext">offline</span>
+                    </div>
                 </div>
-                <div class="p-2 border-b border-wa-border bg-wa-dark">
-                    <input type="text" id="db-user-search" oninput="searchUsersInDB(this.value)" placeholder="Search name or email..." class="w-full bg-wa-panel text-wa-text px-3 py-2 rounded-lg text-xs border border-wa-border focus:outline-none">
+                <div class="flex items-center space-x-3 text-wa-subtext text-base">
+                    <button onclick="startCall('video')" title="Video Call" class="hover:text-wa-green transition p-1"><i class="fa-solid fa-video"></i></button>
+                    <button onclick="startCall('audio')" title="Voice Call" class="hover:text-wa-green transition p-1"><i class="fa-solid fa-phone"></i></button>
+                    <button onclick="triggerAttachment()" title="Attach File" class="hover:text-wa-green transition p-1"><i class="fa-solid fa-paperclip"></i></button>
                 </div>
-                <div id="db-search-results" class="flex-1 overflow-y-auto p-3 space-y-2">
-                    <p class="text-center text-wa-subtext text-xs py-4">Type a name to search...</p>
+            </header>
+
+            <!-- Video Call Overlay -->
+            <div id="video-call-overlay" class="absolute inset-0 bg-slate-950/95 z-40 hidden flex flex-col items-center justify-center p-4">
+                <div class="relative w-full h-[65vh] bg-slate-900 rounded-2xl overflow-hidden border border-wa-border flex items-center justify-center">
+                    <video id="remote-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                    <div class="absolute bottom-4 right-4 w-28 h-20 bg-slate-800 rounded-lg overflow-hidden border border-wa-green shadow-xl">
+                        <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                    </div>
+                </div>
+                <div class="flex space-x-4 mt-6">
+                    <button onclick="toggleAudioTrack()" id="mute-btn" class="bg-slate-800 text-white w-12 h-12 rounded-full flex items-center justify-center text-base"><i class="fa-solid fa-microphone"></i></button>
+                    <button onclick="toggleVideoTrack()" id="cam-toggle-btn" class="bg-slate-800 text-white w-12 h-12 rounded-full flex items-center justify-center text-base"><i class="fa-solid fa-video"></i></button>
+                    <button onclick="hangUpCall()" class="bg-red-600 text-white px-6 h-12 rounded-full font-bold text-xs"><i class="fa-solid fa-phone-slash mr-1"></i> End</button>
                 </div>
             </div>
+
+            <!-- Messages Stream Area -->
+            <div id="messages-scroll-container" class="flex-1 overflow-y-auto p-4 space-y-2 bg-[radial-gradient(#1f2c34_1px,transparent_1px)] [background-size:16px_16px]">
+                <!-- Messages populated dynamically -->
+            </div>
+
+            <!-- Chat Footer Input -->
+            <footer class="bg-wa-header p-2 flex items-center space-x-2 border-t border-wa-border">
+                <button onclick="triggerAttachment()" class="text-wa-subtext hover:text-wa-text text-lg p-2"><i class="fa-solid fa-paperclip"></i></button>
+                <input type="file" id="file-input" class="hidden" onchange="handleFileUpload(event)">
+                <div class="flex-1 bg-wa-dark rounded-full flex items-center px-4 py-2 border border-transparent focus-within:border-wa-green transition">
+                    <input type="text" id="chat-message-input" onkeypress="handleMessageKeyPress(event)" placeholder="Message TMChat..." class="bg-transparent w-full text-xs text-wa-text focus:outline-none placeholder-wa-subtext">
+                </div>
+                <button onclick="sendChatMessage()" class="bg-wa-green text-slate-950 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow hover:bg-emerald-600 transition">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </footer>
+
         </div>
 
     </div>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Auth / Login Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-wa-panel border border-wa-border rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 bg-wa-green text-slate-950 rounded-full flex items-center justify-center mx-auto text-2xl font-bold mb-2"><i class="fa-brands fa-whatsapp"></i></div>
+                <h3 class="text-base font-bold text-wa-text">Welcome to TMChat</h3>
+                <p class="text-xs text-wa-subtext">Sign in to start chatting with friends</p>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-wa-subtext mb-1">Email</label>
+                    <input type="email" id="auth-email" placeholder="user@example.com" class="w-full bg-wa-dark border border-wa-border rounded-lg px-3 py-2 text-xs text-wa-text focus:outline-none focus:border-wa-green">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-wa-subtext mb-1">Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" class="w-full bg-wa-dark border border-wa-border rounded-lg px-3 py-2 text-xs text-wa-text focus:outline-none focus:border-wa-green">
+                </div>
+                <div id="auth-error-msg" class="text-red-400 text-xs hidden"></div>
+            </div>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="loginUser()" class="flex-1 bg-wa-green hover:bg-emerald-600 text-slate-950 py-2.5 rounded-lg text-xs font-bold transition">Login</button>
+                <button onclick="registerUser()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-wa-text py-2.5 rounded-lg text-xs font-bold transition">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Rules Modal -->
+    <div id="rules-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-wa-panel border border-wa-border rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-3">
+            <div class="flex justify-between items-center border-b border-wa-border pb-2">
+                <h3 class="text-xs font-bold text-wa-text"><i class="fa-solid fa-shield-halved text-wa-green mr-1.5"></i> Security Rules</h3>
+                <button onclick="toggleRulesModal()" class="text-wa-subtext hover:text-wa-text"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-[11px] text-wa-subtext">Database Node Rules (`users/` & `chats/`):</p>
+            <pre class="bg-slate-950 p-2.5 rounded text-[9px] text-emerald-400 font-mono overflow-x-auto border border-wa-border">
+{
+  "rules": {
+    "users": {
+      "$uid": { ".read": "auth != null", ".write": "$uid === auth.uid" }
+    },
+    "friends": {
+      "$uid": { ".read": "auth != null", ".write": "$uid === auth.uid" }
+    },
+    "chats": {
+      "$chatId": { ".read": "auth != null", ".write": "auth != null" }
+    }
+  }
+}
+            </pre>
+            <button onclick="toggleRulesModal()" class="w-full bg-wa-green text-slate-950 font-bold py-1.5 rounded text-xs">Got it</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-14 left-1/2 -translate-x-1/2 bg-wa-panel border border-wa-green text-wa-text px-4 py-2 rounded-full shadow-2xl text-xs z-50 hidden transition-all">
+        Notification
+    </div>
 
     <script>
+        // Exact Firebase Configuration requested
         const firebaseConfig = {
             apiKey: "AIzaSyDvK59-OiliO6lC8NkRbO7uK5ESEEMg_e4",
             authDomain: "tma2z-4d472.firebaseapp.com",
@@ -180,242 +279,349 @@
             messagingSenderId: "637327747107",
             appId: "1:637327747107:web:39686aaa75a525cb22e996"
         };
-        
+
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
         let currentUser = null;
-        let isRegistering = false;
+        let activePeerId = null;
         let activeChatId = null;
         let allUsersCache = {};
-        let myFriendsCache = {};
+        let myFriendsList = {};
+        let localStream = null;
+        let peerConnection = null;
 
+        const rtcConfig = {
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        };
+
+        // Auth Observer
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('chat-dashboard').classList.remove('hidden');
-                
-                const userRef = db.ref('users/' + user.uid);
-                userRef.once('value').then(snap => {
-                    const defaultName = user.email ? user.email.split('@')[0] : 'User';
-                    if (!snap.exists()) {
-                        userRef.set({ uid: user.uid, name: defaultName, email: user.email || '', status: 'online' });
-                    }
-                    const val = snap.val() || {};
-                    const name = val.name || defaultName;
-                    document.getElementById('current-user-name').innerText = name;
-                    document.getElementById('current-user-avatar').innerText = name.charAt(0).toUpperCase();
-                });
+                closeAuthModal();
 
-                initDashboard();
+                // Auto Sync User Record in Database
+                const userRef = db.ref('users/' + user.uid);
+                userRef.update({
+                    email: user.email,
+                    username: user.email.split('@')[0],
+                    online: true,
+                    lastSeen: Date.now()
+                });
+                userRef.onDisconnect().update({ online: false, lastSeen: Date.now() });
+
+                // Update settings UI
+                document.getElementById('settings-username').innerText = user.email.split('@')[0];
+                document.getElementById('settings-email').innerText = user.email;
+                document.getElementById('settings-avatar').innerText = user.email.charAt(0).toUpperCase();
+
+                loadFriendsList();
+                loadUsersCache();
             } else {
                 currentUser = null;
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('chat-dashboard').classList.add('hidden');
+                openAuthModal();
             }
         });
 
-        function toggleAuthMode() {
-            isRegistering = !isRegistering;
-            document.getElementById('name-field').classList.toggle('hidden', !isRegistering);
-            document.getElementById('auth-btn').innerText = isRegistering ? "Register" : "Sign In";
-        }
-
-        function handleAuth(e) {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            const name = document.getElementById('auth-name').value;
-
-            if (isRegistering) {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then(cred => db.ref('users/' + cred.user.uid).set({ uid: cred.user.uid, name: name || email.split('@')[0], email: email, status: 'online' }))
-                    .catch(err => alert(err.message));
-            } else {
-                auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
-            }
-        }
-
-        function logout() {
-            if(currentUser) db.ref('users/' + currentUser.uid + '/status').set('offline');
-            auth.signOut();
-        }
-
-        function initDashboard() {
-            db.ref('users/' + currentUser.uid + '/status').set('online');
-            db.ref('users/' + currentUser.uid + '/status').onDisconnect().set('offline');
-
-            db.ref('users').on('value', snap => { if(snap.exists()) allUsersCache = snap.val(); });
-            db.ref('friends/' + currentUser.uid).on('value', snap => {
-                myFriendsCache = snap.val() || {};
-                renderChatList();
-            });
-        }
-
-        function renderChatList() {
-            const chatListEl = document.getElementById('chat-list');
-            chatListEl.innerHTML = '';
-            
-            const friendUids = Object.keys(myFriendsCache);
-            if (friendUids.length === 0) {
-                chatListEl.innerHTML = `<p class="text-center text-wa-subtext text-xs p-5">No friends added yet. Click <i class="fa-solid fa-user-plus"></i> above to add!</p>`;
-                return;
-            }
-
-            friendUids.forEach(friendUid => {
-                db.ref('users/' + friendUid).once('value').then(userSnap => {
-                    const friendUser = userSnap.val() || {};
-                    const friendName = friendUser.name || (friendUser.email ? friendUser.email.split('@')[0] : 'User');
-                    const chatId = currentUser.uid < friendUid ? `${currentUser.uid}_${friendUid}` : `${friendUid}_${currentUser.uid}`;
-
-                    db.ref('chats/' + chatId).once('value').then(chatSnap => {
-                        const chatData = chatSnap.val() || {};
-                        const lastMsg = chatData.lastMessage || 'Tap to chat';
-
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = `flex items-center gap-3 px-3 py-3 hover:bg-wa-hover cursor-pointer transition border-b border-wa-border/30`;
-                        itemDiv.onclick = () => openChat(chatId, friendName, friendUid);
-                        itemDiv.innerHTML = `
-                            <div class="w-10 h-10 rounded-full bg-wa-green text-white font-bold flex items-center justify-center text-sm relative flex-shrink-0">
-                                ${friendName.charAt(0).toUpperCase()}
-                                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-wa-panel ${friendUser.status === 'online' ? 'bg-emerald-500' : 'bg-gray-500'}"></span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-semibold text-wa-text text-xs truncate">${friendName}</h4>
-                                <p class="text-[11px] text-wa-subtext truncate">${lastMsg}</p>
-                            </div>
-                        `;
-                        chatListEl.appendChild(itemDiv);
-                    });
-                });
-            });
-        }
-
-        function openSearchModal() {
-            document.getElementById('search-modal').classList.remove('hidden');
-            document.getElementById('db-user-search').focus();
-        }
-        function closeSearchModal() {
-            document.getElementById('search-modal').classList.add('hidden');
-        }
-
-        function searchUsersInDB(query) {
-            const resultsEl = document.getElementById('db-search-results');
-            const q = query.trim().toLowerCase();
-            if (!q) { resultsEl.innerHTML = `<p class="text-center text-wa-subtext text-xs py-4">Type a name to search...</p>`; return; }
-
-            resultsEl.innerHTML = '';
-            for (let uid in allUsersCache) {
-                if (uid === currentUser.uid) continue;
-                const u = allUsersCache[uid];
-                if (!u) continue;
-
-                const name = (u.name || '').toLowerCase();
-                const email = (u.email || '').toLowerCase();
-
-                if (name.includes(q) || email.includes(q)) {
-                    const isAlreadyFriend = myFriendsCache && myFriendsCache[uid];
-                    const displayName = u.name || (u.email ? u.email.split('@')[0] : 'User');
-
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center justify-between p-2 hover:bg-wa-dark rounded-lg';
-                    div.innerHTML = `
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-full bg-wa-green text-white font-bold flex items-center justify-center text-xs">
-                                ${displayName.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-wa-text text-xs">${displayName}</h4>
-                                <p class="text-[10px] text-wa-subtext">${u.email || ''}</p>
-                            </div>
-                        </div>
-                        <div>
-                            ${isAlreadyFriend ? 
-                                `<button onclick="startChatFromSearch('${uid}', '${displayName}')" class="bg-blue-600 text-white px-2.5 py-1 rounded text-[11px]">Chat</button>` :
-                                `<button onclick="addFriend('${uid}')" class="bg-wa-green text-white px-3 py-1 rounded text-[11px]">Add</button>`
-                            }
-                        </div>
-                    `;
-                    resultsEl.appendChild(div);
-                }
-            }
-        }
-
-        function addFriend(targetUid) {
-            db.ref('friends/' + currentUser.uid + '/' + targetUid).set(true);
-            db.ref('friends/' + targetUid + '/' + currentUser.uid).set(true);
-            closeSearchModal();
-        }
-
-        function startChatFromSearch(targetUid, targetName) {
-            closeSearchModal();
-            const chatId = currentUser.uid < targetUid ? `${currentUser.uid}_${targetUid}` : `${targetUid}_${currentUser.uid}`;
-            openChat(chatId, targetName, targetUid);
-        }
-
-        // OPEN CHAT (MOBILE FRIENDLY SWITCH)
-        function openChat(chatId, otherName, otherUid) {
-            activeChatId = chatId;
-            
-            // Mobile UI Switch: Hide sidebar, show main chat
-            document.getElementById('sidebar-panel').classList.add('hidden');
-            document.getElementById('sidebar-panel').classList.remove('w-full');
-            document.getElementById('chat-main-area').classList.remove('hidden');
-            document.getElementById('active-chat-container').classList.remove('hidden');
-            document.getElementById('empty-chat-state').classList.add('hidden');
-
-            document.getElementById('active-name').innerText = otherName;
-            document.getElementById('active-avatar').innerText = otherName.charAt(0).toUpperCase();
-
-            db.ref('users/' + otherUid + '/status').on('value', snap => {
-                document.getElementById('active-status').innerText = snap.val() || 'offline';
+        // Tab Switcher Logic
+        function switchTab(tabName) {
+            ['friends', 'chats', 'find', 'community', 'settings'].forEach(t => {
+                document.getElementById(`tab-content-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-btn-${t}`);
+                btn.classList.remove('border-wa-green', 'text-wa-green');
+                btn.classList.add('border-transparent');
             });
 
-            const msgBox = document.getElementById('messages-box');
-            db.ref('chats/' + chatId + '/messages').on('value', snap => {
-                msgBox.innerHTML = '';
-                if(snap.exists()) {
-                    snap.forEach(mSnap => {
-                        const msg = mSnap.val();
-                        const isMe = msg.sender === currentUser.uid;
-                        const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        
-                        const div = document.createElement('div');
-                        div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-1.5`;
-                        div.innerHTML = `
-                            <div class="max-w-[80%] rounded-lg px-2.5 py-1.5 shadow text-xs ${isMe ? 'bg-wa-lightgreen' : 'bg-wa-incoming'}">
-                                <p class="text-wa-text break-words">${msg.text}</p>
-                                <div class="text-[9px] text-wa-subtext text-right mt-0.5">${time}</div>
-                            </div>
-                        `;
-                        msgBox.appendChild(div);
-                    });
-                    msgBox.scrollTop = msgBox.scrollHeight;
-                }
-            });
+            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            activeBtn.classList.add('border-wa-green', 'text-wa-green');
+            activeBtn.classList.remove('border-transparent');
+
+            if (tabName === 'find') searchUsersInDb();
         }
 
-        // BACK TO CHAT LIST (FOR MOBILE)
-        function backToChatList() {
-            document.getElementById('sidebar-panel').classList.remove('hidden');
-            document.getElementById('sidebar-panel').classList.add('w-full');
-            document.getElementById('chat-main-area').classList.add('hidden');
+        // Open/Close Full Mobile Chat Screen
+        function openChatScreen(peerUid, peerEmail) {
+            activePeerId = peerUid;
+            activeChatId = [currentUser.uid, peerUid].sort().join('_');
+
+            document.getElementById('active-peer-name').innerText = peerEmail;
+            document.getElementById('active-peer-avatar').innerText = peerEmail.charAt(0).toUpperCase();
+            document.getElementById('active-peer-status').innerText = allUsersCache[peerUid]?.online ? 'online' : 'offline';
+
+            const screen = document.getElementById('mobile-chat-screen');
+            screen.classList.remove('translate-x-full');
+
+            loadChatMessages();
+        }
+
+        function closeChatScreen() {
+            const screen = document.getElementById('mobile-chat-screen');
+            screen.classList.add('translate-x-full');
+            activePeerId = null;
             activeChatId = null;
         }
 
-        function sendMessage() {
-            const input = document.getElementById('message-input');
+        // Database Friends Handler
+        function loadFriendsList() {
+            db.ref(`friends/${currentUser.uid}`).on('value', snapshot => {
+                myFriendsList = snapshot.val() || {};
+                renderFriendsUI();
+            });
+        }
+
+        function loadUsersCache() {
+            db.ref('users').on('value', snapshot => {
+                allUsersCache = snapshot.val() || {};
+                renderFriendsUI();
+            });
+        }
+
+        function renderFriendsUI() {
+            const container = document.getElementById('friends-list-container');
+            const friendUids = Object.keys(myFriendsList);
+
+            if (friendUids.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-wa-subtext text-xs">
+                        <i class="fa-solid fa-user-plus text-3xl mb-2 text-wa-green opacity-80 block"></i>
+                        No friends added yet.<br>Click "Find" tab above to add users!
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            friendUids.forEach(uid => {
+                const friendInfo = myFriendsList[uid];
+                const liveInfo = allUsersCache[uid] || {};
+                const email = liveInfo.email || friendInfo.email || 'User';
+
+                const div = document.createElement('div');
+                div.className = 'flex items-center px-3 py-3 cursor-pointer hover:bg-wa-hover transition rounded-xl';
+                div.onclick = () => openChatScreen(uid, email);
+                div.innerHTML = `
+                    <div class="relative mr-3">
+                        <div class="w-11 h-11 rounded-full bg-slate-700 text-wa-text flex items-center justify-center font-bold text-sm">
+                            ${email.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-wa-dark ${liveInfo.online ? 'bg-emerald-500' : 'bg-slate-500'}"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-xs font-semibold text-wa-text truncate">${email}</h4>
+                        <p class="text-[10px] text-wa-subtext">${liveInfo.online ? 'Online' : 'Offline'}</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-wa-subtext"></i>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Add Friend Bi-directionally
+        async function addFriend(friendUid, friendEmail) {
+            if (!currentUser) return;
+            await db.ref(`friends/${currentUser.uid}/${friendUid}`).set({
+                email: friendEmail,
+                addedAt: Date.now()
+            });
+            await db.ref(`friends/${friendUid}/${currentUser.uid}`).set({
+                email: currentUser.email,
+                addedAt: Date.now()
+            });
+            showToast("Added " + friendEmail.split('@')[0] + " as friend!");
+            switchTab('friends');
+        }
+
+        function searchUsersInDb() {
+            const query = (document.getElementById('find-user-input').value || '').toLowerCase().trim();
+            const container = document.getElementById('find-results-container');
+            container.innerHTML = '';
+
+            let count = 0;
+            Object.keys(allUsersCache).forEach(uid => {
+                if (uid === currentUser.uid) return;
+                const user = allUsersCache[uid];
+                if (query && !user.email.toLowerCase().includes(query)) return;
+
+                count++;
+                const isAlreadyFriend = !!myFriendsList[uid];
+                const div = document.createElement('div');
+                div.className = 'bg-wa-panel p-3 rounded-xl border border-wa-border flex items-center justify-between';
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-full bg-slate-700 text-wa-text flex items-center justify-center font-bold text-xs">
+                            ${user.email.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h5 class="text-xs font-semibold text-wa-text">${user.email}</h5>
+                            <span class="text-[10px] text-wa-subtext">${user.online ? 'Online' : 'Offline'}</span>
+                        </div>
+                    </div>
+                    ${isAlreadyFriend ? 
+                        `<button onclick="openChatScreen('${uid}', '${user.email}')" class="bg-wa-panel border border-wa-green text-wa-green px-3 py-1 rounded-lg text-xs font-bold">Chat</button>` : 
+                        `<button onclick="addFriend('${uid}', '${user.email}')" class="bg-wa-green text-slate-950 px-3 py-1 rounded-lg text-xs font-bold"><i class="fa-solid fa-user-plus mr-1"></i> Add</button>`
+                    }
+                `;
+                container.appendChild(div);
+            });
+
+            if (count === 0) {
+                container.innerHTML = '<div class="text-center py-6 text-xs text-wa-subtext">No registered users found.</div>';
+            }
+        }
+
+        // Realtime Messages
+        function loadChatMessages() {
+            const container = document.getElementById('messages-scroll-container');
+            container.innerHTML = '';
+
+            const messagesRef = db.ref(`chats/${activeChatId}/messages`);
+            messagesRef.off();
+
+            messagesRef.limitToLast(50).on('child_added', snapshot => {
+                const msg = snapshot.val();
+                const isMe = msg.sender === currentUser.uid;
+
+                const bubble = document.createElement('div');
+                bubble.className = `flex flex-col max-w-[80%] my-1 ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`;
+
+                let contentHTML = `<div class="text-xs text-wa-text break-words">${escapeHtml(msg.text)}</div>`;
+                if (msg.type === 'image') {
+                    contentHTML = `<img src="${msg.url}" class="rounded-lg max-w-xs max-h-52 object-cover mb-1">`;
+                }
+
+                bubble.innerHTML = `
+                    <div class="p-2.5 rounded-xl shadow relative ${isMe ? 'bg-wa-bubbleOut rounded-tr-none' : 'bg-wa-bubbleIn rounded-tl-none'}">
+                        ${contentHTML}
+                        <div class="text-[9px] text-wa-subtext text-right mt-1">${new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                    </div>
+                `;
+                container.appendChild(bubble);
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-message-input');
             const text = input.value.trim();
-            if(!text || !activeChatId) return;
+            if (!text || !activeChatId) return;
 
-            const msgData = { sender: currentUser.uid, text: text, timestamp: Date.now() };
-            db.ref('chats/' + activeChatId + '/messages').push(msgData);
-            db.ref('chats/' + activeChatId).update({ lastMessage: text, lastTime: Date.now() });
-
+            db.ref(`chats/${activeChatId}/messages`).push({
+                sender: currentUser.uid,
+                text: text,
+                type: 'text',
+                timestamp: Date.now()
+            });
             input.value = '';
         }
+
+        function handleMessageKeyPress(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        function triggerAttachment() {
+            document.getElementById('file-input').click();
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                db.ref(`chats/${activeChatId}/messages`).push({
+                    sender: currentUser.uid,
+                    text: "[Image Attached]",
+                    url: event.target.result,
+                    type: 'image',
+                    timestamp: Date.now()
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // WebRTC Logic
+        async function startCall(type) {
+            showToast("Initiating WebRTC " + type + " call...");
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+                document.getElementById('local-video').srcObject = localStream;
+                document.getElementById('video-call-overlay').classList.remove('hidden');
+            } catch (err) {
+                showToast("Media error: " + err.message);
+            }
+        }
+
+        function hangUpCall() {
+            if (localStream) {
+                localStream.getTracks().forEach(t => t.stop());
+                localStream = null;
+            }
+            document.getElementById('video-call-overlay').classList.add('hidden');
+        }
+
+        function toggleAudioTrack() {
+            if (localStream) {
+                const track = localStream.getAudioTracks()[0];
+                track.enabled = !track.enabled;
+            }
+        }
+
+        function toggleVideoTrack() {
+            if (localStream) {
+                const track = localStream.getVideoTracks()[0];
+                track.enabled = !track.enabled;
+            }
+        }
+
+        // Auth Operations
+        async function loginUser() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            try {
+                await auth.signInWithEmailAndPassword(email, pass);
+            } catch (e) {
+                document.getElementById('auth-error-msg').innerText = e.message;
+                document.getElementById('auth-error-msg').classList.remove('hidden');
+            }
+        }
+
+        async function registerUser() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            try {
+                const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                await db.ref('users/' + cred.user.uid).set({
+                    email: email,
+                    username: email.split('@')[0],
+                    online: true,
+                    lastSeen: Date.now()
+                });
+            } catch (e) {
+                document.getElementById('auth-error-msg').innerText = e.message;
+                document.getElementById('auth-error-msg').classList.remove('hidden');
+            }
+        }
+
+        async function logoutUser() {
+            if (currentUser) {
+                await db.ref('users/' + currentUser.uid).update({ online: false });
+            }
+            await auth.signOut();
+            window.location.reload();
+        }
+
+        function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); document.getElementById('auth-modal').classList.add('flex'); }
+        function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); document.getElementById('auth-modal').classList.remove('flex'); }
+        function toggleRulesModal() { document.getElementById('rules-modal').classList.toggle('hidden'); document.getElementById('rules-modal').classList.toggle('flex'); }
+        function showToast(m) {
+            const t = document.getElementById('toast-notification');
+            t.innerText = m;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 2500);
+        }
+        function escapeHtml(str) { return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
     </script>
 </body>
 </html>
