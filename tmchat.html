@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TMChat - Screen Share & Pro Call</title>
+    <title>TMChat - Safe Pro Call</title>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS CDN -->
@@ -255,7 +255,7 @@
                 </div>
             </div>
 
-            <!-- CALL CONTROL BUTTONS (Mute, Screen Share, Speaker, End Call) -->
+            <!-- CALL CONTROL BUTTONS -->
             <div class="flex justify-center items-center gap-3 mb-2 z-10 hide-in-pip">
                 <!-- Mute Audio -->
                 <button onclick="toggleMute()" id="mute-btn" class="w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition" title="Mute"><i class="fa-solid fa-microphone" id="mute-icon"></i></button>
@@ -486,7 +486,7 @@
         }
 
         function openChatFromSearch(targetUid, targetName) {
-            const chatId = currentUser.uid < targetUid ? `${currentUser.uid}_${targetUid}` : `${targetUid}_${currentUser.uid}`;
+            const chatId = currentUser.uid < targetUid ? `${currentUser.uid}_${targetUid}` : `${targetUid}_${targetUid}`;
             openChatScreen(chatId, targetName, targetUid);
         }
 
@@ -558,7 +558,7 @@
             reader.readAsDataURL(file);
         }
 
-        // ================= WEBRTC & SCREEN SHARING & DUAL HANGUP =================
+        // ================= WEBRTC & SAFE MEDIA ACCESS =================
 
         function createPeerConnection(chatId) {
             if (peerConnection) {
@@ -587,7 +587,7 @@
             
             document.getElementById('call-modal').classList.remove('hidden');
             document.getElementById('call-user-name').innerText = document.getElementById('active-name').innerText;
-            document.getElementById('call-status-badge').innerText = "Calling...";
+            document.getElementById('call-status-badge').innerText = "Connecting media...";
 
             if(type === 'audio') {
                 document.getElementById('audio-call-indicator').classList.remove('hidden');
@@ -597,7 +597,13 @@
             }
 
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+                // Safe media constraints
+                const constraints = { 
+                    video: type === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false, 
+                    audio: true 
+                };
+
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
                 document.getElementById('local-video').srcObject = localStream;
 
                 rtcCallRef = db.ref('chats/' + activeChatId + '/call');
@@ -622,6 +628,7 @@
                 };
                 
                 await rtcCallRef.set(callPayload);
+                document.getElementById('call-status-badge').innerText = "Ringing...";
 
                 rtcCallRef.on('value', async snap => {
                     const data = snap.val();
@@ -644,8 +651,8 @@
                 });
 
             } catch(err) {
-                alert("Camera/Microphone access error: " + err.message);
-                endCall();
+                alert("Camera or Microphone permission denied or not available. Please allow permissions in browser settings.");
+                closeCallUI();
             }
         }
 
@@ -681,7 +688,7 @@
             rtcCallRef = db.ref('chats/' + chatId + '/call');
 
             document.getElementById('call-user-name').innerText = data.callerName || "Call Active";
-            document.getElementById('call-status-badge').innerText = "Connecting...";
+            document.getElementById('call-status-badge').innerText = "Connecting media...";
 
             if(data.mediaType === 'audio') {
                 document.getElementById('audio-call-indicator').classList.remove('hidden');
@@ -691,7 +698,12 @@
             }
 
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: data.mediaType === 'video', audio: true });
+                const constraints = { 
+                    video: data.mediaType === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false, 
+                    audio: true 
+                };
+
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
                 document.getElementById('local-video').srcObject = localStream;
 
                 createPeerConnection(chatId);
@@ -719,8 +731,8 @@
                 document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
 
             } catch(err) {
-                alert("Call connection error: " + err.message);
-                endCall();
+                alert("Camera or Microphone permission error: " + err.message);
+                closeCallUI();
             }
         }
 
@@ -741,14 +753,18 @@
         }
 
         function closeCallUI() {
-            if(localStream && typeof localStream.getTracks === 'function') {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
+            try {
+                if(localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                    localStream = null;
+                }
+            } catch(e) {}
+
             if(peerConnection) {
-                peerConnection.close();
+                try { peerConnection.close(); } catch(e) {}
                 peerConnection = null;
             }
+
             document.getElementById('call-modal').classList.add('hidden');
             document.getElementById('call-modal').classList.remove('pip-mode');
             document.getElementById('incoming-call-modal').classList.add('hidden');
@@ -766,12 +782,14 @@
             closeCallUI();
         }
 
-        // ================= CONTROLS (Mute, Speaker, Screen Share, PiP) =================
+        // ================= CONTROLS =================
 
         function toggleMute() {
-            if(!localStream || typeof localStream.getAudioTracks !== 'function') return;
+            if(!localStream) return;
             isMuted = !isMuted;
-            localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
+            try {
+                localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
+            } catch(e) {}
             const btn = document.getElementById('mute-btn');
             const icon = document.getElementById('mute-icon');
             if(isMuted) {
@@ -798,7 +816,6 @@
             }
         }
 
-        // SCREEN SHARING (Live Mobile/Desktop Screen Broadcast)
         async function toggleScreenShare() {
             const btn = document.getElementById('screen-share-btn');
             const icon = document.getElementById('screen-share-icon');
@@ -808,7 +825,6 @@
                     const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
                     const videoTrack = screenStream.getVideoTracks()[0];
 
-                    // Replace current video track with screen track in peer connection
                     if (peerConnection) {
                         const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
                         if (sender) {
@@ -825,7 +841,7 @@
                         stopScreenShare();
                     };
                 } catch (err) {
-                    alert("Screen sharing cancelled or not supported.");
+                    alert("Screen sharing cancelled or not supported on this mobile browser.");
                 }
             } else {
                 stopScreenShare();
