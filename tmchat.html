@@ -272,7 +272,6 @@
         // WEBRTC GLOBAL VARS
         let peerConnection = null;
         let localStream = null;
-        let remoteStream = null;
         let rtcCallRef = null;
         let incomingCallData = null;
 
@@ -528,24 +527,23 @@
             reader.readAsDataURL(file);
         }
 
-        // ================= ROBUST TWO-WAY WEBRTC CALLING SYSTEM =================
+        // ================= PERFECT 2-WAY WEBRTC VIDEO & AUTOMATIC HANGUP =================
 
-        function createPeerConnection(chatId) {
+        function createPeerConnection() {
             if (peerConnection) {
                 peerConnection.close();
             }
             peerConnection = new RTCPeerConnection(iceServers);
-            remoteStream = new MediaStream();
-            document.getElementById('remote-video').srcObject = remoteStream;
 
-            // Handle incoming remote tracks
+            // Directly Bind Remote Video Tracks to HTML Video Element
             peerConnection.ontrack = event => {
-                event.streams[0].getTracks().forEach(track => {
-                    remoteStream.addTrack(track);
-                });
+                const remoteVid = document.getElementById('remote-video');
+                if (remoteVid.srcObject !== event.streams[0]) {
+                    remoteVid.srcObject = event.streams[0];
+                }
             };
 
-            // Send local ice candidates
+            // ICE Candidates Handler
             peerConnection.onicecandidate = event => {
                 if (event.candidate && rtcCallRef) {
                     rtcCallRef.child('candidates').push(event.candidate.toJSON());
@@ -572,9 +570,9 @@
                 document.getElementById('local-video').srcObject = localStream;
 
                 rtcCallRef = db.ref('chats/' + activeChatId + '/call');
-                await rtcCallRef.remove(); // Clear previous signals
+                await rtcCallRef.remove(); // Clear old session data
 
-                createPeerConnection(activeChatId);
+                createPeerConnection();
 
                 localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
@@ -593,6 +591,9 @@
                 
                 await rtcCallRef.set(callPayload);
 
+                // Listen for Remote Disconnect / Hangup
+                listenForCallDisconnection(activeChatId);
+
                 // Listen for Answer
                 rtcCallRef.on('value', async snap => {
                     const data = snap.val();
@@ -605,7 +606,7 @@
                     }
                 });
 
-                // Listen for ICE candidates from receiver
+                // Listen for ICE Candidates
                 rtcCallRef.child('candidates').on('child_added', snap => {
                     const candData = snap.val();
                     if (candData && peerConnection) {
@@ -614,7 +615,7 @@
                 });
 
             } catch(err) {
-                alert("Camera/Microphone access required: " + err.message);
+                alert("Camera/Microphone access needed: " + err.message);
                 endCall();
             }
         }
@@ -627,13 +628,15 @@
                     db.ref('chats/' + chatId + '/call').on('value', async callSnap => {
                         const data = callSnap.val();
                         if(data && data.type === 'offer' && data.caller !== currentUser.uid) {
-                            // Only show if modal is not already active
                             if(document.getElementById('call-modal').classList.contains('hidden') && document.getElementById('incoming-call-modal').classList.contains('hidden')) {
                                 incomingCallData = { data, chatId };
                                 document.getElementById('incoming-call-modal').classList.remove('hidden');
                                 document.getElementById('incoming-name').innerText = data.callerName || "Friend";
                                 document.getElementById('incoming-avatar').innerText = (data.callerName || "F").charAt(0).toUpperCase();
                             }
+                        } else if(!data) {
+                            // Close call modal if remote ended call before answering
+                            document.getElementById('incoming-call-modal').classList.add('hidden');
                         }
                     });
                 });
@@ -663,7 +666,7 @@
                 localStream = await navigator.mediaDevices.getUserMedia({ video: data.mediaType === 'video', audio: true });
                 document.getElementById('local-video').srcObject = localStream;
 
-                createPeerConnection(chatId);
+                createPeerConnection();
 
                 localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
@@ -677,7 +680,10 @@
                     answer: { type: answer.type, sdp: answer.sdp }
                 });
 
-                // Listen for ICE candidates from caller
+                // Listen for Remote Disconnect / Hangup
+                listenForCallDisconnection(chatId);
+
+                // Listen for Caller ICE Candidates
                 rtcCallRef.child('candidates').on('child_added', snap => {
                     const candData = snap.val();
                     if (candData && peerConnection) {
@@ -694,6 +700,16 @@
             }
         }
 
+        // LISTEN FOR REMOTE CALL HANGUP
+        function listenForCallDisconnection(chatId) {
+            db.ref('chats/' + chatId + '/call').on('value', snap => {
+                if(!snap.exists()) {
+                    // Call ended by remote peer
+                    closeCallUI();
+                }
+            });
+        }
+
         function declineCall() {
             document.getElementById('incoming-call-modal').classList.add('hidden');
             if(incomingCallData) {
@@ -702,7 +718,7 @@
             incomingCallData = null;
         }
 
-        function endCall() {
+        function closeCallUI() {
             if(localStream) {
                 localStream.getTracks().forEach(track => track.stop());
                 localStream = null;
@@ -711,12 +727,18 @@
                 peerConnection.close();
                 peerConnection = null;
             }
+            document.getElementById('call-modal').classList.add('hidden');
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+            document.getElementById('remote-video').srcObject = null;
+            document.getElementById('local-video').srcObject = null;
+            incomingCallData = null;
+        }
+
+        function endCall() {
             if(activeChatId) {
                 db.ref('chats/' + activeChatId + '/call').remove();
             }
-            document.getElementById('call-modal').classList.add('hidden');
-            document.getElementById('incoming-call-modal').classList.add('hidden');
-            incomingCallData = null;
+            closeCallUI();
         }
     </script>
 </body>
