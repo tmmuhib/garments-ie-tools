@@ -691,9 +691,29 @@
             reader.readAsDataURL(file);
         }
 
+        function isAndroidDevice() {
+            return /Android/i.test(navigator.userAgent || '');
+        }
+
+        function openInChrome(targetUrl) {
+            const url = targetUrl || (location.protocol + '//' + location.host + location.pathname + location.search + location.hash);
+            if (isAndroidDevice()) {
+                // Android intent asks the OS to open this exact HTTPS URL in Chrome.
+                const withoutScheme = url.replace(/^https?:\/\//i, '');
+                const intentUrl = 'intent://' + withoutScheme + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(url) + ';end';
+                try { location.href = intentUrl; } catch (e) { location.href = url; }
+                return;
+            }
+            const opened = window.open(url, '_blank', 'noopener');
+            if (!opened) location.href = url;
+        }
+
         function openGoogleSearch() {
-            const win = window.open('https://www.google.com/search?q=', '_blank', 'noopener,noreferrer');
-            if (!win) alert('ব্রাউজার নতুন ট্যাব ব্লক করেছে। Google খুলতে popup permission Allow করো।');
+            const url = 'https://www.google.com/search?q=';
+            const win = window.open(url, '_blank');
+            if (!win) {
+                if (confirm('নতুন ট্যাব খোলা যাচ্ছে না। Google/Chrome-এ খুলতে চান?')) openInChrome(url);
+            }
         }
 
         // ================= WEBRTC CALLS: TWO-WAY ICE, PIP, MUTE AND HANGUP =================
@@ -1091,8 +1111,17 @@
 
         async function toggleScreenShare() {
             if (!peerConnection || !localStream) return;
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-                alert('Screen sharing cannot run on HTTP. Open this app through HTTPS (or localhost), then allow screen sharing in the browser.'); return;
+            // getDisplayMedia is available only in a secure context and in browsers that
+            // implement screen capture. GitHub Pages must be opened with https:// explicitly.
+            if (!window.isSecureContext || location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                const secureUrl = 'https://' + location.host + location.pathname + location.search + location.hash;
+                if (confirm('Screen Share-এর জন্য HTTPS দরকার। HTTPS পেজটি Chrome-এ খুলবেন?')) openInChrome(secureUrl);
+                return;
+            }
+            if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
+                const msg = 'এই in-app browser-এ Screen Share সমর্থিত নয়। Chrome-এ একই HTTPS পেজ খুলে আবার চেষ্টা করুন। Android-এর কিছু ফোনে অন্য অ্যাপ শেয়ার করা OS/Chrome দ্বারা সীমাবদ্ধ থাকতে পারে।\n\nএখন Chrome-এ খুলবেন?';
+                if (confirm(msg)) openInChrome(location.href);
+                return;
             }
             try {
                 if (displayStream) {
@@ -1100,7 +1129,8 @@
                     return;
                 }
                 // Keep microphone audio in the same WebRTC call while replacing only the outgoing video.
-                displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 20, max: 30 }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+                // Call getDisplayMedia directly from this button gesture; browser permission UI must appear.
+                displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 15, max: 30 }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
                 const displayTrack = displayStream.getVideoTracks()[0];
                 if (!displayTrack) { displayStream = null; return; }
                 screenShareSender = videoSender || peerConnection.getSenders().find(sender => sender.track && sender.track.kind === 'video') || peerConnection.getTransceivers().map(t => t.sender).find(sender => sender && sender.track && sender.track.kind === 'video');
@@ -1115,11 +1145,14 @@
                 // to resume playback when the peer receives the replacement video track.
                 displayTrack.contentHint = 'motion';
                 displayTrack.enabled = true;
-                // Show the shared desktop locally; the other person sees it in the main video area.
+                // Main call view shows the shared screen. Keep the local camera in the PiP inset,
+                // so the sharer can still see their own camera while sharing.
                 const localVideo = document.getElementById('local-video');
                 localVideo.srcObject = displayStream;
                 localVideo.classList.remove('hidden');
                 localVideo.play().catch(() => {});
+                const pipLocal = document.getElementById('pip-local-video');
+                if (pipLocal && localStream) { pipLocal.srcObject = localStream; pipLocal.muted = true; pipLocal.play().catch(() => {}); }
                 displayTrack.addEventListener('ended', () => { if (displayStream) stopScreenShare(); }, { once: true });
                 // Nudge remote playback on the next media frame after sender replacement.
                 setTimeout(() => {
@@ -1348,6 +1381,39 @@
             pendingRemoteCandidates = [];
             remoteDescriptionReady = false;
         }
+
+        // Android in-app browsers often do not support WebRTC screen capture.
+        // Try to hand the current HTTPS page to Chrome automatically and show a fallback button.
+        function isAndroidInAppBrowser() {
+            const ua = navigator.userAgent || '';
+            return /Android/i.test(ua) && (/(;\s?wv\)|\bwv\b|FBAN|FBAV|Instagram|WhatsApp|Line\/|TikTok|Snapchat|WebView)/i.test(ua) || (!/Chrome\//i.test(ua) && /Version\//i.test(ua)));
+        }
+        function redirectInAppToChrome() {
+            if (!isAndroidInAppBrowser()) return;
+            const current = location.href;
+            if (!/^https:\/\//i.test(current)) return; // Chrome screen capture requires HTTPS.
+            const withoutScheme = current.replace(/^https:\/\//i, '');
+            const intent = 'intent://' + withoutScheme + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(current) + ';end';
+            // Attempt the redirect. A user-visible button remains available if the host blocks it.
+            try { window.location.href = intent; } catch (_) {}
+            setTimeout(() => {
+                if (document.getElementById('chromeRedirectFallback')) return;
+                const bar = document.createElement('div');
+                bar.id = 'chromeRedirectFallback';
+                bar.style.cssText = 'position:fixed;z-index:2147483647;left:10px;right:10px;bottom:calc(12px + env(safe-area-inset-bottom));padding:12px 14px;background:#111b21;color:#e9edef;border:1px solid #00a884;border-radius:14px;box-shadow:0 4px 24px #0008;font:14px/1.4 Arial,sans-serif;display:flex;align-items:center;gap:10px;';
+                const msg = document.createElement('span');
+                msg.textContent = 'Screen Share-এর জন্য Chrome-এ খুলুন';
+                msg.style.flex = '1';
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.textContent = 'Open Chrome';
+                btn.style.cssText = 'background:#00a884;color:#062b24;border:0;border-radius:9px;padding:10px 12px;font-weight:700;white-space:nowrap;';
+                btn.onclick = () => { window.location.href = intent; };
+                bar.append(msg, btn); document.body.appendChild(bar);
+            }, 900);
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', redirectInAppToChrome, { once: true });
+        else redirectInAppToChrome();
+
     </script>
 </body>
 </html>
