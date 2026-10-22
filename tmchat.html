@@ -558,17 +558,17 @@
             reader.readAsDataURL(file);
         }
 
-        // ================= WEBRTC & SAFE MEDIA ACCESS =================
+        // ================= WEBRTC & SAFE NULL-GUARDED MEDIA =================
 
         function createPeerConnection(chatId) {
             if (peerConnection) {
-                peerConnection.close();
+                try { peerConnection.close(); } catch(e){}
             }
             peerConnection = new RTCPeerConnection(iceServers);
 
             peerConnection.ontrack = event => {
                 const remoteVid = document.getElementById('remote-video');
-                if (remoteVid.srcObject !== event.streams[0]) {
+                if (remoteVid && remoteVid.srcObject !== event.streams[0]) {
                     remoteVid.srcObject = event.streams[0];
                 }
             };
@@ -597,23 +597,25 @@
             }
 
             try {
-                // Safe media constraints
                 const constraints = { 
                     video: type === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false, 
                     audio: true 
                 };
 
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
-                document.getElementById('local-video').srcObject = localStream;
+                const localVid = document.getElementById('local-video');
+                if (localVid) localVid.srcObject = localStream;
 
                 rtcCallRef = db.ref('chats/' + activeChatId + '/call');
                 await rtcCallRef.remove();
 
                 createPeerConnection(activeChatId);
 
-                localStream.getTracks().forEach(track => {
-                    peerConnection.addTrack(track, localStream);
-                });
+                if (localStream && typeof localStream.getTracks === 'function') {
+                    localStream.getTracks().forEach(track => {
+                        if (peerConnection) peerConnection.addTrack(track, localStream);
+                    });
+                }
 
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
@@ -704,13 +706,16 @@
                 };
 
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
-                document.getElementById('local-video').srcObject = localStream;
+                const localVid = document.getElementById('local-video');
+                if (localVid) localVid.srcObject = localStream;
 
                 createPeerConnection(chatId);
 
-                localStream.getTracks().forEach(track => {
-                    peerConnection.addTrack(track, localStream);
-                });
+                if (localStream && typeof localStream.getTracks === 'function') {
+                    localStream.getTracks().forEach(track => {
+                        if (peerConnection) peerConnection.addTrack(track, localStream);
+                    });
+                }
 
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
                 const answer = await peerConnection.createAnswer();
@@ -754,22 +759,32 @@
 
         function closeCallUI() {
             try {
-                if(localStream) {
-                    localStream.getTracks().forEach(track => track.stop());
-                    localStream = null;
+                if (localStream && typeof localStream.getTracks === 'function') {
+                    localStream.getTracks().forEach(track => {
+                        if(track && typeof track.stop === 'function') track.stop();
+                    });
                 }
             } catch(e) {}
+            localStream = null;
 
-            if(peerConnection) {
+            if (peerConnection) {
                 try { peerConnection.close(); } catch(e) {}
                 peerConnection = null;
             }
 
-            document.getElementById('call-modal').classList.add('hidden');
-            document.getElementById('call-modal').classList.remove('pip-mode');
-            document.getElementById('incoming-call-modal').classList.add('hidden');
-            document.getElementById('remote-video').srcObject = null;
-            document.getElementById('local-video').srcObject = null;
+            const callModal = document.getElementById('call-modal');
+            const incomingModal = document.getElementById('incoming-call-modal');
+            const remoteVid = document.getElementById('remote-video');
+            const localVid = document.getElementById('local-video');
+
+            if(callModal) {
+                callModal.classList.add('hidden');
+                callModal.classList.remove('pip-mode');
+            }
+            if(incomingModal) incomingModal.classList.add('hidden');
+            if(remoteVid) remoteVid.srcObject = null;
+            if(localVid) localVid.srcObject = null;
+
             incomingCallData = null;
             isPiPActive = false;
             isScreenSharing = false;
@@ -785,7 +800,7 @@
         // ================= CONTROLS =================
 
         function toggleMute() {
-            if(!localStream) return;
+            if(!localStream || typeof localStream.getAudioTracks !== 'function') return;
             isMuted = !isMuted;
             try {
                 localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
@@ -793,26 +808,26 @@
             const btn = document.getElementById('mute-btn');
             const icon = document.getElementById('mute-icon');
             if(isMuted) {
-                btn.className = "w-11 h-11 rounded-full bg-red-600 text-white flex items-center justify-center text-sm shadow transition";
-                icon.className = "fa-solid fa-microphone-slash";
+                if(btn) btn.className = "w-11 h-11 rounded-full bg-red-600 text-white flex items-center justify-center text-sm shadow transition";
+                if(icon) icon.className = "fa-solid fa-microphone-slash";
             } else {
-                btn.className = "w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition";
-                icon.className = "fa-solid fa-microphone";
+                if(btn) btn.className = "w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition";
+                if(icon) icon.className = "fa-solid fa-microphone";
             }
         }
 
         function toggleSpeaker() {
             isSpeakerOn = !isSpeakerOn;
             const remoteVid = document.getElementById('remote-video');
-            remoteVid.muted = !isSpeakerOn;
+            if(remoteVid) remoteVid.muted = !isSpeakerOn;
             const btn = document.getElementById('speaker-btn');
             const icon = document.getElementById('speaker-icon');
             if(!isSpeakerOn) {
-                btn.className = "w-11 h-11 rounded-full bg-red-600 text-white flex items-center justify-center text-sm shadow transition";
-                icon.className = "fa-solid fa-volume-low";
+                if(btn) btn.className = "w-11 h-11 rounded-full bg-red-600 text-white flex items-center justify-center text-sm shadow transition";
+                if(icon) icon.className = "fa-solid fa-volume-low";
             } else {
-                btn.className = "w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition";
-                icon.className = "fa-solid fa-volume-high";
+                if(btn) btn.className = "w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition";
+                if(icon) icon.className = "fa-solid fa-volume-high";
             }
         }
 
@@ -832,10 +847,11 @@
                         }
                     }
 
-                    document.getElementById('local-video').srcObject = screenStream;
+                    const localVid = document.getElementById('local-video');
+                    if(localVid) localVid.srcObject = screenStream;
                     isScreenSharing = true;
-                    btn.className = "w-11 h-11 rounded-full bg-wa-green text-white flex items-center justify-center text-sm shadow transition animate-pulse";
-                    icon.className = "fa-solid fa-stop";
+                    if(btn) btn.className = "w-11 h-11 rounded-full bg-wa-green text-white flex items-center justify-center text-sm shadow transition animate-pulse";
+                    if(icon) icon.className = "fa-solid fa-stop";
 
                     videoTrack.onended = () => {
                         stopScreenShare();
@@ -852,12 +868,13 @@
             isScreenSharing = false;
             const btn = document.getElementById('screen-share-btn');
             const icon = document.getElementById('screen-share-icon');
-            btn.className = "w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition";
-            icon.className = "fa-solid fa-desktop";
+            if(btn) btn.className = "w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition";
+            if(icon) icon.className = "fa-solid fa-desktop";
 
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('local-video').srcObject = localStream;
+                const localVid = document.getElementById('local-video');
+                if(localVid) localVid.srcObject = localStream;
                 const videoTrack = localStream.getVideoTracks()[0];
                 if (peerConnection) {
                     const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
@@ -871,11 +888,11 @@
             const modal = document.getElementById('call-modal');
             const pipIcon = document.getElementById('pip-icon');
             if(isPiPActive) {
-                modal.classList.add('pip-mode');
-                pipIcon.className = "fa-solid fa-expand";
+                if(modal) modal.classList.add('pip-mode');
+                if(pipIcon) pipIcon.className = "fa-solid fa-expand";
             } else {
-                modal.classList.remove('pip-mode');
-                pipIcon.className = "fa-solid fa-compress";
+                if(modal) modal.classList.remove('pip-mode');
+                if(pipIcon) pipIcon.className = "fa-solid fa-compress";
             }
         }
     </script>
