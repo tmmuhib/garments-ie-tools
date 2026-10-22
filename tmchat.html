@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TMChat - Pro Call Connected Fix</title>
+    <title>TMChat - Final Call & Chat Fix</title>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS CDN -->
@@ -150,16 +150,12 @@
         <main id="main-views" class="hidden flex-1 relative w-full overflow-hidden">
             <section id="view-friends" class="absolute inset-0 flex flex-col p-3 overflow-y-auto">
                 <h2 class="text-xs uppercase font-bold text-wa-subtext tracking-wider mb-2">My Friends</h2>
-                <div id="friends-list" class="flex-1 space-y-2">
-                    <!-- Friends List -->
-                </div>
+                <div id="friends-list" class="flex-1 space-y-2"></div>
             </section>
 
             <section id="view-chats" class="absolute inset-0 flex flex-col p-3 overflow-y-auto hidden">
                 <h2 class="text-xs uppercase font-bold text-wa-subtext tracking-wider mb-2">Recent Chats</h2>
-                <div id="recent-chats-list" class="flex-1 space-y-2">
-                    <!-- Recent Chats -->
-                </div>
+                <div id="recent-chats-list" class="flex-1 space-y-2"></div>
             </section>
 
             <section id="view-find" class="absolute inset-0 flex flex-col p-3 overflow-y-auto hidden">
@@ -191,13 +187,12 @@
                     </div>
                 </div>
 
-                <!-- PERMISSION SETUP WIDGET -->
                 <div class="bg-wa-panel p-4 rounded-xl border border-wa-border space-y-3">
                     <h3 class="font-bold text-wa-text text-xs uppercase tracking-wider flex items-center gap-2">
                         <i class="fa-solid fa-shield-halved text-wa-green"></i> Camera & Mic Permissions
                     </h3>
                     <p class="text-[11px] text-wa-subtext leading-relaxed">
-                        If camera or microphone access is blocked or showing errors, click below to test or re-request permissions directly.
+                        If camera or microphone access is blocked or showing errors, click below to test permissions.
                     </p>
                     <div class="flex gap-2">
                         <button onclick="requestPermissionsManually()" class="flex-1 bg-wa-green hover:bg-emerald-600 text-white font-semibold py-2 rounded-lg text-xs transition shadow">
@@ -236,20 +231,20 @@
             </div>
 
             <!-- MESSAGES BOX -->
-            <div id="messages-box" class="flex-1 overflow-y-auto p-3 space-y-2 bg-[#0b141a] min-h-0">
-                <!-- Messages -->
-            </div>
+            <div id="messages-box" class="flex-1 overflow-y-auto p-3 space-y-2 bg-[#0b141a] min-h-0"></div>
 
-            <!-- CHAT INPUT -->
-            <div class="bg-wa-panel p-2 flex items-center gap-2 border-t border-wa-border shrink-0 mb-1">
+            <!-- CHAT INPUT (Textarea for Multi-line & Text Wrap) -->
+            <div class="bg-wa-panel p-2 flex items-end gap-2 border-t border-wa-border shrink-0 mb-1">
                 <input type="file" id="attachment-input" class="hidden" onchange="handleAttachment(event)">
-                <button onclick="document.getElementById('attachment-input').click()" class="text-wa-subtext text-lg p-2 hover:text-wa-text"><i class="fa-solid fa-paperclip"></i></button>
-                <input type="text" id="message-input" onkeydown="if(event.key==='Enter') sendMessage()" placeholder="Type a message..." class="flex-1 bg-wa-dark text-wa-text px-3 py-2.5 rounded-xl text-xs border border-wa-border focus:outline-none focus:border-wa-green">
+                <button onclick="document.getElementById('attachment-input').click()" class="text-wa-subtext text-lg p-2.5 hover:text-wa-text"><i class="fa-solid fa-paperclip"></i></button>
+                
+                <textarea id="message-input" rows="1" onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendMessage(); }" placeholder="Type a message..." class="flex-1 bg-wa-dark text-wa-text px-3 py-2 rounded-xl text-xs border border-wa-border focus:outline-none focus:border-wa-green resize-none max-h-24 chat-message-text"></textarea>
+                
                 <button onclick="sendMessage()" class="bg-wa-green text-white w-10 h-10 rounded-full flex items-center justify-center text-xs shadow active:scale-95 transition shrink-0"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
 
-        <!-- INCOMING CALL BANNER / DIALOG -->
+        <!-- INCOMING CALL BANNER -->
         <div id="incoming-call-modal" class="hidden fixed top-4 left-4 right-4 z-[110] bg-wa-panel border border-wa-green rounded-2xl p-4 shadow-2xl max-w-sm mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div id="incoming-avatar" class="w-10 h-10 rounded-full bg-wa-green text-white font-bold flex items-center justify-center text-sm">C</div>
@@ -266,17 +261,14 @@
 
         <!-- WEBRTC VIDEO/AUDIO CALL MODAL -->
         <div id="call-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col justify-between p-4 max-w-md mx-auto transition-all duration-300">
-            <!-- Header (Hide in PiP) -->
             <div class="flex justify-between items-center text-wa-text mt-2 z-10 hide-in-pip">
                 <div>
                     <h3 id="call-user-name" class="font-bold text-base">User Name</h3>
                     <p id="call-status-badge" class="text-xs text-yellow-400">Connecting...</p>
                 </div>
-                <!-- PiP Minimize Button -->
                 <button onclick="togglePiP()" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg text-xs" title="Minimize PiP"><i class="fa-solid fa-compress" id="pip-icon"></i></button>
             </div>
 
-            <!-- TWO-WAY VIDEO & SCREEN SHARE CONTAINER -->
             <div class="flex-1 relative flex items-center justify-center my-2 overflow-hidden rounded-2xl bg-wa-panel">
                 <video id="remote-video" autoplay playsinline class="w-full h-full object-cover bg-black"></video>
                 <video id="local-video" autoplay playsinline muted class="absolute bottom-3 right-3 w-28 h-36 object-cover rounded-xl border-2 border-wa-green shadow-xl bg-gray-900 z-20"></video>
@@ -287,15 +279,10 @@
                 </div>
             </div>
 
-            <!-- CALL CONTROL BUTTONS -->
             <div class="flex justify-center items-center gap-3 mb-2 z-10 hide-in-pip">
-                <!-- Mute Audio -->
                 <button onclick="toggleMute()" id="mute-btn" class="w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition" title="Mute"><i class="fa-solid fa-microphone" id="mute-icon"></i></button>
-                <!-- Screen Share -->
                 <button onclick="toggleScreenShare()" id="screen-share-btn" class="w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition" title="Screen Share"><i class="fa-solid fa-desktop" id="screen-share-icon"></i></button>
-                <!-- Loudspeaker -->
                 <button onclick="toggleSpeaker()" id="speaker-btn" class="w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition" title="Speaker"><i class="fa-solid fa-volume-high" id="speaker-icon"></i></button>
-                <!-- End Call -->
                 <button onclick="endCall()" class="w-13 h-13 rounded-full bg-red-600 active:bg-red-700 text-white flex items-center justify-center text-lg shadow-lg transition px-4"><i class="fa-solid fa-phone-slash"></i></button>
             </div>
         </div>
@@ -339,7 +326,6 @@
         let isScreenSharing = false;
         let iceCandidatesQueue = [];
 
-        // Reliable Multi-STUN Servers
         const iceServers = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -575,6 +561,7 @@
             db.ref('chats/' + activeChatId).update({ lastMessage: text, lastTime: Date.now() });
 
             input.value = '';
+            input.style.height = 'auto'; // Reset textarea height
         }
 
         function handleAttachment(e) {
@@ -628,7 +615,7 @@
             alert("How to enable:\n1. Click the lock/settings icon near URL.\n2. Turn on Camera & Microphone.\n3. Refresh page and call again!");
         }
 
-        // ================= BULLETPROOF STABLE WEBRTC SYSTEM =================
+        // ================= ROBUST STABLE WEBRTC SYSTEM =================
 
         function createPeerConnection(chatId) {
             if (peerConnection) {
@@ -661,9 +648,7 @@
                 } else {
                     iceCandidatesQueue.push(candidate);
                 }
-            } catch (e) {
-                console.error("ICE candidate error:", e);
-            }
+            } catch (e) {}
         }
 
         async function flushIceCandidates() {
@@ -750,9 +735,7 @@
                             await flushIceCandidates();
                             document.getElementById('call-status-badge').innerText = "Connected";
                             document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
-                        } catch(err) {
-                            console.error("Set remote description error:", err);
-                        }
+                        } catch(err) {}
                     }
                 });
 
@@ -764,7 +747,6 @@
                 });
 
             } catch(err) {
-                console.error("Start call exception:", err);
                 closeCallUI();
             }
         }
@@ -846,7 +828,6 @@
                 document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
 
             } catch(err) {
-                console.error("Accept call exception:", err);
                 closeCallUI();
             }
         }
