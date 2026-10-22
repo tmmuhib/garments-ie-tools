@@ -811,6 +811,36 @@
             }
         }
 
+        let ringtoneContext = null;
+        let ringtoneTimer = null;
+        function startIncomingRingtone() {
+            stopIncomingRingtone();
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                ringtoneContext = new AudioCtx();
+                const ringOnce = () => {
+                    if (!ringtoneContext || ringtoneContext.state === 'closed') return;
+                    [880, 660].forEach((frequency, index) => {
+                        const osc = ringtoneContext.createOscillator();
+                        const gain = ringtoneContext.createGain();
+                        osc.type = 'sine'; osc.frequency.value = frequency;
+                        gain.gain.setValueAtTime(0.0001, ringtoneContext.currentTime + index * 0.22);
+                        gain.gain.exponentialRampToValueAtTime(0.12, ringtoneContext.currentTime + index * 0.22 + 0.03);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, ringtoneContext.currentTime + index * 0.22 + 0.18);
+                        osc.connect(gain); gain.connect(ringtoneContext.destination);
+                        osc.start(ringtoneContext.currentTime + index * 0.22);
+                        osc.stop(ringtoneContext.currentTime + index * 0.22 + 0.2);
+                    });
+                };
+                ringtoneContext.resume().then(() => { ringOnce(); ringtoneTimer = setInterval(ringOnce, 1500); }).catch(() => {});
+            } catch (e) { console.warn('Ringtone unavailable:', e); }
+        }
+        function stopIncomingRingtone() {
+            if (ringtoneTimer) { clearInterval(ringtoneTimer); ringtoneTimer = null; }
+            if (ringtoneContext) { const ctx = ringtoneContext; ringtoneContext = null; ctx.close().catch(() => {}); }
+        }
+
         function listenGlobalCalls() {
             if (!currentUser) return;
             db.ref('friends/' + currentUser.uid).on('value', snap => {
@@ -835,6 +865,7 @@
                             if (callChatId || peerConnection || incomingCallData) return;
                             incomingCallData = { data, chatId };
                             document.getElementById('incoming-call-modal').classList.remove('hidden');
+                            startIncomingRingtone();
                             document.getElementById('incoming-name').innerText = data.callerName || 'Friend';
                             document.getElementById('incoming-avatar').innerText = (data.callerName || 'F').charAt(0).toUpperCase();
                         }
@@ -845,6 +876,7 @@
 
         async function acceptCall() {
             if (!incomingCallData || peerConnection || localStream) return;
+            stopIncomingRingtone();
             const { data, chatId } = incomingCallData;
             callChatId = chatId;
             activeChatId = chatId;
@@ -889,6 +921,7 @@
         }
 
         function declineCall() {
+            stopIncomingRingtone();
             const incoming = incomingCallData;
             document.getElementById('incoming-call-modal').classList.add('hidden');
             incomingCallData = null;
@@ -1058,12 +1091,26 @@
             const stop = () => { dragging = false; pip.classList.remove('dragging'); };
             handle.addEventListener('pointerup', stop);
             handle.addEventListener('pointercancel', stop);
-            window.addEventListener('resize', () => {
+            const keepPiPVisible = () => {
                 if (pip.classList.contains('hidden')) return;
+                // Android keyboard changes the visual viewport without reliably resizing layout viewport.
+                const vv = window.visualViewport;
+                const visibleWidth = vv ? vv.width : window.innerWidth;
+                const visibleHeight = vv ? vv.height : window.innerHeight;
+                const offsetLeft = vv ? vv.offsetLeft : 0;
+                const offsetTop = vv ? vv.offsetTop : 0;
                 const r = pip.getBoundingClientRect();
-                pip.style.left = Math.min(Math.max(0, r.left), Math.max(0, innerWidth - pip.offsetWidth)) + 'px';
-                pip.style.top = Math.min(Math.max(0, r.top), Math.max(0, innerHeight - pip.offsetHeight)) + 'px';
-            });
+                const currentLeft = pip.style.left ? parseFloat(pip.style.left) : r.left;
+                const currentTop = pip.style.top ? parseFloat(pip.style.top) : r.top;
+                pip.style.left = Math.min(Math.max(offsetLeft + 4, currentLeft), offsetLeft + visibleWidth - pip.offsetWidth - 4) + 'px';
+                pip.style.top = Math.min(Math.max(offsetTop + 4, currentTop), offsetTop + visibleHeight - pip.offsetHeight - 4) + 'px';
+                pip.style.right = 'auto'; pip.style.bottom = 'auto';
+            };
+            window.addEventListener('resize', keepPiPVisible);
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', keepPiPVisible);
+                window.visualViewport.addEventListener('scroll', keepPiPVisible);
+            }
         }
         enableDraggablePiP();
 
@@ -1091,6 +1138,7 @@
 
         async function closeCallUI() {
             callClosing = true;
+            stopIncomingRingtone();
             if (displayStream) {
                 const oldDisplay = displayStream; displayStream = null;
                 oldDisplay.getTracks().forEach(track => { track.onended = null; track.stop(); });
