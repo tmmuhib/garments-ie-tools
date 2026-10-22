@@ -204,7 +204,7 @@
                 <div id="incoming-avatar" class="w-10 h-10 rounded-full bg-wa-green text-white font-bold flex items-center justify-center text-sm">C</div>
                 <div>
                     <h4 id="incoming-name" class="font-bold text-wa-text text-xs">Incoming Call</h4>
-                    <p class="text-[10px] text-wa-subtext">Wants to video call with you</p>
+                    <p class="text-[10px] text-wa-subtext">Wants to call you</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -528,26 +528,24 @@
             reader.readAsDataURL(file);
         }
 
-        // ================= INSTANT 1-CLICK TWO-WAY WEBRTC VIDEO CALL =================
+        // ================= ROBUST TWO-WAY WEBRTC CALLING SYSTEM =================
 
-        async function createPeer(chatId) {
+        function createPeerConnection(chatId) {
+            if (peerConnection) {
+                peerConnection.close();
+            }
             peerConnection = new RTCPeerConnection(iceServers);
             remoteStream = new MediaStream();
             document.getElementById('remote-video').srcObject = remoteStream;
 
-            // Transmit Local Camera/Mic Tracks
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
-
-            // Receive Remote User's Camera/Mic Tracks
+            // Handle incoming remote tracks
             peerConnection.ontrack = event => {
                 event.streams[0].getTracks().forEach(track => {
                     remoteStream.addTrack(track);
                 });
             };
 
-            // ICE Candidate Handshake
+            // Send local ice candidates
             peerConnection.onicecandidate = event => {
                 if (event.candidate && rtcCallRef) {
                     rtcCallRef.child('candidates').push(event.candidate.toJSON());
@@ -574,9 +572,13 @@
                 document.getElementById('local-video').srcObject = localStream;
 
                 rtcCallRef = db.ref('chats/' + activeChatId + '/call');
-                await rtcCallRef.remove(); // Clear previous call references
+                await rtcCallRef.remove(); // Clear previous signals
 
-                await createPeer(activeChatId);
+                createPeerConnection(activeChatId);
+
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
 
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
@@ -591,31 +593,32 @@
                 
                 await rtcCallRef.set(callPayload);
 
-                // Listen for Answer and ICE Candidates
+                // Listen for Answer
                 rtcCallRef.on('value', async snap => {
                     const data = snap.val();
                     if(!data) return;
 
-                    if (data.answer && !peerConnection.currentRemoteDescription) {
-                        const answerDescription = new RTCSessionDescription(data.answer);
-                        await peerConnection.setRemoteDescription(answerDescription);
+                    if (data.answer && peerConnection && !peerConnection.currentRemoteDescription) {
+                        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
                         document.getElementById('call-status-badge').innerText = "Connected";
                         document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
                     }
                 });
 
+                // Listen for ICE candidates from receiver
                 rtcCallRef.child('candidates').on('child_added', snap => {
-                    const candidate = new RTCIceCandidate(snap.val());
-                    peerConnection.addIceCandidate(candidate).catch(e=>{});
+                    const candData = snap.val();
+                    if (candData && peerConnection) {
+                        peerConnection.addIceCandidate(new RTCIceCandidate(candData)).catch(e => {});
+                    }
                 });
 
             } catch(err) {
-                alert("Camera/Microphone permission denied.");
+                alert("Camera/Microphone access required: " + err.message);
                 endCall();
             }
         }
 
-        // LISTEN FOR INCOMING CALL NOTIFICATIONS GLOBALLY
         function listenGlobalCalls() {
             db.ref('friends/' + currentUser.uid).on('value', snap => {
                 const friends = snap.val() || {};
@@ -624,17 +627,19 @@
                     db.ref('chats/' + chatId + '/call').on('value', async callSnap => {
                         const data = callSnap.val();
                         if(data && data.type === 'offer' && data.caller !== currentUser.uid) {
-                            incomingCallData = { data, chatId };
-                            document.getElementById('incoming-call-modal').classList.remove('hidden');
-                            document.getElementById('incoming-name').innerText = data.callerName || "Friend";
-                            document.getElementById('incoming-avatar').innerText = (data.callerName || "F").charAt(0).toUpperCase();
+                            // Only show if modal is not already active
+                            if(document.getElementById('call-modal').classList.contains('hidden') && document.getElementById('incoming-call-modal').classList.contains('hidden')) {
+                                incomingCallData = { data, chatId };
+                                document.getElementById('incoming-call-modal').classList.remove('hidden');
+                                document.getElementById('incoming-name').innerText = data.callerName || "Friend";
+                                document.getElementById('incoming-avatar').innerText = (data.callerName || "F").charAt(0).toUpperCase();
+                            }
                         }
                     });
                 });
             });
         }
 
-        // INSTANT 1-CLICK RECEIVE CALL
         async function acceptCall() {
             if(!incomingCallData) return;
             document.getElementById('incoming-call-modal').classList.add('hidden');
@@ -644,14 +649,25 @@
             activeChatId = chatId;
             rtcCallRef = db.ref('chats/' + chatId + '/call');
 
-            document.getElementById('call-user-name').innerText = data.callerName || "Incoming Call";
+            document.getElementById('call-user-name').innerText = data.callerName || "Call Active";
             document.getElementById('call-status-badge').innerText = "Connecting...";
+
+            if(data.mediaType === 'audio') {
+                document.getElementById('audio-call-indicator').classList.remove('hidden');
+                document.getElementById('audio-call-indicator').classList.add('flex');
+            } else {
+                document.getElementById('audio-call-indicator').classList.add('hidden');
+            }
 
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: data.mediaType === 'video', audio: true });
                 document.getElementById('local-video').srcObject = localStream;
 
-                await createPeer(chatId);
+                createPeerConnection(chatId);
+
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
 
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
                 const answer = await peerConnection.createAnswer();
@@ -661,16 +677,19 @@
                     answer: { type: answer.type, sdp: answer.sdp }
                 });
 
+                // Listen for ICE candidates from caller
                 rtcCallRef.child('candidates').on('child_added', snap => {
-                    const candidate = new RTCIceCandidate(snap.val());
-                    peerConnection.addIceCandidate(candidate).catch(e=>{});
+                    const candData = snap.val();
+                    if (candData && peerConnection) {
+                        peerConnection.addIceCandidate(new RTCIceCandidate(candData)).catch(e => {});
+                    }
                 });
 
                 document.getElementById('call-status-badge').innerText = "Connected";
                 document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
 
             } catch(err) {
-                alert("Call error: " + err.message);
+                alert("Call connection error: " + err.message);
                 endCall();
             }
         }
@@ -684,11 +703,20 @@
         }
 
         function endCall() {
-            if(localStream) localStream.getTracks().forEach(track => track.stop());
-            if(peerConnection) { peerConnection.close(); peerConnection = null; }
-            if(activeChatId) db.ref('chats/' + activeChatId + '/call').remove();
+            if(localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            if(peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            if(activeChatId) {
+                db.ref('chats/' + activeChatId + '/call').remove();
+            }
             document.getElementById('call-modal').classList.add('hidden');
             document.getElementById('incoming-call-modal').classList.add('hidden');
+            incomingCallData = null;
         }
     </script>
 </body>
