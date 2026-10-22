@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TMChat - Pro Call with Permission Settings</title>
+    <title>TMChat - Pro Call & Chat Fixed</title>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS CDN -->
@@ -46,6 +46,13 @@
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-thumb { background: #374248; border-radius: 3px; }
         
+        /* Message Text Wrap Fix */
+        .chat-message-text {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
         /* Floating PiP Mode Styles */
         #call-modal.pip-mode {
             position: fixed !important;
@@ -172,7 +179,7 @@
                 <p class="text-wa-subtext text-xs">Public groups and broadcasts available here.</p>
             </section>
 
-            <!-- SETTINGS VIEW WITH PERMISSION SETUP OPTION -->
+            <!-- SETTINGS VIEW -->
             <section id="view-settings" class="absolute inset-0 flex flex-col p-4 overflow-y-auto hidden space-y-3">
                 <div class="bg-wa-panel p-4 rounded-xl border border-wa-border space-y-3">
                     <div class="flex items-center gap-3 border-b border-wa-border/50 pb-3">
@@ -228,10 +235,12 @@
                 </div>
             </div>
 
+            <!-- MESSAGES BOX (Text Wrapped Properly) -->
             <div id="messages-box" class="flex-1 overflow-y-auto p-3 space-y-2 bg-[#0b141a] min-h-0">
                 <!-- Messages -->
             </div>
 
+            <!-- CHAT INPUT -->
             <div class="bg-wa-panel p-2 flex items-center gap-2 border-t border-wa-border shrink-0 mb-1">
                 <input type="file" id="attachment-input" class="hidden" onchange="handleAttachment(event)">
                 <button onclick="document.getElementById('attachment-input').click()" class="text-wa-subtext text-lg p-2 hover:text-wa-text"><i class="fa-solid fa-paperclip"></i></button>
@@ -255,7 +264,7 @@
             </div>
         </div>
 
-        <!-- WEBRTC VIDEO/AUDIO CALL MODAL WITH CONTROLS & SCREEN SHARE -->
+        <!-- WEBRTC VIDEO/AUDIO CALL MODAL -->
         <div id="call-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col justify-between p-4 max-w-md mx-auto transition-all duration-300">
             <!-- Header (Hide in PiP) -->
             <div class="flex justify-between items-center text-wa-text mt-2 z-10 hide-in-pip">
@@ -329,11 +338,14 @@
         let isPiPActive = false;
         let isScreenSharing = false;
 
+        // Reliable Multi-STUN Servers for GitHub Pages / Cross-network connection
         const iceServers = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' }
             ]
         };
 
@@ -365,7 +377,7 @@
                 listenGlobalCalls();
             } else {
                 currentUser = null;
-                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('main-header').classList.add('hidden');
                 document.getElementById('main-views').classList.add('hidden');
             }
@@ -536,7 +548,7 @@
                         div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-1.5`;
                         div.innerHTML = `
                             <div class="max-w-[82%] rounded-2xl px-3 py-1.5 shadow text-xs ${isMe ? 'bg-wa-lightgreen' : 'bg-wa-incoming'}">
-                                <p class="text-wa-text break-words">${msg.text}</p>
+                                <p class="text-wa-text chat-message-text">${msg.text}</p>
                                 <div class="text-[9px] text-wa-subtext text-right mt-0.5">${time}</div>
                             </div>
                         `;
@@ -581,45 +593,41 @@
             reader.readAsDataURL(file);
         }
 
-        // ================= MANUAL PERMISSION SETUP FROM SETTINGS =================
+        // ================= MANUAL PERMISSION SETUP =================
 
         async function requestPermissionsManually() {
             const statusEl = document.getElementById('permission-status-text');
-            statusEl.innerText = "Status: Requesting camera & microphone access...";
+            statusEl.innerText = "Status: Requesting permissions...";
             statusEl.className = "text-[10px] text-yellow-400 italic";
 
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                statusEl.innerText = "Status: MediaDevices API not supported on this browser/app.";
-                statusEl.className = "text-[10px] text-red-400 italic";
-                return;
-            }
-
             try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    statusEl.innerText = "Status: Not supported in this browser.";
+                    statusEl.className = "text-[10px] text-red-400 italic";
+                    return;
+                }
                 const testStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                // Stop tracks immediately after testing success
                 testStream.getTracks().forEach(track => track.stop());
-                statusEl.innerText = "Status: Camera & Microphone permissions granted successfully!";
+                statusEl.innerText = "Status: Permissions granted successfully!";
                 statusEl.className = "text-[10px] text-emerald-400 font-semibold";
             } catch (err) {
-                console.warn("Manual permission request failed:", err);
                 try {
-                    // Try audio-only fallback test
                     const audioTest = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
                     audioTest.getTracks().forEach(track => track.stop());
-                    statusEl.innerText = "Status: Microphone allowed, but Camera blocked/unavailable.";
+                    statusEl.innerText = "Status: Microphone allowed, Camera restricted.";
                     statusEl.className = "text-[10px] text-yellow-400 font-semibold";
-                } catch (audioErr) {
-                    statusEl.innerText = "Status: Blocked! Please check browser address bar settings to allow Camera & Mic.";
+                } catch (e) {
+                    statusEl.innerText = "Status: Blocked! Allow in browser address bar.";
                     statusEl.className = "text-[10px] text-red-400 font-semibold";
                 }
             }
         }
 
         function openPermissionHelp() {
-            alert("How to enable permissions:\n\n1. Look at the address bar or top-left corner near the URL.\n2. Click the lock/site settings icon (🔒 or ⚙️).\n3. Turn on 'Camera' and 'Microphone' access.\n4. Refresh the page and try calling again!");
+            alert("How to enable:\n1. Click the lock/settings icon near URL.\n2. Turn on Camera & Microphone.\n3. Refresh page and call again!");
         }
 
-        // ================= WEBRTC & BULLETPROOF MEDIA FALLBACK =================
+        // ================= BULLETPROOF STABLE WEBRTC SYSTEM =================
 
         function createPeerConnection(chatId) {
             if (peerConnection) {
@@ -636,7 +644,7 @@
 
             peerConnection.onicecandidate = event => {
                 if (event.candidate && rtcCallRef) {
-                    rtcCallRef.child('candidates').push(event.candidate.toJSON());
+                    rtcCallRef.child('candidates').push(event.candidate.toJSON()).catch(e=>{});
                 }
             };
 
@@ -644,22 +652,19 @@
         }
 
         async function acquireMediaStream(type) {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                return null;
-            }
-
             try {
-                return await navigator.mediaDevices.getUserMedia({ 
-                    video: type === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false, 
-                    audio: true 
-                });
-            } catch (err1) {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    return await navigator.mediaDevices.getUserMedia({ 
+                        video: type === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false, 
+                        audio: true 
+                    });
+                }
+            } catch (e1) {
                 try {
                     return await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-                } catch (err2) {
-                    return null; 
-                }
+                } catch (e2) {}
             }
+            return null;
         }
 
         async function startCall(type) {
@@ -677,14 +682,14 @@
             }
 
             try {
+                rtcCallRef = db.ref('chats/' + activeChatId + '/call');
+                await rtcCallRef.remove();
+
                 localStream = await acquireMediaStream(type);
                 const localVid = document.getElementById('local-video');
                 if (localVid && localStream) {
                     localVid.srcObject = localStream;
                 }
-
-                rtcCallRef = db.ref('chats/' + activeChatId + '/call');
-                await rtcCallRef.remove();
 
                 createPeerConnection(activeChatId);
 
@@ -715,22 +720,27 @@
                         closeCallUI();
                         return;
                     }
-                    if (data.answer && peerConnection && !peerConnection.currentRemoteDescription) {
-                        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-                        document.getElementById('call-status-badge').innerText = "Connected";
-                        document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
+                    if (data.answer && peerConnection && peerConnection.signalingState === "have-local-offer") {
+                        try {
+                            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                            document.getElementById('call-status-badge').innerText = "Connected";
+                            document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
+                        } catch(err) {
+                            console.error("Set remote description error:", err);
+                        }
                     }
                 });
 
                 rtcCallRef.child('candidates').on('child_added', snap => {
                     const candData = snap.val();
-                    if (candData && peerConnection) {
+                    if (candData && peerConnection && peerConnection.remoteDescription) {
                         peerConnection.addIceCandidate(new RTCIceCandidate(candData)).catch(e => {});
                     }
                 });
 
             } catch(err) {
-                console.error("Call initialization error:", err);
+                console.error("Start call exception:", err);
+                closeCallUI();
             }
         }
 
@@ -800,7 +810,7 @@
 
                 rtcCallRef.child('candidates').on('child_added', snap => {
                     const candData = snap.val();
-                    if (candData && peerConnection) {
+                    if (candData && peerConnection && peerConnection.remoteDescription) {
                         peerConnection.addIceCandidate(new RTCIceCandidate(candData)).catch(e => {});
                     }
                 });
@@ -809,7 +819,8 @@
                 document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
 
             } catch(err) {
-                console.error("Accept call error:", err);
+                console.error("Accept call exception:", err);
+                closeCallUI();
             }
         }
 
@@ -824,7 +835,7 @@
         function declineCall() {
             document.getElementById('incoming-call-modal').classList.add('hidden');
             if(incomingCallData) {
-                db.ref('chats/' + incomingCallData.chatId + '/call').remove();
+                db.ref('chats/' + incomingCallData.chatId + '/call').remove().catch(e=>{});
             }
             incomingCallData = null;
         }
@@ -864,7 +875,7 @@
 
         function endCall() {
             if(activeChatId) {
-                db.ref('chats/' + activeChatId + '/call').remove();
+                db.ref('chats/' + activeChatId + '/call').remove().catch(e=>{});
             }
             closeCallUI();
         }
