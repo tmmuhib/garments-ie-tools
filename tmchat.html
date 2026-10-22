@@ -60,7 +60,7 @@
                         <i class="fa-solid fa-comments"></i>
                     </div>
                     <h1 class="text-xl font-bold text-wa-text">TMChat</h1>
-                    <p id="auth-subtitle" class="text-wa-subtext text-xs mt-1">Sign in to start messaging</p>
+                    <p id="auth-subtitle" class="text-wa-subtext text-xs mt-1">Sign in to start messaging & calling</p>
                 </div>
 
                 <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-3">
@@ -123,11 +123,11 @@
         <!-- MAIN VIEW PANELS -->
         <main id="main-views" class="hidden flex-1 relative w-full overflow-hidden">
             
-            <!-- FRIENDS TAB (DEFAULT) -->
+            <!-- FRIENDS TAB -->
             <section id="view-friends" class="absolute inset-0 flex flex-col p-3 overflow-y-auto">
                 <h2 class="text-xs uppercase font-bold text-wa-subtext tracking-wider mb-2">My Friends</h2>
                 <div id="friends-list" class="flex-1 space-y-2">
-                    <!-- Friends List Injected Here -->
+                    <!-- Friends List -->
                 </div>
             </section>
 
@@ -135,11 +135,11 @@
             <section id="view-chats" class="absolute inset-0 flex flex-col p-3 overflow-y-auto hidden">
                 <h2 class="text-xs uppercase font-bold text-wa-subtext tracking-wider mb-2">Recent Chats</h2>
                 <div id="recent-chats-list" class="flex-1 space-y-2">
-                    <!-- Recent Active Chats Injected Here -->
+                    <!-- Recent Chats -->
                 </div>
             </section>
 
-            <!-- FIND (SEARCH & ADD) TAB -->
+            <!-- FIND TAB -->
             <section id="view-find" class="absolute inset-0 flex flex-col p-3 overflow-y-auto hidden">
                 <div class="mb-3">
                     <input type="text" id="db-user-search" oninput="searchUsersInDB(this.value)" placeholder="Type name or email..." class="w-full bg-wa-panel text-wa-text px-3 py-2.5 rounded-xl text-xs border border-wa-border focus:outline-none focus:border-wa-green">
@@ -175,7 +175,7 @@
             </section>
         </main>
 
-        <!-- FULLSCREEN MOBILE CHAT WINDOW WITH FIXED INPUT -->
+        <!-- FULLSCREEN MOBILE CHAT WINDOW -->
         <div id="active-chat-screen" class="fixed inset-0 z-50 bg-wa-dark flex flex-col w-full h-full max-w-md mx-auto hidden">
             
             <!-- Chat Header -->
@@ -189,22 +189,45 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4 text-wa-subtext text-base">
-                    <button onclick="alert('Calling feature...')" class="hover:text-wa-text"><i class="fa-solid fa-phone"></i></button>
-                    <button onclick="alert('Video calling feature...')" class="hover:text-wa-text"><i class="fa-solid fa-video"></i></button>
+                    <button onclick="startCall('audio')" class="hover:text-wa-text p-1"><i class="fa-solid fa-phone"></i></button>
+                    <button onclick="startCall('video')" class="hover:text-wa-text p-1"><i class="fa-solid fa-video"></i></button>
                 </div>
             </div>
 
-            <!-- Messages Scroll Box (Takes all available remaining height) -->
+            <!-- Messages Box -->
             <div id="messages-box" class="flex-1 overflow-y-auto p-3 space-y-2 bg-[#0b141a] min-h-0">
-                <!-- Dynamic Chat Messages -->
+                <!-- Chat Messages -->
             </div>
 
-            <!-- Always-Visible Bottom Chat Input Bar -->
+            <!-- Chat Input Bar -->
             <div class="bg-wa-panel p-2 flex items-center gap-2 border-t border-wa-border shrink-0 mb-1">
                 <input type="file" id="attachment-input" class="hidden" onchange="handleAttachment(event)">
                 <button onclick="document.getElementById('attachment-input').click()" class="text-wa-subtext text-lg p-2 hover:text-wa-text"><i class="fa-solid fa-paperclip"></i></button>
                 <input type="text" id="message-input" onkeydown="if(event.key==='Enter') sendMessage()" placeholder="Type a message..." class="flex-1 bg-wa-dark text-wa-text px-3 py-2.5 rounded-xl text-xs border border-wa-border focus:outline-none focus:border-wa-green">
                 <button onclick="sendMessage()" class="bg-wa-green text-white w-10 h-10 rounded-full flex items-center justify-center text-xs shadow active:scale-95 transition shrink-0"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+        <!-- WEBRTC CALL SCREEN MODAL -->
+        <div id="call-modal" class="hidden fixed inset-0 z-[100] bg-black/95 flex flex-col justify-between p-4 max-w-md mx-auto">
+            <div class="flex justify-between items-center text-wa-text mt-2">
+                <div>
+                    <h3 id="call-user-name" class="font-bold text-base">User Name</h3>
+                    <p id="call-status-badge" class="text-xs text-yellow-400">Ringing...</p>
+                </div>
+            </div>
+
+            <div class="flex-1 relative flex items-center justify-center my-4 overflow-hidden rounded-2xl bg-wa-panel">
+                <video id="remote-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                <video id="local-video" autoplay playsinline muted class="absolute bottom-3 right-3 w-28 h-20 object-cover rounded-xl border-2 border-wa-green shadow-lg"></video>
+                <div id="audio-call-indicator" class="hidden flex-col items-center justify-center text-wa-text">
+                    <div class="w-20 h-20 rounded-full bg-wa-green flex items-center justify-center text-3xl mb-3 animate-pulse"><i class="fa-solid fa-microphone"></i></div>
+                    <p class="text-sm font-medium">Voice Call in Progress...</p>
+                </div>
+            </div>
+
+            <div class="flex justify-center items-center gap-6 mb-4">
+                <button onclick="endCall()" class="w-14 h-14 rounded-full bg-red-600 active:bg-red-700 text-white flex items-center justify-center text-xl shadow-lg transition"><i class="fa-solid fa-phone-slash"></i></button>
             </div>
         </div>
 
@@ -233,8 +256,21 @@
         let currentUser = null;
         let isRegistering = false;
         let activeChatId = null;
+        let targetFriendUid = null;
         let allUsersCache = {};
         let myFriendsCache = {};
+
+        // WebRTC STUN Configuration
+        let peerConnection = null;
+        let localStream = null;
+        let rtcCallRef = null;
+        const iceServers = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ]
+        };
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -446,12 +482,13 @@
         }
 
         function openChatFromSearch(targetUid, targetName) {
-            const chatId = currentUser.uid < targetUid ? `${currentUser.uid}_${targetUid}` : `${targetUid}_${targetUid}`;
+            const chatId = currentUser.uid < targetUid ? `${currentUser.uid}_${targetUid}` : `${targetUid}_${currentUser.uid}`;
             openChatScreen(chatId, targetName, targetUid);
         }
 
         function openChatScreen(chatId, otherName, otherUid) {
             activeChatId = chatId;
+            targetFriendUid = otherUid;
             document.getElementById('active-chat-screen').classList.remove('hidden');
             document.getElementById('active-name').innerText = otherName;
             document.getElementById('active-avatar').innerText = otherName.charAt(0).toUpperCase();
@@ -482,11 +519,14 @@
                     msgBox.scrollTop = msgBox.scrollHeight;
                 }
             });
+
+            listenForCalls(chatId);
         }
 
         function closeChatScreen() {
             document.getElementById('active-chat-screen').classList.add('hidden');
             activeChatId = null;
+            targetFriendUid = null;
         }
 
         function sendMessage() {
@@ -516,6 +556,126 @@
                 db.ref('chats/' + activeChatId).update({ lastMessage: msgData.text, lastTime: Date.now() });
             };
             reader.readAsDataURL(file);
+        }
+
+        // ================= FULLY FUNCTIONAL WEBRTC VIDEO/AUDIO CALL SYSTEM =================
+        async function startCall(type) {
+            if(!activeChatId) return;
+            
+            document.getElementById('call-modal').classList.remove('hidden');
+            document.getElementById('call-user-name').innerText = document.getElementById('active-name').innerText;
+            document.getElementById('call-status-badge').innerText = "Calling...";
+
+            if(type === 'audio') {
+                document.getElementById('local-video').classList.add('hidden');
+                document.getElementById('remote-video').classList.add('hidden');
+                document.getElementById('audio-call-indicator').classList.remove('hidden');
+                document.getElementById('audio-call-indicator').classList.add('flex');
+            } else {
+                document.getElementById('local-video').classList.remove('hidden');
+                document.getElementById('remote-video').classList.remove('hidden');
+                document.getElementById('audio-call-indicator').classList.add('hidden');
+            }
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: type === 'video', 
+                    audio: true 
+                });
+                
+                if(type === 'video') {
+                    document.getElementById('local-video').srcObject = localStream;
+                }
+
+                createPeerConnection();
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                rtcCallRef = db.ref('chats/' + activeChatId + '/call');
+                
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                rtcCallRef.set({ type: 'offer', offer: { type: offer.type, sdp: offer.sdp }, caller: currentUser.uid });
+
+                rtcCallRef.on('value', async snap => {
+                    const data = snap.val();
+                    if(!data) return;
+                    if(data.type === 'answer' && !peerConnection.currentRemoteDescription && data.answer) {
+                        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                        document.getElementById('call-status-badge').innerText = "Connected";
+                        document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
+                    }
+                    if(data.candidate && peerConnection) {
+                        try { await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){}
+                    }
+                });
+
+            } catch(err) {
+                alert("Permission error: Camera/Microphone access is required for calls.");
+                endCall();
+            }
+        }
+
+        function listenForCalls(chatId) {
+            const callRef = db.ref('chats/' + chatId + '/call');
+            callRef.on('value', async snap => {
+                const data = snap.val();
+                if(!data || data.caller === currentUser.uid) return;
+
+                if(data.type === 'offer' && !peerConnection) {
+                    if(confirm("Incoming Call! Do you want to answer?")) {
+                        document.getElementById('call-modal').classList.remove('hidden');
+                        document.getElementById('call-user-name').innerText = "Incoming Call";
+                        rtcCallRef = callRef;
+
+                        try {
+                            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                            document.getElementById('local-video').srcObject = localStream;
+
+                            createPeerConnection();
+                            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                            const answer = await peerConnection.createAnswer();
+                            await peerConnection.setLocalDescription(answer);
+                            
+                            callRef.update({ type: 'answer', answer: { type: answer.type, sdp: answer.sdp } });
+                            document.getElementById('call-status-badge').innerText = "Connected";
+                            document.getElementById('call-status-badge').className = "text-xs text-emerald-400 font-semibold";
+
+                        } catch(err) {
+                            alert("Unable to access camera/microphone.");
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPeerConnection() {
+            peerConnection = new RTCPeerConnection(iceServers);
+            peerConnection.ontrack = event => {
+                document.getElementById('remote-video').srcObject = event.streams[0];
+            };
+            peerConnection.onicecandidate = event => {
+                if(event.candidate && rtcCallRef) {
+                    rtcCallRef.child('candidate').set(event.candidate.toJSON());
+                }
+            };
+        }
+
+        function endCall() {
+            if(localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if(peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            if(activeChatId) {
+                db.ref('chats/' + activeChatId + '/call').remove();
+            }
+            document.getElementById('call-modal').classList.add('hidden');
+            document.getElementById('call-status-badge').innerText = "Ringing...";
+            document.getElementById('call-status-badge').className = "text-xs text-yellow-400";
         }
     </script>
 </body>
