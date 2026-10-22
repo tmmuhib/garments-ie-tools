@@ -48,7 +48,11 @@
 
         /* Call controls and minimized in-app PiP */
         /* Call overlay always covers the complete browser viewport, not the narrow app column. */
-        #call-modal { position:fixed; inset:0; width:100vw; max-width:none; height:100vh; height:100dvh; margin:0; z-index:9999; padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+        #call-modal { position:fixed; inset:0; display:flex; width:100vw; max-width:none; height:100vh; height:100dvh; margin:0; z-index:9999; padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+        /* Force hidden call layers to stay hidden even before Tailwind CDN loads. */
+        #call-modal.hidden, #pip-call.hidden { display:none !important; }
+        #call-modal:not(.hidden) { display:flex !important; }
+        #pip-call:not(.hidden) { display:block !important; }
         #call-modal .call-stage { min-height:0; }
         #remote-video { object-fit:contain; }
         #pip-call {
@@ -320,6 +324,10 @@
         let remoteIceListener = null;
         let pendingRemoteCandidates = [];
         let remoteDescriptionReady = false;
+        // ICE can fire before the initial offer is written to Firebase. Queue it so
+        // the initial set() cannot erase candidates and prevent the other phone ringing/connecting.
+        let callRecordReady = false;
+        let queuedLocalCandidates = [];
         let listeningCallIds = new Set();
 
         const iceServers = {
@@ -623,8 +631,15 @@
 
             peerConnection.onicecandidate = event => {
                 if (!event.candidate || !rtcCallRef || !callRole) return;
-                const ownPath = callRole === 'caller' ? 'callerCandidates' : 'calleeCandidates';
-                rtcCallRef.child(ownPath).push(event.candidate.toJSON()).catch(err => console.warn('ICE write failed:', err));
+                const candidateData = event.candidate.toJSON();
+                // The caller's first Firebase set() replaces the whole call node.
+                // Hold candidates until that write has completed; callee candidates
+                // are also queued until the answer/status update is safely stored.
+                if (!callRecordReady) {
+                    queuedLocalCandidates.push(candidateData);
+                    return;
+                }
+                writeLocalCandidate(candidateData);
             };
 
             peerConnection.onconnectionstatechange = () => {
@@ -640,6 +655,19 @@
                     setCallStatus('Network failed — TURN server may be needed');
                 }
             };
+        }
+
+        function writeLocalCandidate(candidateData) {
+            if (!rtcCallRef || !callRole) return;
+            const ownPath = callRole === 'caller' ? 'callerCandidates' : 'calleeCandidates';
+            rtcCallRef.child(ownPath).push(candidateData)
+                .catch(err => console.warn('ICE candidate write failed:', err));
+        }
+
+        async function flushLocalCandidates() {
+            callRecordReady = true;
+            const queued = queuedLocalCandidates.splice(0);
+            for (const candidate of queued) writeLocalCandidate(candidate);
         }
 
         function setCallStatus(text) {
@@ -704,8 +732,9 @@
 
         function showCallUI(type, name, status) {
             const modal = document.getElementById('call-modal');
-            modal.classList.remove('hidden');
+            // Every new outgoing or incoming call starts full-screen. PiP is only user-triggered.
             document.getElementById('pip-call').classList.add('hidden');
+            modal.classList.remove('hidden');
             document.getElementById('call-user-name').innerText = name || 'TMChat Call';
             setCallStatus(status || 'Connecting...');
             const audioOnly = type === 'audio';
@@ -734,6 +763,8 @@
             cameraDisabled = false;
 
             try {
+                callRecordReady = false;
+                queuedLocalCandidates = [];
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === 'video' });
                 rtcCallRef = getCallRef(callChatId);
                 await rtcCallRef.remove();
@@ -756,6 +787,7 @@
                     mediaType: type,
                     createdAt: Date.now()
                 });
+                await flushLocalCandidates();
 
                 showCallUI(type, document.getElementById('active-name').innerText, 'Calling...');
                 listenForCallDisconnection(callChatId);
@@ -814,6 +846,8 @@
 
             document.getElementById('incoming-call-modal').classList.add('hidden');
             try {
+                callRecordReady = false;
+                queuedLocalCandidates = [];
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: data.mediaType === 'video' });
                 createPeerConnection();
                 localStream.getTracks().forEach(track => {
@@ -829,6 +863,7 @@
                     answer: { type: answer.type, sdp: answer.sdp },
                     acceptedAt: Date.now()
                 });
+                await flushLocalCandidates();
 
                 showCallUI(data.mediaType || 'video', data.callerName || 'Friend', 'Connecting...');
                 listenForCallDisconnection(chatId);
@@ -944,7 +979,8 @@
         }
 
         function minimizeCall() {
-            if (!peerConnection) return;
+            // PiP is shown only when the user presses the minimize button.
+            if (!peerConnection || !callChatId) return;
             const remote = document.getElementById('remote-video').srcObject;
             if (remote) document.getElementById('pip-remote-video').srcObject = remote;
             document.getElementById('call-modal').classList.add('hidden');
