@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>TMChat - Dynamic P2P Call</title>
+    <title>TMChat - Pro Call & Chat</title>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS CDN -->
@@ -45,6 +45,24 @@
         }
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-thumb { background: #374248; border-radius: 3px; }
+        /* PiP Mode Styles */
+        #call-modal.pip-mode {
+            position: fixed !important;
+            bottom: 80px !important;
+            right: 15px !important;
+            width: 150px !important;
+            height: 200px !important;
+            top: auto !important;
+            left: auto !important;
+            z-index: 9999 !important;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            border: 2px solid #00a884;
+            padding: 4px !important;
+            background: #000 !important;
+        }
+        #call-modal.pip-mode .hide-in-pip { display: none !important; }
+        #call-modal.pip-mode video#local-video { width: 50px !important; height: 60px !important; bottom: 5px !important; right: 5px !important; }
     </style>
 </head>
 <body class="w-full h-full flex flex-col justify-between overflow-hidden">
@@ -213,31 +231,39 @@
             </div>
         </div>
 
-        <!-- WEBRTC VIDEO/AUDIO CALL MODAL -->
-        <div id="call-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col justify-between p-4 max-w-md mx-auto">
-            <div class="flex justify-between items-center text-wa-text mt-2 z-10">
+        <!-- WEBRTC VIDEO/AUDIO CALL MODAL WITH CONTROLS -->
+        <div id="call-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col justify-between p-4 max-w-md mx-auto transition-all duration-300">
+            <!-- Header (Hide in PiP) -->
+            <div class="flex justify-between items-center text-wa-text mt-2 z-10 hide-in-pip">
                 <div>
                     <h3 id="call-user-name" class="font-bold text-base">User Name</h3>
                     <p id="call-status-badge" class="text-xs text-yellow-400">Connecting...</p>
                 </div>
+                <!-- PiP Minimize Button -->
+                <button onclick="togglePiP()" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg text-xs" title="Minimize PiP"><i class="fa-solid fa-compress" id="pip-icon"></i></button>
             </div>
 
             <!-- TWO-WAY VIDEO CONTAINER -->
-            <div class="flex-1 relative flex items-center justify-center my-4 overflow-hidden rounded-2xl bg-wa-panel">
-                <!-- REMOTE USER VIDEO (FULLSCREEN) -->
+            <div class="flex-1 relative flex items-center justify-center my-2 overflow-hidden rounded-2xl bg-wa-panel">
                 <video id="remote-video" autoplay playsinline class="w-full h-full object-cover bg-black"></video>
-                <!-- LOCAL USER VIDEO (PICTURE-IN-PICTURE) -->
                 <video id="local-video" autoplay playsinline muted class="absolute bottom-3 right-3 w-28 h-36 object-cover rounded-xl border-2 border-wa-green shadow-xl bg-gray-900 z-20"></video>
                 
-                <!-- AUDIO ONLY DISPLAY -->
                 <div id="audio-call-indicator" class="hidden flex-col items-center justify-center text-wa-text absolute inset-0 bg-wa-panel">
                     <div class="w-20 h-20 rounded-full bg-wa-green flex items-center justify-center text-3xl mb-3 animate-pulse"><i class="fa-solid fa-microphone"></i></div>
                     <p class="text-sm font-medium">Voice Call Active</p>
                 </div>
             </div>
 
-            <div class="flex justify-center items-center gap-6 mb-4 z-10">
-                <button onclick="endCall()" class="w-14 h-14 rounded-full bg-red-600 active:bg-red-700 text-white flex items-center justify-center text-xl shadow-lg transition"><i class="fa-solid fa-phone-slash"></i></button>
+            <!-- CALL CONTROL BUTTONS (Mute, Loudspeaker, Record, End Call) -->
+            <div class="flex justify-center items-center gap-4 mb-2 z-10 hide-in-pip">
+                <!-- Mute Audio -->
+                <button onclick="toggleMute()" id="mute-btn" class="w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition" title="Mute"><i class="fa-solid fa-microphone" id="mute-icon"></i></button>
+                <!-- Loudspeaker / Audio Route -->
+                <button onclick="toggleSpeaker()" id="speaker-btn" class="w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition" title="Speaker"><i class="fa-solid fa-volume-high" id="speaker-icon"></i></button>
+                <!-- Record Call -->
+                <button onclick="toggleRecord()" id="record-btn" class="w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition" title="Record"><i class="fa-solid fa-record-vinyl" id="record-icon"></i></button>
+                <!-- End Call -->
+                <button onclick="endCall()" class="w-13 h-13 rounded-full bg-red-600 active:bg-red-700 text-white flex items-center justify-center text-lg shadow-lg transition px-4"><i class="fa-solid fa-phone-slash"></i></button>
             </div>
         </div>
 
@@ -274,6 +300,12 @@
         let localStream = null;
         let rtcCallRef = null;
         let incomingCallData = null;
+        let isMuted = false;
+        let isSpeakerOn = true;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let isPiPActive = false;
 
         const iceServers = {
             iceServers: [
@@ -527,15 +559,14 @@
             reader.readAsDataURL(file);
         }
 
-        // ================= PERFECT 2-WAY WEBRTC VIDEO & AUTOMATIC HANGUP =================
+        // ================= WEBRTC & DUAL HANGUP & CONTROLS =================
 
-        function createPeerConnection() {
+        function createPeerConnection(chatId) {
             if (peerConnection) {
                 peerConnection.close();
             }
             peerConnection = new RTCPeerConnection(iceServers);
 
-            // Directly Bind Remote Video Tracks to HTML Video Element
             peerConnection.ontrack = event => {
                 const remoteVid = document.getElementById('remote-video');
                 if (remoteVid.srcObject !== event.streams[0]) {
@@ -543,12 +574,14 @@
                 }
             };
 
-            // ICE Candidates Handler
             peerConnection.onicecandidate = event => {
                 if (event.candidate && rtcCallRef) {
                     rtcCallRef.child('candidates').push(event.candidate.toJSON());
                 }
             };
+
+            // Setup instant dual disconnect listener
+            listenForCallDisconnection(chatId);
         }
 
         async function startCall(type) {
@@ -570,9 +603,9 @@
                 document.getElementById('local-video').srcObject = localStream;
 
                 rtcCallRef = db.ref('chats/' + activeChatId + '/call');
-                await rtcCallRef.remove(); // Clear old session data
+                await rtcCallRef.remove();
 
-                createPeerConnection();
+                createPeerConnection(activeChatId);
 
                 localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
@@ -586,19 +619,18 @@
                     offer: { type: offer.type, sdp: offer.sdp },
                     caller: currentUser.uid,
                     callerName: document.getElementById('current-user-name').innerText,
-                    mediaType: type
+                    mediaType: type,
+                    status: 'active'
                 };
                 
                 await rtcCallRef.set(callPayload);
 
-                // Listen for Remote Disconnect / Hangup
-                listenForCallDisconnection(activeChatId);
-
-                // Listen for Answer
                 rtcCallRef.on('value', async snap => {
                     const data = snap.val();
-                    if(!data) return;
-
+                    if(!data) {
+                        closeCallUI();
+                        return;
+                    }
                     if (data.answer && peerConnection && !peerConnection.currentRemoteDescription) {
                         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
                         document.getElementById('call-status-badge').innerText = "Connected";
@@ -606,7 +638,6 @@
                     }
                 });
 
-                // Listen for ICE Candidates
                 rtcCallRef.child('candidates').on('child_added', snap => {
                     const candData = snap.val();
                     if (candData && peerConnection) {
@@ -615,7 +646,7 @@
                 });
 
             } catch(err) {
-                alert("Camera/Microphone access needed: " + err.message);
+                alert("Camera/Microphone access error: " + err.message);
                 endCall();
             }
         }
@@ -635,7 +666,6 @@
                                 document.getElementById('incoming-avatar').innerText = (data.callerName || "F").charAt(0).toUpperCase();
                             }
                         } else if(!data) {
-                            // Close call modal if remote ended call before answering
                             document.getElementById('incoming-call-modal').classList.add('hidden');
                         }
                     });
@@ -666,7 +696,7 @@
                 localStream = await navigator.mediaDevices.getUserMedia({ video: data.mediaType === 'video', audio: true });
                 document.getElementById('local-video').srcObject = localStream;
 
-                createPeerConnection();
+                createPeerConnection(chatId);
 
                 localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
@@ -680,10 +710,6 @@
                     answer: { type: answer.type, sdp: answer.sdp }
                 });
 
-                // Listen for Remote Disconnect / Hangup
-                listenForCallDisconnection(chatId);
-
-                // Listen for Caller ICE Candidates
                 rtcCallRef.child('candidates').on('child_added', snap => {
                     const candData = snap.val();
                     if (candData && peerConnection) {
@@ -700,11 +726,9 @@
             }
         }
 
-        // LISTEN FOR REMOTE CALL HANGUP
         function listenForCallDisconnection(chatId) {
             db.ref('chats/' + chatId + '/call').on('value', snap => {
                 if(!snap.exists()) {
-                    // Call ended by remote peer
                     closeCallUI();
                 }
             });
@@ -728,10 +752,12 @@
                 peerConnection = null;
             }
             document.getElementById('call-modal').classList.add('hidden');
+            document.getElementById('call-modal').classList.remove('pip-mode');
             document.getElementById('incoming-call-modal').classList.add('hidden');
             document.getElementById('remote-video').srcObject = null;
             document.getElementById('local-video').srcObject = null;
             incomingCallData = null;
+            isPiPActive = false;
         }
 
         function endCall() {
@@ -739,6 +765,88 @@
                 db.ref('chats/' + activeChatId + '/call').remove();
             }
             closeCallUI();
+        }
+
+        // ================= ADDITIONAL CONTROLS (Mute, Speaker, Record, PiP) =================
+
+        function toggleMute() {
+            if(!localStream) return;
+            isMuted = !isMuted;
+            localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
+            const btn = document.getElementById('mute-btn');
+            const icon = document.getElementById('mute-icon');
+            if(isMuted) {
+                btn.className = "w-11 h-11 rounded-full bg-red-600 text-white flex items-center justify-center text-sm shadow transition";
+                icon.className = "fa-solid fa-microphone-slash";
+            } else {
+                btn.className = "w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition";
+                icon.className = "fa-solid fa-microphone";
+            }
+        }
+
+        function toggleSpeaker() {
+            isSpeakerOn = !isSpeakerOn;
+            const remoteVid = document.getElementById('remote-video');
+            remoteVid.muted = !isSpeakerOn;
+            const btn = document.getElementById('speaker-btn');
+            const icon = document.getElementById('speaker-icon');
+            if(!isSpeakerOn) {
+                btn.className = "w-11 h-11 rounded-full bg-red-600 text-white flex items-center justify-center text-sm shadow transition";
+                icon.className = "fa-solid fa-volume-low";
+            } else {
+                btn.className = "w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition";
+                icon.className = "fa-solid fa-volume-high";
+            }
+        }
+
+        function toggleRecord() {
+            const btn = document.getElementById('record-btn');
+            const icon = document.getElementById('record-icon');
+            if(!isRecording) {
+                try {
+                    recordedChunks = [];
+                    const remoteStreamObj = document.getElementById('remote-video').srcObject;
+                    if(!remoteStreamObj) { alert("No active video stream to record."); return; }
+                    
+                    mediaRecorder = new MediaRecorder(remoteStreamObj, { mimeType: 'video/webm' });
+                    mediaRecorder.ondataavailable = e => { if(e.data.size > 0) recordedChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = 'tmchat-call-recording.webm';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    };
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.className = "w-11 h-11 rounded-full bg-red-600 animate-pulse text-white flex items-center justify-center text-sm shadow transition";
+                    icon.className = "fa-solid fa-stop";
+                } catch(err) {
+                    alert("Recording not supported on this device/browser.");
+                }
+            } else {
+                if(mediaRecorder) mediaRecorder.stop();
+                isRecording = false;
+                btn.className = "w-11 h-11 rounded-full bg-wa-panel hover:bg-wa-hover text-white flex items-center justify-center text-sm shadow transition";
+                icon.className = "fa-solid fa-record-vinyl";
+            }
+        }
+
+        function togglePiP() {
+            isPiPActive = !isPiPActive;
+            const modal = document.getElementById('call-modal');
+            const pipIcon = document.getElementById('pip-icon');
+            if(isPiPActive) {
+                modal.classList.add('pip-mode');
+                pipIcon.className = "fa-solid fa-expand";
+            } else {
+                modal.classList.remove('pip-mode');
+                pipIcon.className = "fa-solid fa-compress";
+            }
         }
     </script>
 </body>
