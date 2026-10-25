@@ -58,7 +58,7 @@
     color: #1b5e20;
   }
   label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin: 12px 0 5px; }
-  input, select {
+  input, textarea {
     width: 100%;
     padding: 12px;
     border: 1px solid var(--border);
@@ -67,8 +67,10 @@
     background: #fbfdfc;
     color: var(--text);
     outline: none;
+    font-family: inherit;
   }
-  input:focus, select:focus { border-color: var(--accent-dark); background: #fff; }
+  textarea { resize: vertical; min-height: 96px; }
+  input:focus, textarea:focus { border-color: var(--accent-dark); background: #fff; }
   button {
     border: 0;
     border-radius: 12px;
@@ -81,11 +83,13 @@
     transition: transform .06s ease, opacity .15s ease;
   }
   button:active { transform: scale(.985); }
+  button:disabled { opacity: .6; cursor: default; }
   button.ghost { background: #e8f5ef; color: var(--primary); padding: 9px 12px; font-size: 13px; }
   button.danger { background: #fdecea; color: #b71c1c; }
   button.mini { padding: 7px 10px; font-size: 12px; border-radius: 9px; }
+  .wide { width: 100%; margin-top: 10px; }
   .users {
-    max-height: 260px;
+    max-height: 300px;
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -99,19 +103,31 @@
   }
   .user:last-child { border-bottom: 0; }
   .user.active { background: #e7f8ee; }
-  .user-name { font-size: 13.5px; font-weight: 700; }
-  .user-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .user-name { font-size: 13.5px; font-weight: 700; word-break: break-word; }
+  .user-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; word-break: break-word; }
+  .user-last {
+    font-size: 12px;
+    color: var(--text);
+    margin-top: 3px;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
   .chat-head {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
     margin-bottom: 8px;
   }
-  .chat-peer { font-size: 14px; font-weight: 800; }
-  .chat-peer-user { font-size: 11.5px; color: var(--muted); }
+  .chat-peer { font-size: 14.5px; font-weight: 800; word-break: break-word; }
+  .chat-peer-user { font-size: 11.5px; color: var(--muted); word-break: break-word; }
+  .chat-room { font-size: 10.5px; color: var(--muted); margin-top: 2px; word-break: break-all; }
   .msgs {
-    max-height: 340px;
+    max-height: 380px;
     overflow-y: auto;
     background: #f4f8f6;
     border: 1px solid var(--border);
@@ -122,7 +138,7 @@
     gap: 8px;
   }
   .msg {
-    max-width: 84%;
+    max-width: 88%;
     padding: 8px 10px;
     border-radius: 12px;
     background: #fff;
@@ -132,24 +148,18 @@
   .msg.me { align-self: flex-end; background: #e7f8ee; border-color: #bfe8cf; }
   .msg .who { font-size: 10px; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
   .msg .body { white-space: pre-wrap; word-break: break-word; }
-  .msg .time { font-size: 9.5px; color: var(--muted); text-align: right; margin-top: 3px; }
-  .send-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
-  .send-row input { flex: 1; }
-  .send-row button { flex: 0 0 auto; padding: 12px 16px; }
-  .chat-actions { margin-top: 10px; }
-  .button-row {
+  .msg .meta-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 9px 11px;
-    margin-top: 8px;
-    background: #fbfdfc;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
   }
-  .button-row > div { flex: 1; min-width: 0; }
-  .button-name { font-size: 13px; font-weight: 700; }
-  .button-link { font-size: 11px; color: var(--muted); word-break: break-all; }
+  .msg .time { font-size: 9.5px; color: var(--muted); }
+  .msg .edited { font-size: 9.5px; color: var(--muted); font-style: italic; margin-left: 4px; }
+  .msg-actions { display: flex; gap: 5px; }
+  .msg-actions button { padding: 3px 8px; font-size: 10.5px; border-radius: 7px; }
+  .chat-actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
   .footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 18px; }
   .modal {
     position: fixed;
@@ -206,7 +216,7 @@
 <div class="top">
   <div class="wrap" style="padding-bottom:0">
     <h1>TM Book Chat Control</h1>
-    <p>Admin console · চ্যাট দেখা, পাঠানো ও ডিলিট</p>
+    <p>Admin console · ইউজার চ্যাট দেখা, এডিট ও ডিলিট</p>
   </div>
 </div>
 
@@ -217,56 +227,70 @@
     <div class="account-name" id="adminName">—</div>
     <div class="muted" id="adminUser">@—</div>
     <div class="muted" id="adminPhone" style="margin-top:2px">—</div>
-    <div style="margin-top:8px"><span class="badge">ADMIN</span></div>
+    <div style="margin-top:8px"><span class="badge">ADMIN ONLY</span></div>
   </div>
 
-  <div class="card">
-    <h2>২. চ্যাট কন্ট্রোল</h2>
-    <div class="muted">ইউজার সিলেক্ট করলে অ্যাডমিনের সাথে তার চ্যাট দেখা যাবে — মেসেজ পাঠানো ও পুরো চ্যাট ডিলিট করা যাবে।</div>
-    <label for="userSearch">ইউজার খুঁজুন</label>
-    <input id="userSearch" type="text" placeholder="নাম / @username / ফোন" autocomplete="off" />
+  <div class="card" id="usersCard">
+    <h2>২. ইউজার লিস্ট</h2>
+    <div class="muted">ইউজারের নাম দেখানো হচ্ছে। নাম ক্লিক করলে সেই ইউজার কার কার সাথে চ্যাট করেছে তা দেখা যাবে।</div>
+    <label for="userSearch">ইউজার খুঁজুন (নাম / @username / ফোন)</label>
+    <input id="userSearch" type="text" placeholder="যেমন: mithu বা @mithu123" autocomplete="off" />
     <div class="muted" id="userCount" style="margin-top:6px"></div>
     <div class="users" id="userList"></div>
     <div class="muted" id="userListEmpty" style="display:none; margin-top:8px">কোনো ইউজার পাওয়া যায়নি।</div>
-
-    <div id="chatPanel" class="hidden" style="margin-top:14px">
-      <div class="chat-head">
-        <div>
-          <div class="chat-peer" id="chatPeerName">—</div>
-          <div class="chat-peer-user" id="chatPeerUser">—</div>
-        </div>
-        <button type="button" class="ghost mini" id="btnCloseChat">বন্ধ</button>
-      </div>
-      <div class="muted" id="chatCount" style="margin-bottom:6px"></div>
-      <div class="msgs" id="msgList"></div>
-      <div class="muted" id="chatEmpty" style="margin-top:6px">এখনো কোনো মেসেজ নেই।</div>
-      <div class="send-row">
-        <input id="msgInput" type="text" placeholder="মেসেজ লিখুন…" autocomplete="off" />
-        <button type="button" id="btnSend">পাঠান</button>
-      </div>
-      <div class="chat-actions">
-        <button type="button" class="danger mini" id="btnDeleteChat">পুরো চ্যাট ডিলিট</button>
-      </div>
-    </div>
+    <button type="button" class="ghost wide" id="btnLoadMore">আরও ইউজার লোড করুন</button>
+    <div class="muted" id="userLimitNote" style="display:none; margin-top:8px"></div>
   </div>
 
-  <div class="card">
-    <h2>৩. ডাইনামিক বাটন</h2>
-    <div class="muted">অন্য বাটন যেভাবে তৈরি হয় — টার্গেট সিলেক্ট করে নাম + লিংক দিয়ে নতুন ডাইনামিক বাটন যোগ করুন।</div>
-    <label for="buttonTarget">কোন জায়গায় দেখাবে (button option)</label>
-    <select id="buttonTarget"></select>
-    <label for="buttonName">বাটনের নাম</label>
-    <input id="buttonName" type="text" placeholder="যেমন: Job Circular" autocomplete="off" />
-    <label for="buttonLink">লিংক (GitHub / যেকোনো URL)</label>
-    <input id="buttonLink" type="text" placeholder="https://…" autocomplete="off" />
-    <div style="margin-top:10px">
-      <button type="button" id="addButtonBtn" style="width:100%">বাটন যোগ করুন</button>
+  <div class="card hidden" id="chatsCard">
+    <div class="chat-head">
+      <div>
+        <h2 style="margin:0 0 2px">৩. চ্যাট লিস্ট</h2>
+        <div class="chat-peer" id="chatsUserName">—</div>
+        <div class="chat-peer-user" id="chatsUserMeta">@—</div>
+      </div>
+      <button type="button" class="ghost mini" id="chatsBack">← ইউজার</button>
     </div>
-    <div class="muted" id="buttonEmpty" style="display:none; margin-top:12px">এই টার্গেটে এখনো কোনো বাটন নেই।</div>
-    <div id="buttonList"></div>
+    <div class="muted" id="chatListCount" style="margin-bottom:6px"></div>
+    <div class="users" id="peerList" style="max-height:360px; margin-top:0"></div>
+    <div class="muted" id="peerEmpty" style="display:none; margin-top:8px">এই ইউজার এখনো কারো সাথে চ্যাট করেনি।</div>
   </div>
 
-  <div class="footer">TM Book Chat Control · অ্যাডমিন প্রোফাইল থেকে খুলুন</div>
+  <div class="card hidden" id="chatPanel">
+    <div class="chat-head">
+      <div>
+        <h2 style="margin:0 0 2px">৪. মেসেজ</h2>
+        <div class="chat-peer" id="chatPeerName">—</div>
+        <div class="chat-peer-user" id="chatPeerUser">@—</div>
+        <div class="chat-room" id="chatRoom"></div>
+      </div>
+      <button type="button" class="ghost mini" id="chatBack">← চ্যাট লিস্ট</button>
+    </div>
+    <div class="muted" id="chatCount" style="margin-bottom:6px"></div>
+    <div class="msgs" id="msgList"></div>
+    <div class="muted" id="chatEmpty" style="display:none; margin-top:6px">এই চ্যাটে কোনো মেসেজ নেই।</div>
+    <div class="chat-actions">
+      <button type="button" class="danger mini" id="btnDeleteChat">পুরো চ্যাট ডিলিট</button>
+    </div>
+    <div class="muted" style="margin-top:10px">মেসেজের পাশে Edit / Delete দিয়ে অ্যাডমিন মেসেজ বদলাতে বা মুছতে পারবেন।</div>
+  </div>
+
+  <div class="footer">TM Book Chat Control · শুধু অ্যাডমিনের জন্য</div>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>মেসেজ এডিট</h2>
+      <button type="button" class="modal-close" id="editClose">বন্ধ</button>
+    </div>
+    <div class="muted" id="editWho" style="margin-bottom:8px"></div>
+    <textarea id="editText" placeholder="মেসেজ লিখুন…"></textarea>
+    <div class="modal-actions">
+      <button type="button" class="ghost" id="editCancel">বাতিল</button>
+      <button type="button" id="editSave">সেভ</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal" id="noticeModal">
@@ -304,33 +328,30 @@
   firebase.initializeApp({ databaseURL: "https://easylife-e96f6-default-rtdb.firebaseio.com" });
   var db = firebase.database();
 
-  var TARGETS = [
-    ["home", "Home"],
-    ["ie", "IE"],
-    ["planning", "Planning"],
-    ["textile", "Textile"],
-    ["donet", "Donet"],
-    ["content", "Content"],
-    ["video", "Video"],
-    ["games", "Games"],
-    ["audio", "Audio"],
-    ["translate", "Translate"],
-    ["ai_agent", "AI Agent"],
-    ["flexiload", "Flexiload"],
-    ["bibah", "Bibah"],
-    ["sidebar", "Sidebar"]
-  ];
+  var PAGE_SIZE = 100;
+  var MAX_USERS = 600;
+  var MAX_PEERS = 200;
+  var MAX_MESSAGES = 200;
 
   var ADMIN = { uid: "", name: "", username: "" };
   var state = {
+    source: "users",
     users: [],
+    userKeys: {},
+    lastKey: null,
+    usersDone: false,
+    usersLoading: false,
+    userQuery: "",
+    searchTimer: null,
+    searchLookup: "",
+    selectedUser: null,
     peer: null,
     roomId: "",
     msgRef: null,
     msgListener: null,
-    btnTarget: "",
-    btnRef: null,
-    btnListener: null,
+    msgFirstLoad: false,
+    chatToken: 0,
+    editMessage: null,
     confirmAction: null
   };
   var toastTimer = null;
@@ -346,6 +367,25 @@
   function setText(id, value) {
     var el = $(id);
     if (el) el.textContent = value == null ? "" : String(value);
+  }
+  function shortUid(uid) {
+    uid = String(uid || "");
+    return uid.length > 12 ? uid.slice(0, 6) + "…" + uid.slice(-4) : uid;
+  }
+  function displayName(user) {
+    return user.fullName || user.username || user.uid || "ইউজার";
+  }
+  function userMeta(user) {
+    return "@" + (user.username || "-") + (user.phone ? " · " + user.phone : "");
+  }
+  function formatTime(value) {
+    var number = Number(value) || 0;
+    if (!number) return "";
+    try {
+      return new Date(number).toLocaleString();
+    } catch (error) {
+      return "";
+    }
   }
   function toast(message) {
     var el = $("toast");
@@ -399,8 +439,8 @@
         setText("adminUser", "@" + ADMIN.username);
         setText("adminPhone", user.phone || "-");
         $("main").classList.remove("hidden");
-        loadUsers();
-        initButtons();
+        updateLoadMore();
+        loadUsersPage();
       });
     }).catch(function (error) {
       var message = error && error.message === "no-user"
@@ -410,102 +450,327 @@
     });
   }
 
-  /* ---------- Users ---------- */
-  function loadUsers() {
-    db.ref("users").once("value").then(function (snap) {
-      var list = [];
-      snap.forEach(function (child) {
-        var value = child.val() || {};
-        value.uid = value.uid || child.key;
-        if (!value.uid || value.uid === ADMIN.uid) return;
-        list.push(value);
-      });
-      if (!list.length) return loadPublicUsers();
-      finishUserLoad(list);
-    }).catch(loadPublicUsers);
+  /* ---------- User list (paged, capped) ---------- */
+  function addUser(user) {
+    var uid = String(user.uid || "");
+    if (!uid || uid === ADMIN.uid || state.userKeys[uid]) return;
+    state.userKeys[uid] = true;
+    state.users.push({
+      uid: uid,
+      username: String(user.username || ""),
+      fullName: String(user.fullName || ""),
+      phone: String(user.phone || ""),
+      email: String(user.email || "")
+    });
   }
 
-  function loadPublicUsers() {
-    db.ref("publicUsers").once("value").then(function (snap) {
-      var list = [];
+  function updateLoadMore() {
+    var button = $("btnLoadMore");
+    var limitNote = $("userLimitNote");
+    if (state.usersLoading) {
+      button.classList.remove("hidden");
+      button.disabled = true;
+      button.textContent = "লোড হচ্ছে…";
+      limitNote.style.display = "none";
+      return;
+    }
+    if (state.users.length >= MAX_USERS) {
+      button.classList.add("hidden");
+      limitNote.style.display = "block";
+      limitNote.textContent = "সর্বোচ্চ " + MAX_USERS + " জন লোড হয়েছে। নির্দিষ্ট username লিখে খুঁজুন।";
+      return;
+    }
+    limitNote.style.display = "none";
+    if (state.usersDone) {
+      button.classList.add("hidden");
+    } else {
+      button.classList.remove("hidden");
+      button.disabled = false;
+      button.textContent = "আরও ইউজার লোড করুন";
+    }
+  }
+
+  function loadUsersPage() {
+    if (!ADMIN.uid || state.usersLoading || state.usersDone) return;
+    if (state.users.length >= MAX_USERS) {
+      state.usersDone = true;
+      updateLoadMore();
+      return;
+    }
+    state.usersLoading = true;
+    updateLoadMore();
+    var ref = db.ref(state.source).orderByKey();
+    if (state.lastKey) ref = ref.startAt(state.lastKey, true);
+    ref.limitToFirst(PAGE_SIZE + 1).once("value").then(function (snap) {
+      var rows = [];
       snap.forEach(function (child) {
-        var value = child.val() || {};
-        value.uid = value.uid || child.key;
-        if (value.uid && value.uid !== ADMIN.uid) list.push(value);
+        rows.push({ key: child.key, value: child.val() || {} });
       });
-      finishUserLoad(list);
+      rows = rows.filter(function (row) {
+        return row.key && row.key !== ADMIN.uid && !state.userKeys[row.key];
+      });
+      var hasMore = rows.length > PAGE_SIZE;
+      if (hasMore) rows = rows.slice(0, PAGE_SIZE);
+      rows.forEach(function (row) {
+        var user = row.value || {};
+        user.uid = user.uid || row.key;
+        addUser(user);
+      });
+      if (rows.length) state.lastKey = rows[rows.length - 1].key;
+      var firstEmpty = !state.users.length && !state.lastKey;
+      if (!hasMore) {
+        if (state.source === "users" && firstEmpty) {
+          state.source = "publicUsers";
+          state.usersLoading = false;
+          loadUsersPage();
+          return;
+        }
+        state.usersDone = true;
+      }
+      if (state.users.length >= MAX_USERS) state.usersDone = true;
+      state.usersLoading = false;
+      updateLoadMore();
+      renderUsers();
     }).catch(function () {
+      state.usersLoading = false;
+      if (state.source === "users" && !state.users.length) {
+        state.source = "publicUsers";
+        state.lastKey = null;
+        state.usersDone = false;
+        loadUsersPage();
+        return;
+      }
+      state.usersDone = true;
+      updateLoadMore();
       $("userListEmpty").style.display = "block";
       setText("userListEmpty", "ইউজার লিস্ট লোড করা যায়নি। ইন্টারনেট চেক করুন।");
     });
   }
 
-  function finishUserLoad(list) {
-    state.users = list.sort(function (a, b) {
-      var an = String(a.username || a.fullName || "").toLowerCase();
-      var bn = String(b.username || b.fullName || "").toLowerCase();
-      return an < bn ? -1 : (an > bn ? 1 : 0);
-    });
-    renderUsers();
-  }
-
   function renderUsers() {
     var box = $("userList");
-    var query = $("userSearch").value.trim().toLowerCase();
     box.textContent = "";
+    var query = state.userQuery.trim().toLowerCase();
+    var rows = state.users.slice().sort(function (a, b) {
+      var an = (a.fullName || a.username || "").toLowerCase();
+      var bn = (b.fullName || b.username || "").toLowerCase();
+      return an < bn ? -1 : (an > bn ? 1 : 0);
+    });
     var shown = 0;
-    state.users.forEach(function (user) {
-      var hay = [
-        user.username || "",
-        user.fullName || "",
-        user.phone || ""
-      ].join(" ").toLowerCase();
+    rows.forEach(function (user) {
+      var hay = [user.username, user.fullName, user.phone, user.email]
+        .join(" ").toLowerCase();
       if (query && hay.indexOf(query) === -1) return;
       shown++;
       var row = document.createElement("div");
-      row.className = "user" + (state.peer && state.peer.uid === user.uid ? " active" : "");
+      row.className = "user";
       row.setAttribute("role", "button");
       row.tabIndex = 0;
       var name = document.createElement("div");
       name.className = "user-name";
-      name.textContent = user.fullName || user.username || user.uid;
+      name.textContent = displayName(user);
       var meta = document.createElement("div");
       meta.className = "user-meta";
-      meta.textContent = "@" + (user.username || "-") +
-        (user.phone ? " · " + user.phone : "");
+      meta.textContent = userMeta(user);
       row.appendChild(name);
       row.appendChild(meta);
-      row.addEventListener("click", function () { selectPeer(user); });
+      row.addEventListener("click", function () { openUser(user); });
+      row.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openUser(user);
+        }
+      });
       box.appendChild(row);
     });
     $("userListEmpty").style.display = shown ? "none" : "block";
-    setText("userCount", state.users.length ? state.users.length + " জন ইউজার" : "");
+    if (!shown && !state.usersDone) {
+      setText("userListEmpty", "লোড হওয়া ইউজারদের মধ্যে পাওয়া যায়নি। আরও লোড করুন বা username লিখুন।");
+    } else if (!shown) {
+      setText("userListEmpty", "কোনো ইউজার পাওয়া যায়নি।");
+    }
+    setText(
+      "userCount",
+      state.users.length
+        ? (state.users.length + " জন লোড হয়েছে" + (query ? " · ফিল্টারে " + shown + " জন" : ""))
+        : ""
+    );
   }
 
-  /* ---------- Chat ---------- */
-  function selectPeer(user) {
-    state.peer = user;
-    state.roomId = [ADMIN.uid, user.uid].sort().join("_");
-    $("chatPanel").classList.remove("hidden");
-    setText("chatPeerName", user.fullName || user.username || user.uid);
-    setText("chatPeerUser", "@" + (user.username || "-") +
-      (user.phone ? " · " + user.phone : ""));
-    $("msgInput").value = "";
-    renderUsers();
+  function lookupUsername() {
+    var name = normalizeUsername(state.userQuery);
+    if (!name || name.length < 2 || name === state.searchLookup) return;
+    state.searchLookup = name;
+    db.ref("usernames/" + name).once("value").then(function (snap) {
+      var uid = snap.val();
+      if (!uid || typeof uid !== "string" || uid === ADMIN.uid) return;
+      if (state.userKeys[uid]) return;
+      db.ref("users/" + uid).once("value").then(function (userSnap) {
+        var user = userSnap.val();
+        if (!user) return;
+        user.uid = user.uid || uid;
+        addUser(user);
+        renderUsers();
+        updateLoadMore();
+      });
+    }).catch(function () {});
+  }
+
+  /* ---------- Peer list for one user ---------- */
+  function openUser(user) {
+    state.selectedUser = user;
+    state.peer = null;
+    state.roomId = "";
+    state.chatToken++;
     detachMessages();
-    var ref = db.ref("chats/" + state.roomId + "/messages");
-    state.msgRef = ref;
-    state.msgListener = function (snap) { renderMessages(snap); };
-    ref.on("value", state.msgListener);
+    $("usersCard").classList.add("hidden");
+    $("chatPanel").classList.add("hidden");
+    $("chatsCard").classList.remove("hidden");
+    setText("chatsUserName", displayName(user));
+    setText("chatsUserMeta", userMeta(user));
+    setText("chatListCount", "চ্যাট লোড হচ্ছে…");
+    setText("peerEmpty", "");
+    $("peerEmpty").style.display = "none";
+    $("peerList").textContent = "";
+
+    var token = state.chatToken;
+    db.ref("userChats/" + user.uid)
+      .once("value")
+      .then(function (snap) {
+        if (token !== state.chatToken) return;
+        var peers = [];
+        snap.forEach(function (child) {
+          var entry = child.val() || {};
+          var roomId = entry.roomId || child.key || "";
+          if (!roomId) return;
+          entry.roomId = roomId;
+          entry.peerUid = entry.peerUid || "";
+          if (!(Number(entry.timestamp) > 0) && !entry.lastMessage) return;
+          peers.push(entry);
+        });
+        peers.sort(function (a, b) {
+          return (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0);
+        });
+        renderPeers(peers.slice(0, MAX_PEERS));
+      })
+      .catch(function () {
+        if (token !== state.chatToken) return;
+        setText("chatListCount", "");
+        $("peerEmpty").style.display = "block";
+        setText("peerEmpty", "চ্যাট লিস্ট লোড করা যায়নি। ইন্টারনেট চেক করুন।");
+      });
+  }
+
+  function renderPeers(peers) {
+    var box = $("peerList");
+    box.textContent = "";
+    $("peerEmpty").style.display = peers.length ? "none" : "block";
+    if (!peers.length) {
+      setText("peerEmpty", "এই ইউজার এখনো কারো সাথে চ্যাট করেনি।");
+    }
+    setText("chatListCount", peers.length
+      ? peers.length + " টি চ্যাট" + (peers.length >= MAX_PEERS ? " · সর্বশেষ " + MAX_PEERS : "")
+      : "");
+    peers.forEach(function (entry) {
+      var row = document.createElement("div");
+      row.className = "user";
+      row.setAttribute("role", "button");
+      row.tabIndex = 0;
+      var name = document.createElement("div");
+      name.className = "user-name";
+      name.textContent = entry.peerName || shortUid(entry.peerUid) || "ইউজার";
+      var last = document.createElement("div");
+      last.className = "user-last";
+      last.textContent = entry.lastMessage || "(মেসেজ নেই)";
+      var meta = document.createElement("div");
+      meta.className = "user-meta";
+      meta.textContent = formatTime(entry.timestamp) || "—";
+      row.appendChild(name);
+      row.appendChild(last);
+      row.appendChild(meta);
+      row.addEventListener("click", function () { openChat(entry); });
+      row.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openChat(entry);
+        }
+      });
+      box.appendChild(row);
+    });
+    if (!peers.length) setText("chatListCount", "");
+  }
+
+  /* ---------- Messages ---------- */
+  function openChat(entry) {
+    state.peer = entry;
+    state.roomId = entry.roomId;
+    state.chatToken++;
+    var token = state.chatToken;
+    $("chatsCard").classList.add("hidden");
+    $("chatPanel").classList.remove("hidden");
+    setText("chatPeerName", entry.peerName || displayName(state.selectedUser || {}));
+    setText("chatPeerUser", shortUid(entry.peerUid));
+    setText("chatRoom", "Room: " + entry.roomId);
+    $("msgList").textContent = "";
+    setText("chatCount", "মেসেজ লোড হচ্ছে…");
+    $("chatEmpty").style.display = "none";
+
+    if (entry.peerUid) {
+      db.ref("users/" + entry.peerUid).once("value").then(function (snap) {
+        if (token !== state.chatToken) return;
+        var user = snap.val() || {};
+        if (user.username || user.phone) {
+          setText("chatPeerUser", userMeta(user));
+          if (!entry.peerName && (user.fullName || user.username)) {
+            setText("chatPeerName", user.fullName || user.username);
+          }
+        }
+      }).catch(function () {});
+    }
+
+    attachMessages();
     $("chatPanel").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function closeChat() {
+  function backToChats() {
+    state.chatToken++;
     detachMessages();
     state.peer = null;
     state.roomId = "";
     $("chatPanel").classList.add("hidden");
+    $("chatsCard").classList.remove("hidden");
+    if (state.selectedUser) openUser(state.selectedUser);
+  }
+
+  function backToUsers() {
+    state.chatToken++;
+    detachMessages();
+    state.peer = null;
+    state.roomId = "";
+    state.selectedUser = null;
+    $("chatsCard").classList.add("hidden");
+    $("chatPanel").classList.add("hidden");
+    $("usersCard").classList.remove("hidden");
     renderUsers();
+    $("usersCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function attachMessages() {
+    detachMessages();
+    if (!state.roomId) return;
+    state.msgFirstLoad = true;
+    var room = state.roomId;
+    var ref = db.ref("chats/" + room + "/messages")
+      .orderByKey()
+      .limitToLast(MAX_MESSAGES);
+    state.msgRef = ref;
+    state.msgListener = function (snapshot) {
+      if (room !== state.roomId) return;
+      renderMessages(snapshot);
+    };
+    ref.on("value", state.msgListener, function () {
+      toast("মেসেজ লোড করা যায়নি");
+    });
   }
 
   function detachMessages() {
@@ -518,111 +783,182 @@
 
   function renderMessages(snapshot) {
     var box = $("msgList");
+    var nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
     box.textContent = "";
     var items = [];
     snapshot.forEach(function (child) {
       var value = child.val() || {};
       value.id = value.id || child.key;
+      if (!value.id) return;
       items.push(value);
     });
     items.sort(function (a, b) {
       return (Number(a.timestamp) || 0) - (Number(b.timestamp) || 0);
     });
-    items = items.slice(-200);
     $("chatEmpty").style.display = items.length ? "none" : "block";
-    setText("chatCount", items.length ? items.length + " মেসেজ" : "");
+    setText("chatCount", items.length
+      ? items.length + " মেসেজ" + (items.length >= MAX_MESSAGES ? " · সর্বশেষ " + MAX_MESSAGES : "")
+      : "");
     items.forEach(function (message) {
       var mine = message.senderId === ADMIN.uid;
       var wrap = document.createElement("div");
       wrap.className = "msg " + (mine ? "me" : "peer");
+
       var who = document.createElement("div");
       who.className = "who";
       who.textContent = mine
-        ? "আপনি"
-        : (message.senderName || (state.peer && (state.peer.fullName || state.peer.username)) || "ইউজার");
+        ? "আপনি (অ্যাডমিন)"
+        : (message.senderName ||
+          (state.selectedUser ? displayName(state.selectedUser) : "") ||
+          "ইউজার");
+
       var body = document.createElement("div");
       body.className = "body";
-      body.textContent = String(message.text || "");
-      var time = document.createElement("div");
+      body.textContent = message.text ? String(message.text) : "(মেসেজ নেই)";
+
+      var metaRow = document.createElement("div");
+      metaRow.className = "meta-row";
+      var time = document.createElement("span");
       time.className = "time";
-      time.textContent = message.timestamp
-        ? new Date(Number(message.timestamp)).toLocaleString()
-        : "";
+      time.textContent = formatTime(message.timestamp);
+      if (message.edited) {
+        var edited = document.createElement("span");
+        edited.className = "edited";
+        edited.textContent = "(সম্পাদিত)";
+        time.appendChild(edited);
+      }
+
+      var actions = document.createElement("span");
+      actions.className = "msg-actions";
+      var edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "ghost";
+      edit.textContent = "Edit";
+      edit.addEventListener("click", function () { openEdit(message); });
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "danger";
+      del.textContent = "Delete";
+      del.addEventListener("click", function () { confirmDeleteMessage(message); });
+      actions.appendChild(edit);
+      actions.appendChild(del);
+
+      metaRow.appendChild(time);
+      metaRow.appendChild(actions);
       wrap.appendChild(who);
       wrap.appendChild(body);
-      wrap.appendChild(time);
+      wrap.appendChild(metaRow);
       box.appendChild(wrap);
     });
-    box.scrollTop = box.scrollHeight;
+    if (state.msgFirstLoad || nearBottom) box.scrollTop = box.scrollHeight;
+    state.msgFirstLoad = false;
   }
 
-  function sendMessage() {
-    if (!state.peer || !state.roomId) return;
-    var text = $("msgInput").value.trim();
-    if (!text) return;
-    var now = Date.now();
-    var ref = db.ref("chats/" + state.roomId + "/messages").push();
-    ref.set({
-      id: ref.key,
-      senderId: ADMIN.uid,
-      senderName: ADMIN.name,
-      text: text,
-      timestamp: now,
-      replyToId: "",
-      replyToSender: "",
-      replyToText: "",
-      edited: false
-    }).then(function () {
-      $("msgInput").value = "";
-      updateChatIndexes(state.peer, text, now);
-    }).catch(function () {
-      toast("মেসেজ পাঠানো যায়নি");
-    });
+  function openEdit(message) {
+    state.editMessage = message;
+    setText("editWho", formatTime(message.timestamp));
+    $("editText").value = String(message.text || "");
+    $("editModal").classList.add("show");
+    setTimeout(function () { $("editText").focus(); }, 100);
   }
 
-  function updateChatIndexes(peer, text, timestamp) {
+  function closeEdit() {
+    $("editModal").classList.remove("show");
+    state.editMessage = null;
+  }
+
+  function saveEditedMessage() {
+    var message = state.editMessage;
+    var text = $("editText").value.trim();
+    if (!message) return;
+    if (!text) {
+      toast("মেসেজ খালি রাখা যাবে না");
+      return;
+    }
     var room = state.roomId;
-    var updates = {};
-    updates["/userChats/" + ADMIN.uid + "/" + room + "/roomId"] = room;
-    updates["/userChats/" + ADMIN.uid + "/" + room + "/peerUid"] = peer.uid;
-    updates["/userChats/" + ADMIN.uid + "/" + room + "/peerName"] =
-      peer.fullName || peer.username || peer.uid;
-    updates["/userChats/" + ADMIN.uid + "/" + room + "/lastMessage"] = text;
-    updates["/userChats/" + ADMIN.uid + "/" + room + "/timestamp"] = timestamp;
-    updates["/userChats/" + ADMIN.uid + "/" + room + "/lastFrom"] = ADMIN.uid;
-    updates["/userChats/" + peer.uid + "/" + room + "/roomId"] = room;
-    updates["/userChats/" + peer.uid + "/" + room + "/peerUid"] = ADMIN.uid;
-    updates["/userChats/" + peer.uid + "/" + room + "/peerName"] = ADMIN.name;
-    updates["/userChats/" + peer.uid + "/" + room + "/lastMessage"] = text;
-    updates["/userChats/" + peer.uid + "/" + room + "/timestamp"] = timestamp;
-    updates["/userChats/" + peer.uid + "/" + room + "/lastFrom"] = ADMIN.uid;
-    db.ref().update(updates).catch(function () {
-      toast("চ্যাট লিস্ট আপডেট হয়নি");
-    });
+    db.ref("chats/" + room + "/messages/" + message.id)
+      .update({ text: text, edited: true })
+      .then(function () {
+        closeEdit();
+        toast("মেসেজ এডিট হয়েছে");
+        refreshPreview(room);
+      })
+      .catch(function () { toast("এডিট করা যায়নি"); });
   }
 
-  function confirmDeleteChat() {
-    if (!state.peer) return;
+  function confirmDeleteMessage(message) {
     showConfirm(
-      "চ্যাট ডিলিট",
-      "«" + (state.peer.fullName || state.peer.username || state.peer.uid) +
-        "» এর সাথে পুরো চ্যাট ডেটাবেস থেকে মুছে যাবে। নিশ্চিত?",
-      deleteChat
+      "মেসেজ ডিলিট",
+      "এই মেসেজটি দুইজনের চ্যাট থেকে মুছে যাবে। নিশ্চিত?",
+      function () {
+        var room = state.roomId;
+        db.ref("chats/" + room + "/messages/" + message.id)
+          .remove()
+          .then(function () {
+            toast("মেসেজ ডিলিট হয়েছে");
+            refreshPreview(room);
+          })
+          .catch(function () { toast("ডিলিট করা যায়নি"); });
+      }
     );
   }
 
-  function deleteChat() {
-    var peer = state.peer;
-    if (!peer) return;
+  function previewUids() {
+    var uids = [];
+    if (state.selectedUser && state.selectedUser.uid) uids.push(state.selectedUser.uid);
+    if (state.peer && state.peer.peerUid) uids.push(state.peer.peerUid);
+    return uids.filter(function (uid, index) {
+      return uid && uids.indexOf(uid) === index;
+    });
+  }
+
+  function refreshPreview(room) {
+    if (!room) return;
+    var uids = previewUids();
+    db.ref("chats/" + room + "/messages")
+      .orderByKey()
+      .limitToLast(1)
+      .once("value")
+      .then(function (snap) {
+        var last = null;
+        snap.forEach(function (child) { last = child.val() || {}; });
+        var updates = {};
+        uids.forEach(function (uid) {
+          updates["/userChats/" + uid + "/" + room + "/lastMessage"] =
+            last ? String(last.text || "") : "";
+          updates["/userChats/" + uid + "/" + room + "/lastFrom"] =
+            last ? String(last.senderId || "") : "";
+          updates["/userChats/" + uid + "/" + room + "/timestamp"] =
+            last ? (Number(last.timestamp) || 0) : 0;
+        });
+        if (Object.keys(updates).length) {
+          db.ref().update(updates).catch(function () {});
+        }
+      })
+      .catch(function () {});
+  }
+
+  function confirmDeleteChat() {
+    if (!state.roomId || !state.selectedUser) return;
+    var peerName = (state.peer && state.peer.peerName) || "এই ইউজার";
+    showConfirm(
+      "পুরো চ্যাট ডিলিট",
+      "«" + peerName + "» এর সাথে পুরো চ্যাট ডেটাবেস থেকে মুছে যাবে। নিশ্চিত?",
+      deleteWholeChat
+    );
+  }
+
+  function deleteWholeChat() {
     var room = state.roomId;
+    if (!room) return;
+    var uids = previewUids();
     var updates = {};
     updates["/chats/" + room] = null;
-    updates["/userChats/" + ADMIN.uid + "/" + room + "/lastMessage"] = "";
-    updates["/userChats/" + ADMIN.uid + "/" + room + "/lastFrom"] = "";
-    updates["/userChats/" + ADMIN.uid + "/" + room + "/timestamp"] = 0;
-    updates["/userChats/" + peer.uid + "/" + room + "/lastMessage"] = "";
-    updates["/userChats/" + peer.uid + "/" + room + "/lastFrom"] = "";
-    updates["/userChats/" + peer.uid + "/" + room + "/timestamp"] = 0;
+    uids.forEach(function (uid) {
+      updates["/userChats/" + uid + "/" + room + "/lastMessage"] = "";
+      updates["/userChats/" + uid + "/" + room + "/lastFrom"] = "";
+      updates["/userChats/" + uid + "/" + room + "/timestamp"] = 0;
+    });
     db.ref().update(updates).then(function () {
       toast("চ্যাট ডিলিট হয়েছে");
     }).catch(function () {
@@ -630,124 +966,23 @@
     });
   }
 
-  /* ---------- Dynamic buttons ---------- */
-  function initButtons() {
-    var select = $("buttonTarget");
-    TARGETS.forEach(function (pair) {
-      var option = document.createElement("option");
-      option.value = pair[0];
-      option.textContent = pair[1];
-      select.appendChild(option);
-    });
-    select.value = TARGETS[0][0];
-    state.btnTarget = select.value;
-    select.addEventListener("change", function () {
-      state.btnTarget = select.value;
-      attachButtons();
-    });
-    $("addButtonBtn").addEventListener("click", addButton);
-    attachButtons();
-  }
-
-  function attachButtons() {
-    detachButtons();
-    var ref = db.ref("serviceButtons/" + state.btnTarget);
-    state.btnRef = ref;
-    state.btnListener = function (snap) {
-      var list = [];
-      snap.forEach(function (child) {
-        var value = child.val() || {};
-        value.buttonId = value.buttonId || child.key;
-        list.push(value);
-      });
-      list.sort(function (a, b) {
-        return (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0);
-      });
-      renderButtons(list);
-    };
-    ref.on("value", state.btnListener);
-  }
-
-  function detachButtons() {
-    if (state.btnRef && state.btnListener) {
-      state.btnRef.off("value", state.btnListener);
-    }
-    state.btnRef = null;
-    state.btnListener = null;
-  }
-
-  function renderButtons(list) {
-    var box = $("buttonList");
-    box.textContent = "";
-    $("buttonEmpty").style.display = list.length ? "none" : "block";
-    list.forEach(function (button) {
-      var row = document.createElement("div");
-      row.className = "button-row";
-      var info = document.createElement("div");
-      var name = document.createElement("div");
-      name.className = "button-name";
-      name.textContent = button.name || button.buttonId;
-      var link = document.createElement("div");
-      link.className = "button-link";
-      link.textContent = button.fileLink || button.githubLink || "—";
-      info.appendChild(name);
-      info.appendChild(link);
-      var del = document.createElement("button");
-      del.type = "button";
-      del.className = "danger mini";
-      del.textContent = "ডিলিট";
-      del.addEventListener("click", function () {
-        showConfirm(
-          "বাটন ডিলিট",
-          "«" + (button.name || "বাটন") + "» ডিলিট করবেন?",
-          function () {
-            db.ref("serviceButtons/" + state.btnTarget + "/" + button.buttonId).remove()
-              .then(function () { toast("বাটন ডিলিট হয়েছে"); })
-              .catch(function () { toast("ডিলিট করা যায়নি"); });
-          }
-        );
-      });
-      row.appendChild(info);
-      row.appendChild(del);
-      box.appendChild(row);
-    });
-  }
-
-  function addButton() {
-    var name = $("buttonName").value.trim();
-    var link = $("buttonLink").value.trim();
-    if (!name) {
-      toast("বাটনের নাম দিন");
-      return;
-    }
-    var ref = db.ref("serviceButtons/" + state.btnTarget).push();
-    ref.set({
-      buttonId: ref.key,
-      name: name,
-      githubLink: "",
-      fileLink: link,
-      adType: "",
-      createdAt: firebase.database.ServerValue.TIMESTAMP
-    }).then(function () {
-      $("buttonName").value = "";
-      $("buttonLink").value = "";
-      toast("বাটন যোগ হয়েছে");
-    }).catch(function () {
-      toast("সেভ করা যায়নি");
-    });
-  }
-
   /* ---------- Wire up ---------- */
-  $("userSearch").addEventListener("input", renderUsers);
-  $("btnSend").addEventListener("click", sendMessage);
-  $("msgInput").addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      sendMessage();
-    }
+  $("userSearch").addEventListener("input", function () {
+    state.userQuery = $("userSearch").value;
+    renderUsers();
+    if (state.searchTimer) clearTimeout(state.searchTimer);
+    state.searchTimer = setTimeout(lookupUsername, 400);
   });
-  $("btnCloseChat").addEventListener("click", closeChat);
+  $("btnLoadMore").addEventListener("click", loadUsersPage);
+  $("chatsBack").addEventListener("click", backToUsers);
+  $("chatBack").addEventListener("click", backToChats);
   $("btnDeleteChat").addEventListener("click", confirmDeleteChat);
+  $("editSave").addEventListener("click", saveEditedMessage);
+  $("editClose").addEventListener("click", closeEdit);
+  $("editCancel").addEventListener("click", closeEdit);
+  $("editModal").addEventListener("click", function (event) {
+    if (event.target === $("editModal")) closeEdit();
+  });
   $("noticeClose").addEventListener("click", closeNotice);
   $("noticeModal").addEventListener("click", function (event) {
     if (event.target === $("noticeModal")) closeNotice();
