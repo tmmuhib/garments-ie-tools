@@ -37,52 +37,63 @@
   button { cursor: pointer; }
   .hidden { display: none !important; }
 
-  /* ---------------- top bar ---------------- */
+  /* ---------------- top bar (flat) ---------------- */
   #topbar {
     flex: 0 0 auto;
-    height: 46px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    padding: 0 12px;
+    padding: 0 10px;
+    background: #0a1712;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
   }
   .brand { display: flex; align-items: center; gap: 7px; min-width: 0; }
   .brandDice {
-    width: 24px; height: 24px; border-radius: 7px;
-    background: linear-gradient(145deg, #ffffff, #dfe8e2);
+    width: 22px; height: 22px; border-radius: 6px;
+    background: #0fae58;
     display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
-    padding: 4px; gap: 1px; box-shadow: 0 3px 10px rgba(0, 0, 0, .4);
-    transform: rotate(-8deg);
+    padding: 4px; gap: 1px;
   }
   .brandDice i { border-radius: 50%; background: transparent; }
-  .brandDice i.on { background: #13241c; }
-  .brandText { display: flex; align-items: baseline; gap: 5px; }
-  .brandMark { font-size: 9px; letter-spacing: .2em; color: #8fe6bd; font-weight: 800; }
-  .brandLudo { font-size: 16px; letter-spacing: .16em; font-weight: 900; color: #fff; }
-  .tbRight { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .brandDice i.on { background: #06251a; }
+  .brandText { display: flex; align-items: baseline; gap: 4px; min-width: 0; }
+  .brandMark { font-size: 8.5px; letter-spacing: .13em; color: #83cba9; font-weight: 800; }
+  .brandLudo { font-size: 15px; letter-spacing: .13em; font-weight: 900; color: #f2fff8; }
+  .tbRight { display: flex; align-items: center; gap: 5px; min-width: 0; }
   .roomPill {
-    border: 1px solid rgba(0, 200, 83, .4);
-    background: rgba(0, 200, 83, .14);
-    color: #b9ffd9;
-    border-radius: 999px;
-    padding: 4px 9px;
+    border: 0;
+    background: rgba(255, 255, 255, .07);
+    color: #b9f5d4;
+    border-radius: 7px;
+    padding: 4px 7px;
     font-size: 10px;
     font-weight: 800;
-    letter-spacing: .08em;
+    letter-spacing: .06em;
     white-space: nowrap;
   }
   .roomPill b { color: #fff; }
+  .balChip {
+    border: 0;
+    background: rgba(0, 200, 83, .15);
+    color: #b8ffd8;
+    border-radius: 7px;
+    padding: 4px 8px;
+    font-size: 10.5px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
   .meChip {
-    max-width: 34vw;
+    max-width: 19vw;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    background: rgba(255, 255, 255, .06);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 4px 10px;
-    font-size: 11px;
+    background: rgba(255, 255, 255, .05);
+    border: 0;
+    border-radius: 7px;
+    padding: 4px 8px;
+    font-size: 10.5px;
     font-weight: 700;
     color: #e5fff2;
   }
@@ -137,6 +148,44 @@
     color: #062015;
     box-shadow: 0 8px 20px rgba(0, 200, 83, .3);
   }
+  .betBox { margin: 6px 0 12px; text-align: left; }
+  .betHead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 0 2px 6px;
+    font-size: 10.5px; font-weight: 800; letter-spacing: .04em;
+    color: #b7d8c8;
+  }
+  .betHead b { color: #fff; font-size: 12px; }
+  .betChips { display: flex; gap: 5px; }
+  .betChip {
+    flex: 1;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .04);
+    color: #d8f2e5;
+    border-radius: 9px;
+    padding: 8px 2px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .betChip.active {
+    background: #00b452;
+    border-color: #00b452;
+    color: #041d11;
+  }
+  .betCustom {
+    width: 100%;
+    margin-top: 7px;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    color: #eafff4;
+    padding: 9px 11px;
+    font-size: 12px;
+    outline: none;
+  }
+  .betHint { margin: 7px 2px 0; font-size: 10px; color: #7fae97; line-height: 1.45; }
+  .lobbyBal { margin-top: 10px; font-size: 11px; font-weight: 700; color: #a4ecc8; }
+  .rcBet { color: #ffe08a; font-weight: 800; }
   .btn {
     border: 0;
     border-radius: 12px;
@@ -194,10 +243,14 @@
   /* ---------------- game ---------------- */
   #gameView { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0 8px 4px; }
   #boardWrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
-  #board {
+  #boardStage {
     position: relative;
-    width: min(100%, calc(100vh - 118px), 640px);
+    width: min(100%, calc(100vh - 214px), 560px);
     aspect-ratio: 1 / 1;
+  }
+  #board {
+    position: absolute;
+    inset: 0;
     background: #f8f6ef;
     border-radius: 14px;
     overflow: hidden;
@@ -237,7 +290,7 @@
   #tokenLayer { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
   .btoken {
     position: absolute;
-    width: 6.3%;
+    width: 5.3%;
     transform: translate(-50%, -58%);
     pointer-events: none;
     filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .35));
@@ -292,12 +345,12 @@
   .waitHint { font-size: clamp(6px, 1.4vw, 8px); color: #fff; font-weight: 800; letter-spacing: .06em; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
   .overMark { font-size: clamp(8px, 1.8vw, 12px); font-weight: 900; color: #fff; letter-spacing: .08em; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
 
-  .home { position: absolute; width: 40%; height: 40%; padding: 2.2%; z-index: 5; display: none; }
+  .home { position: absolute; width: 37%; height: 37%; padding: 1.2%; z-index: 5; display: none; }
   .home.active { display: block; }
-  .home[data-seat="0"] { left: 0; top: 0; }
-  .home[data-seat="1"] { right: 0; top: 0; }
-  .home[data-seat="2"] { right: 0; bottom: 0; }
-  .home[data-seat="3"] { left: 0; bottom: 0; }
+  .home[data-seat="0"] { left: 1.5%; top: 1.5%; }
+  .home[data-seat="1"] { right: 1.5%; top: 1.5%; }
+  .home[data-seat="2"] { right: 1.5%; bottom: 1.5%; }
+  .home[data-seat="3"] { left: 1.5%; bottom: 1.5%; }
   .homeInner {
     position: relative;
     width: 100%; height: 100%;
@@ -365,7 +418,7 @@
   .home.activeTurn .turnChip { display: inline-block; }
   .homeTokens {
     position: absolute;
-    left: 12%; right: 12%; top: 25%; bottom: 9%;
+    left: 10%; right: 10%; top: 27%; bottom: 7%;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
@@ -386,7 +439,7 @@
   .hslot:nth-child(2) { animation-delay: -.8s; }
   .hslot:nth-child(3) { animation-delay: -1.6s; }
   .hslot:nth-child(4) { animation-delay: -2.4s; }
-  .hslot svg { height: 84%; width: auto; max-width: 100%; display: block; }
+  .hslot svg { height: 74%; width: auto; max-width: 100%; display: block; }
   .hslot.movable { pointer-events: auto; cursor: pointer; animation: tokenPulse 1s ease-in-out infinite; z-index: 6; }
   .hslot.done::after {
     content: "✓";
@@ -428,17 +481,19 @@
   .emptyHit b { font-size: clamp(8px, 2.2vw, 11px); letter-spacing: .04em; }
   .emptyHit span { font-size: clamp(6px, 1.6vw, 8.5px); color: #bfe3d1; }
   .ctrlBar {
+    order: -1;
     flex: 0 0 auto;
-    height: clamp(20px, 6.4vw, 27px);
+    height: clamp(19px, 5.6vw, 25px);
     display: flex; align-items: center; justify-content: space-around;
-    background: rgba(2, 14, 9, .94);
-    border-top: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(3, 14, 9, .96);
+    border-top: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
     z-index: 5;
   }
   .home.empty .ctrlBar { visibility: hidden; }
   .ctrl {
-    width: clamp(17px, 5.2vw, 22px);
-    height: clamp(17px, 5.2vw, 22px);
+    width: clamp(16px, 4.8vw, 21px);
+    height: clamp(16px, 4.8vw, 21px);
     border: 0; border-radius: 5px;
     background: transparent;
     color: #e8fff4;
@@ -453,8 +508,7 @@
 
   #dice {
     position: absolute;
-    width: 10.5%;
-    max-width: 56px;
+    width: clamp(38px, 12vw, 54px);
     aspect-ratio: 1 / 1;
     transform: translate(-50%, -50%);
     border-radius: 22%;
@@ -462,11 +516,11 @@
     box-shadow: 0 6px 14px rgba(0, 0, 0, .45), inset 0 -3px 0 rgba(0, 0, 0, .12);
     z-index: 10;
     display: grid; place-items: center;
-    transition: left .38s cubic-bezier(.2, .9, .2, 1), top .38s cubic-bezier(.2, .9, .2, 1);
+    transition: left .36s cubic-bezier(.2, .9, .2, 1), top .36s cubic-bezier(.2, .9, .2, 1);
     pointer-events: none;
   }
   #dice.myturn { pointer-events: auto; cursor: pointer; animation: dicePulse 1.3s ease-in-out infinite; }
-  #dice.rolling { animation: diceShake .45s ease; }
+  #dice.rolling { animation: diceRoll 1.15s cubic-bezier(.15, .7, .25, 1); }
   #dice .pipGrid { width: 70%; height: 70%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 12%; }
   .pip { border-radius: 50%; background: transparent; }
   .pip.on { background: #1c1c1c; box-shadow: inset 0 1px 1px rgba(255, 255, 255, .5); }
@@ -474,12 +528,24 @@
   #statusBar {
     flex: 0 0 auto;
     min-height: 34px;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+    gap: 6px;
     padding: 3px 10px 2px;
     color: #cfe9dc;
     font-size: 12px;
     font-weight: 600;
     text-align: center;
+  }
+  #potBadge {
+    border: 0;
+    border-radius: 6px;
+    background: rgba(251, 192, 45, .16);
+    color: #ffe08a;
+    padding: 3px 7px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .04em;
+    white-space: nowrap;
   }
   #btnEnableMedia {
     border: 1px solid rgba(0, 200, 83, .4);
@@ -655,6 +721,13 @@
   #fatal h2 { color: #fff; font-size: 18px; margin: 0 0 8px; }
   #fatal p { color: #a9c7b8; font-size: 12.5px; line-height: 1.6; margin: 0; }
 
+  @media (max-width: 370px) {
+    .brandMark { display: none; }
+    .brandLudo { font-size: 14px; }
+    .meChip { max-width: 15vw; }
+    .betChip { font-size: 10px; padding: 7px 1px; }
+  }
+
   @keyframes tokenPulse {
     0%, 100% { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px rgba(255, 255, 255, .8)); transform: translateY(0); }
     50% { filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px rgba(255, 255, 255, .95)); transform: translateY(-3px); }
@@ -667,12 +740,14 @@
     0%, 100% { box-shadow: 0 6px 14px rgba(0, 0, 0, .45), 0 0 0 2px rgba(255, 255, 255, .55), 0 0 14px rgba(0, 200, 83, .55); }
     50% { box-shadow: 0 8px 18px rgba(0, 0, 0, .5), 0 0 0 4px rgba(255, 255, 255, .75), 0 0 22px rgba(0, 200, 83, .8); }
   }
-  @keyframes diceShake {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    25% { transform: translate(-50%, -50%) rotate(-14deg) scale(1.08); }
-    50% { transform: translate(-50%, -50%) rotate(12deg) scale(1.1); }
-    75% { transform: translate(-50%, -50%) rotate(-6deg) scale(1.04); }
-    100% { transform: translate(-50%, -50%) rotate(0deg); }
+  @keyframes diceRoll {
+    0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+    14% { transform: translate(-50%, -50%) rotate(250deg) scale(1.18); }
+    32% { transform: translate(-50%, -50%) rotate(520deg) scale(.9); }
+    50% { transform: translate(-50%, -50%) rotate(740deg) scale(1.14); }
+    68% { transform: translate(-50%, -50%) rotate(910deg) scale(.94); }
+    84% { transform: translate(-50%, -50%) rotate(1030deg) scale(1.08); }
+    100% { transform: translate(-50%, -50%) rotate(1120deg) scale(1); }
   }
   @keyframes playPulse {
     0%, 100% { transform: scale(1); }
@@ -701,7 +776,8 @@
     <div class="brandText"><span class="brandMark">TM247</span><span class="brandLudo">LUDO</span></div>
   </div>
   <div class="tbRight">
-    <button class="roomPill hidden" id="roomPill" type="button">ROOM <b id="roomPillCode">------</b></button>
+    <button class="roomPill hidden" id="roomPill" type="button"><b id="roomPillCode">------</b></button>
+    <div class="balChip" id="balChip">৳ 0</div>
     <div class="meChip" id="meChip">Player</div>
   </div>
 </header>
@@ -731,7 +807,20 @@
         <button class="modeBtn" type="button" data-mode="3">3 Players</button>
         <button class="modeBtn active" type="button" data-mode="4">4 Players</button>
       </div>
+      <div class="betBox">
+        <div class="betHead"><span>Bet amount</span><b id="betValue">Free</b></div>
+        <div class="betChips" id="betChips">
+          <button class="betChip active" type="button" data-bet="0">Free</button>
+          <button class="betChip" type="button" data-bet="10">10</button>
+          <button class="betChip" type="button" data-bet="20">20</button>
+          <button class="betChip" type="button" data-bet="50">50</button>
+          <button class="betChip" type="button" data-bet="100">100</button>
+        </div>
+        <input class="betCustom" id="betCustom" type="number" inputmode="numeric" min="0" max="9999" placeholder="Custom amount (0 = free)" />
+        <div class="betHint" id="betHint">Free game — no money</div>
+      </div>
       <button class="btn primary big" id="btnCreate" type="button">Create Room</button>
+      <div class="lobbyBal" id="lobbyBal">Balance: ৳0</div>
     </section>
 
     <section id="inviteWrap" class="hidden">
@@ -753,18 +842,21 @@
 
 <section id="gameView" class="hidden">
   <div id="boardWrap">
-    <div id="board">
-      <div id="cells"></div>
-      <div id="tokenLayer"></div>
-      <div id="center">
-        <div id="centerArt"></div>
-        <div id="centerLabel">LUDO</div>
-        <div id="centerSlot"></div>
+    <div id="boardStage">
+      <div id="board">
+        <div id="cells"></div>
+        <div id="tokenLayer"></div>
+        <div id="center">
+          <div id="centerArt"></div>
+          <div id="centerLabel">LUDO</div>
+          <div id="centerSlot"></div>
+        </div>
       </div>
       <div id="dice"><div class="pipGrid" id="dicePips"></div></div>
     </div>
   </div>
   <div id="statusBar">
+    <span id="potBadge" class="hidden">POT ৳0</span>
     <span id="statusText"></span>
     <button id="btnEnableMedia" class="hidden" type="button">Enable camera &amp; mic</button>
   </div>
@@ -843,10 +935,10 @@
   };
   var MODES = { "2": ["0","2"], "3": ["0","1","2"], "4": ["0","1","2","3"] };
   var DICE_POS = {
-    "0": { left: 20, top: 40 },
-    "1": { left: 80, top: 40 },
-    "2": { left: 80, top: 60 },
-    "3": { left: 20, top: 60 }
+    "0": { left: "13%", top: "-13%" },
+    "1": { left: "87%", top: "-13%" },
+    "2": { left: "87%", top: "113%" },
+    "3": { left: "13%", top: "113%" }
   };
   var PIPS = {
     1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8]
@@ -897,6 +989,16 @@
   var mySeat = null;
   var myName = usernameParam || "Player";
   var selectedMode = "4";
+  var selectedBet = 0;
+  var myBalance = 0;
+  var balanceRef = null;
+  var balanceCb = null;
+  var startBusy = false;
+  var settleBusy = false;
+  var spinTimer = null;
+  var spinUntil = 0;
+  var localSpinUntil = 0;
+  var sweepTimer = null;
 
   var leaving = false;
   var selfLeaving = false;
@@ -915,6 +1017,7 @@
   var modalOnClose = null;
   var autoPassTimer = null;
   var endModalKey = "";
+  var lastDiceKey = "";
   var lastForceAt = 0;
 
   var rtcStarted = false;
@@ -965,6 +1068,310 @@
       });
     }
     return attempt();
+  }
+
+  /* ---------------- money / betting ---------------- */
+
+  function roundMoney(v) { return Math.round((Number(v) || 0) * 100) / 100; }
+  function shortId(id) { return String(id || "").slice(-6).toUpperCase(); }
+  function fmtMoney(v) {
+    var n = roundMoney(v);
+    var text = Math.abs(n - Math.round(n)) < 0.005 ? String(Math.round(n)) : n.toFixed(2);
+    return "৳" + text;
+  }
+
+  function attachBalance() {
+    if (!db || !uid) return;
+    if (balanceRef && balanceCb) {
+      try { balanceRef.off("value", balanceCb); } catch (e) {}
+    }
+    balanceRef = db.ref("users/" + uid + "/balance");
+    balanceCb = balanceRef.on("value", function (snap) {
+      myBalance = roundMoney(snap.val());
+      renderBalance();
+    });
+  }
+
+  function renderBalance() {
+    var chip = $("balChip");
+    if (chip) chip.textContent = fmtMoney(myBalance);
+    var lobby = $("lobbyBal");
+    if (lobby) lobby.textContent = "Balance: " + fmtMoney(myBalance);
+  }
+
+  function pruneLedger(ledger) {
+    var keys = Object.keys(ledger || {});
+    if (keys.length <= 60) return ledger;
+    keys.sort(function (a, b) { return (ledger[b].at || 0) - (ledger[a].at || 0); });
+    var out = {};
+    keys.slice(0, 60).forEach(function (k) { out[k] = ledger[k]; });
+    return out;
+  }
+
+  function writeLudoTx(targetUid, kind, amount, note, refId, userName) {
+    if (!db || !targetUid) return;
+    var key = "ludo_" + String(refId).replace(/[^A-Za-z0-9_-]/g, "") + "_" + kind;
+    db.ref("transactions/" + targetUid + "/" + key).set({
+      kind: kind,
+      amount: roundMoney(amount),
+      status: "completed",
+      method: "Ludo",
+      number: "",
+      note: note,
+      refId: refId,
+      at: Date.now(),
+      userName: userName || "",
+      remarks: ""
+    }).catch(function () {});
+  }
+
+  /* Prime the node first: an RTDB transaction started on an uncached path
+     runs with null and aborts before the server value arrives. */
+  function userTx(targetUid, fn) {
+    var ref = db.ref("users/" + targetUid);
+    return ref.once("value").then(function (snap) {
+      var primed = snap.val();
+      return ref.transaction(function (u) {
+        var base = u;
+        if (base === null) {
+          if (!primed) return;
+          base = JSON.parse(JSON.stringify(primed));
+        }
+        return fn(base);
+      });
+    });
+  }
+
+  /* Atomic debit + ledger marker. The ledger key makes retries idempotent. */
+  function debitBet(targetUid, roundId, amount, name) {
+    if (!targetUid || !roundId || !amount) return Promise.resolve(true);
+    var charged = false;
+    return userTx(targetUid, function (u) {
+      charged = false;
+      var ledger = u.ludoLedger || {};
+      var row = ledger[roundId] || {};
+      if (row.bet) {
+        charged = true;
+        return u;
+      }
+      var bal = roundMoney(u.balance);
+      if (bal < amount) return;
+      row.bet = amount;
+      row.at = Date.now();
+      row.name = name || "";
+      ledger[roundId] = row;
+      u.ludoLedger = pruneLedger(ledger);
+      u.balance = roundMoney(bal - amount);
+      charged = true;
+      return u;
+    }).then(function (res) {
+      if (res.committed && charged) {
+        writeLudoTx(targetUid, "ludo_bet", -amount,
+          "Ludo bet · Room " + shortId(roomId || roundId), roundId, name);
+        return true;
+      }
+      return false;
+    }).catch(function () { return false; });
+  }
+
+  function refundBet(targetUid, roundId, name) {
+    if (!targetUid || !roundId) return Promise.resolve(false);
+    var refunded = 0;
+    var already = false;
+    return userTx(targetUid, function (u) {
+      refunded = 0;
+      already = false;
+      var ledger = u.ludoLedger || {};
+      var row = ledger[roundId];
+      if (!row || !row.bet) return u;
+      if (row.refunded || row.won) { already = !!row.refunded; return u; }
+      u.balance = roundMoney(roundMoney(u.balance) + roundMoney(row.bet));
+      refunded = roundMoney(row.bet);
+      row.refunded = true;
+      row.refundedAt = Date.now();
+      ledger[roundId] = row;
+      u.ludoLedger = ledger;
+      return u;
+    }).then(function (res) {
+      if (res.committed && (refunded || already)) {
+        if (refunded) {
+          writeLudoTx(targetUid, "ludo_refund", refunded,
+            "Ludo refund · Room " + shortId(roomId || roundId), roundId, name);
+        }
+        return true;
+      }
+      return false;
+    }).catch(function () { return false; });
+  }
+
+  function creditWin(targetUid, roundId, amount, name) {
+    if (!targetUid || !roundId || !amount) return Promise.resolve(false);
+    var paid = 0;
+    var already = false;
+    return userTx(targetUid, function (u) {
+      paid = 0;
+      already = false;
+      var ledger = u.ludoLedger || {};
+      var row = ledger[roundId] || {};
+      if (row.won || row.refunded) { already = !!row.won; return u; }
+      u.balance = roundMoney(roundMoney(u.balance) + amount);
+      paid = roundMoney(amount);
+      row.won = amount;
+      row.wonAt = Date.now();
+      row.name = name || row.name || "";
+      ledger[roundId] = row;
+      u.ludoLedger = pruneLedger(ledger);
+      return u;
+    }).then(function (res) {
+      if (res.committed && (paid || already)) {
+        if (paid) {
+          writeLudoTx(targetUid, "ludo_win", paid,
+            "Ludo win · Room " + shortId(roomId || roundId), roundId, name);
+        }
+        return true;
+      }
+      return false;
+    }).catch(function () { return false; });
+  }
+
+  function escrowRows(r) {
+    var out = [];
+    var seen = {};
+    var add = function (map, roundId) {
+      Object.keys(map || {}).forEach(function (seat) {
+        var e = map[seat];
+        if (!e || !e.uid || !(Number(e.amount) > 0)) return;
+        var rid = String(e.roundId || roundId || "");
+        var key = String(e.uid) + ":" + rid;
+        if (seen[key]) return;
+        seen[key] = true;
+        out.push({
+          seat: String(seat), uid: String(e.uid),
+          name: e.name || seatName(r, seat), amount: roundMoney(e.amount),
+          roundId: rid
+        });
+      });
+    };
+    add(r && r.escrow, r && r.roundId);
+    add(r && r.startEscrow, r && r.starting && r.starting.roundId);
+    return out;
+  }
+
+  function markPayoutDone(id) {
+    if (!db || !id) return;
+    db.ref("ludoRooms/" + id + "/payoutDone").set(true).catch(function () {});
+  }
+
+  function settleRoom() {
+    if (!room || !roomId || room.status !== "ended" || room.payoutDone || settleBusy) return;
+    var id = roomId;
+    var r = room;
+    var roundId = r.roundId || id;
+    var rows = escrowRows(r);
+    var lock = r.payout || null;
+    if (!rows.length) { markPayoutDone(id); return; }
+    if (lock && (lock.done || Date.now() - (lock.at || 0) < 15000)) return;
+    settleBusy = true;
+    var total = rows.reduce(function (sum, x) { return sum + x.amount; }, 0);
+    var payoutRef = db.ref("ludoRooms/" + id + "/payout");
+    payoutRef.transaction(function (p) {
+      if (p && (p.done || (p.at && Date.now() - p.at < 15000))) return;
+      return { at: Date.now(), by: uid, amount: total, winnerUid: r.winnerUid || "" };
+    }).then(function (res) {
+      if (!res.committed) return;
+      if (r.winnerUid) {
+        var win = null;
+        rows.forEach(function (x) { if (x.uid === r.winnerUid) win = x; });
+        var winName = win ? win.name : seatName(r, r.winnerSeat);
+        var winRound = (win && win.roundId) || roundId;
+        return creditWin(r.winnerUid, winRound, total, winName).then(function () {
+          return payoutRef.update({ done: true, doneAt: Date.now() });
+        }).then(function () {
+          return db.ref("ludoRooms/" + id).update({ payoutDone: true });
+        }).then(function () {
+          toast("Winner received " + fmtMoney(total));
+        });
+      }
+      return Promise.all(rows.map(function (x) {
+        return refundBet(x.uid, x.roundId || roundId, x.name);
+      })).then(function () {
+        return payoutRef.update({ done: true, refunded: true, doneAt: Date.now() });
+      }).then(function () {
+        return db.ref("ludoRooms/" + id).update({ payoutDone: true });
+      }).then(function () {
+        toast("Bets refunded");
+      });
+    }).catch(function () {}).then(function () {
+      settleBusy = false;
+    });
+  }
+
+  function disbandRoom(id, r) {
+    var ref = db.ref("ludoRooms/" + id);
+    var finish = function () { return ref.remove(); };
+    if (!r) return finish();
+    var roundId = r.roundId || id;
+    var rows = escrowRows(r);
+    var bet = roundMoney(r.bet);
+    if (!rows.length && bet > 0) {
+      roomSeats(r).forEach(function (s) {
+        if (r.seats[s] && r.seats[s].uid) {
+          rows.push({
+            seat: String(s), uid: String(r.seats[s].uid),
+            name: r.seats[s].name || "Player", amount: bet
+          });
+        }
+      });
+    }
+    if (!rows.length) return finish();
+    if (r.winnerUid) {
+      var total = rows.reduce(function (sum, x) { return sum + x.amount; }, 0);
+      var win = null;
+      rows.forEach(function (x) { if (x.uid === r.winnerUid) win = x; });
+      var winName = win ? win.name : seatName(r, r.winnerSeat);
+      var winRound = (win && win.roundId) || roundId;
+      return creditWin(r.winnerUid, winRound, total, winName).then(finish).catch(finish);
+    }
+    return Promise.all(rows.map(function (x) {
+      return refundBet(x.uid, x.roundId || roundId, x.name);
+    })).then(finish).catch(finish);
+  }
+
+  /* Lobby reaper: removes rooms where every seat went offline long ago. */
+  function sweepRooms() {
+    if (!db || roomId) return;
+    db.ref("ludoRooms").orderByKey().limitToLast(80).once("value").then(function (snap) {
+      var now = Date.now();
+      snap.forEach(function (ch) {
+        var id = ch.key;
+        var r = ch.val();
+        if (!id) return;
+        if (!r || !r.seats || !Object.keys(r.seats).length) {
+          if (r) disbandRoom(id, r).catch(function () {});
+          else db.ref("ludoRooms/" + id).remove().catch(function () {});
+          return;
+        }
+        var seats = roomSeats(r);
+        var stale = !seats.length || seats.every(function (s) {
+          var p = r.seats[s];
+          return p && p.online === false && now - (p.lastSeenAt || 0) > 120000;
+        });
+        var tooOld = now - (r.createdAt || 0) > 6 * 3600 * 1000 && r.status !== "playing";
+        var stuckStart = r.status === "waiting" && r.starting && now - (r.starting.at || 0) > 120000;
+        if (stuckStart) {
+          var rows = escrowRows(r);
+          var startRound = (r.starting && r.starting.roundId) || id;
+          Promise.all(rows.map(function (x) { return refundBet(x.uid, x.roundId || startRound, x.name); }))
+            .then(function () {
+              return db.ref("ludoRooms/" + id).update({ starting: null, startEscrow: null });
+            }).catch(function () {});
+          return;
+        }
+        if (stale || tooOld) {
+          disbandRoom(id, r).catch(function () {});
+        }
+      });
+    }).catch(function () {});
   }
 
   function pawnSvg(seat) {
@@ -1141,8 +1548,11 @@
       return;
     }
     fetchMe();
+    attachBalance();
     attachInvites();
     attachRooms();
+    sweepRooms();
+    sweepTimer = setInterval(sweepRooms, 25000);
     maybeRejoin();
   }
 
@@ -1168,6 +1578,21 @@
       });
     });
     $("btnCreate").addEventListener("click", createRoom);
+    var chips = $("betChips");
+    if (chips) {
+      chips.addEventListener("click", function (e) {
+        var btn = e.target.closest(".betChip");
+        if (!btn) return;
+        setBet(btn.getAttribute("data-bet"));
+      });
+    }
+    var custom = $("betCustom");
+    if (custom) {
+      custom.addEventListener("input", function () {
+        setBet(this.value, true);
+      });
+    }
+    setBet(0);
     $("btnJoinCode").addEventListener("click", function () {
       var v = $("joinCode").value.trim();
       if (!v) { toast("Enter a Room ID"); return; }
@@ -1211,6 +1636,7 @@
       }
       closePeers();
       stopRing();
+      if (sweepTimer) { clearInterval(sweepTimer); sweepTimer = null; }
     });
     setInterval(tickRoom, 1000);
     setInterval(function () {
@@ -1228,6 +1654,28 @@
       var v = homeVideos[s];
       if (v && v.srcObject) playVideo(v);
     });
+  }
+
+  function setBet(v, fromInput) {
+    selectedBet = Math.max(0, Math.min(9999, Math.floor(Number(v) || 0)));
+    var val = $("betValue");
+    if (val) val.textContent = selectedBet > 0 ? fmtMoney(selectedBet) : "Free";
+    var hint = $("betHint");
+    if (hint) {
+      hint.textContent = selectedBet > 0
+        ? ("Each player pays " + fmtMoney(selectedBet) + " — winner takes the pot")
+        : "Free game — no money";
+    }
+    var chips = $("betChips");
+    if (chips) {
+      Array.prototype.forEach.call(chips.querySelectorAll(".betChip"), function (b) {
+        b.classList.toggle("active", Number(b.getAttribute("data-bet")) === selectedBet);
+      });
+    }
+    if (!fromInput) {
+      var custom = $("betCustom");
+      if (custom) custom.value = "";
+    }
   }
 
   /* ---------------- rooms list / invites ---------------- */
@@ -1282,7 +1730,8 @@
       roomSeats(r).forEach(function (s) {
         if (r.seats[s].uid === r.hostUid) host = r.seats[s].name || "";
       });
-      sub.textContent = host ? ("Host " + host) : "Waiting for players";
+      sub.textContent = (host ? ("Host " + host) : "Waiting for players") +
+        (Number(r.bet) > 0 ? " · Bet " + fmtMoney(r.bet) : " · Free");
       info.appendChild(strong);
       info.appendChild(sub);
       var btn = document.createElement("button");
@@ -1350,7 +1799,8 @@
       var strong = document.createElement("strong");
       strong.textContent = (inv.fromName || "Player") + " is calling you";
       var span = document.createElement("span");
-      span.textContent = (inv.mode || 4) + " Players · Room " + String(inv.roomId).slice(-6).toUpperCase();
+      span.textContent = (inv.mode || 4) + " Players · Room " + String(inv.roomId).slice(-6).toUpperCase() +
+        (Number(inv.bet) > 0 ? " · Bet " + fmtMoney(inv.bet) : "");
       info.appendChild(strong);
       info.appendChild(span);
       var join = document.createElement("button");
@@ -1374,7 +1824,8 @@
     currentInvite = inv;
     $("ringAvatar").textContent = String(inv.fromName || "P").trim().charAt(0).toUpperCase() || "P";
     $("ringTitle").textContent = (inv.fromName || "Player") + " is calling you";
-    $("ringSub").textContent = (inv.mode || 4) + " Players · Room " + String(inv.roomId).slice(-6).toUpperCase();
+    $("ringSub").textContent = (inv.mode || 4) + " Players · Room " + String(inv.roomId).slice(-6).toUpperCase() +
+      (Number(inv.bet) > 0 ? " · Bet " + fmtMoney(inv.bet) : "");
     $("ringLayer").classList.remove("hidden");
     startRing();
   }
@@ -1410,7 +1861,9 @@
         enterRoom(id, mine);
         return;
       }
+      if (r.starting) { toast("Game is starting — try again in a moment"); return; }
       if (r.status !== "waiting") { toast("Game already started"); return; }
+      if (Number(r.bet) > myBalance) { toast("You need " + fmtMoney(r.bet) + " to join this room"); return; }
       claimSeat(id, inv.seat).then(function (assigned) {
         if (assigned === null) { toast("Room is full"); return; }
         db.ref("ludoInvites/" + uid + "/" + id).remove().catch(function () {});
@@ -1444,7 +1897,7 @@
     return new Promise(function (resolve, reject) {
       txRetry(db.ref("ludoRooms/" + id), function (r) {
         assigned = null;
-        if (!r || r.status !== "waiting" || !r.seats) return;
+        if (!r || r.status !== "waiting" || r.starting || !r.seats) return;
         var seats = seatList(r.mode);
         var free = null;
         if (preferSeat !== undefined && preferSeat !== null && seats.indexOf(String(preferSeat)) >= 0 && !r.seats[String(preferSeat)]) {
@@ -1492,6 +1945,9 @@
       hostUid: uid,
       mode: Number(mode),
       status: "waiting",
+      bet: Math.max(0, Math.floor(Number(selectedBet) || 0)),
+      pot: 0,
+      escrow: {},
       createdAt: now,
       seats: {},
       state: {
@@ -1520,7 +1976,9 @@
       if (!r) { toast("Room not found"); return; }
       var mine = roomSeats(r).filter(function (s) { return r.seats[s].uid === uid; })[0];
       if (mine !== undefined) { enterRoom(id, mine); return; }
+      if (r.starting) { toast("Game is starting — try again in a moment"); return; }
       if (r.status !== "waiting") { toast("Game already started"); return; }
+      if (Number(r.bet) > myBalance) { toast("You need " + fmtMoney(r.bet) + " to join this room"); return; }
       claimSeat(id).then(function (assigned) {
         if (assigned === null) toast("Room is full");
         else enterRoom(id, assigned);
@@ -1735,7 +2193,9 @@
       var goneName = p.name || "Player";
       var list = seatList(r.mode);
       var rest = list.filter(function (s) { return r.seats[s] && String(s) !== String(seat); });
-      if (!rest.length) return ref.remove().then(function () { return true; });
+      if (!rest.length) {
+        return disbandRoom(id, r).then(function () { return true; });
+      }
       var next = null;
       var idx = list.indexOf(String(seat));
       for (var k = 1; k <= list.length; k++) {
@@ -1824,9 +2284,28 @@
   }
 
   function startGame() {
-    if (!roomRef || !isHost()) return;
+    if (!roomRef || !room || !isHost() || startBusy) return;
+    if (room.status !== "waiting") return;
+    var bet = Math.max(0, Math.floor(Number(room.bet) || 0));
+    var filled = roomSeats(room).filter(function (s) { return room.seats[s]; });
+    if (filled.length < 2) { toast("Need at least 2 players to start"); return; }
+    if (bet > 0) {
+      openModal("Start paid game?", bodyText(
+        "Bet " + fmtMoney(bet) + " per player. Winner takes " + fmtMoney(bet * filled.length) +
+        ". The bet is taken from every player's account at start."
+      ), [
+        { label: "Start", cls: "primary", onClick: function () { beginPaidGame(bet); } },
+        { label: "Cancel", cls: "ghost" }
+      ]);
+      return;
+    }
+    beginFreeGame();
+  }
+
+  function beginFreeGame() {
+    startBusy = true;
     txRetry(roomRef, function (r) {
-      if (!r || r.status !== "waiting") return;
+      if (!r || r.status !== "waiting" || r.starting) return;
       var all = seatList(r.mode);
       var filled = all.filter(function (s) { return r.seats && r.seats[s]; });
       if (filled.length < 2) return;
@@ -1834,6 +2313,16 @@
       var home = {};
       filled.forEach(function (s) { tokens[s] = [-1, -1, -1, -1]; home[s] = 0; });
       r.status = "playing";
+      r.bet = 0;
+      r.pot = 0;
+      r.roundId = null;
+      r.escrow = null;
+      r.starting = null;
+      r.payout = null;
+      r.payoutDone = true;
+      r.winnerUid = null;
+      r.winnerSeat = null;
+      r.endedReason = "";
       r.state = {
         turn: filled[0], dice: 0, lastDice: 0, rolled: false,
         tokens: tokens, homeCount: home,
@@ -1845,28 +2334,145 @@
       if (!res.committed) toast("Need at least 2 players to start");
     }).catch(function () {
       toast("Could not start — try again");
-    });
+    }).then(function () { startBusy = false; });
+  }
+
+  function beginPaidGame(bet) {
+    if (!roomRef || !room || !isHost() || startBusy) return;
+    startBusy = true;
+    var id = roomId;
+    var roundId = id + "-g" + Date.now().toString(36);
+    var no = Number(room.gameNo || 0) + 1;
+    var charged = [];
+    var aborted = false;
+    var fail = function (msg) {
+      if (aborted) return;
+      aborted = true;
+      Promise.all(charged.map(function (x) { return refundBet(x.uid, roundId, x.name); }))
+        .then(function () { return db.ref("ludoRooms/" + id).update({ starting: null, startEscrow: null }); })
+        .catch(function () {})
+        .then(function () {
+          if (msg) toast(msg);
+          startBusy = false;
+        });
+    };
+    txRetry(roomRef, function (r) {
+      if (!r || r.status !== "waiting" || r.starting) return;
+      var fill = seatList(r.mode).filter(function (s) { return r.seats && r.seats[s]; });
+      if (fill.length < 2) return;
+      r.starting = { by: uid, at: Date.now(), bet: bet, roundId: roundId, gameNo: no };
+      return r;
+    }).then(function (res) {
+      if (!res.committed) { fail("Could not start — try again"); return; }
+      var r = res.snapshot.val();
+      var queue = seatList(r.mode).filter(function (s) { return r.seats && r.seats[s]; }).map(function (s) {
+        return { seat: String(s), uid: String(r.seats[s].uid), name: r.seats[s].name || "Player" };
+      });
+      var chain = Promise.resolve(true);
+      queue.forEach(function (p) {
+        chain = chain.then(function (ok) {
+          if (!ok || aborted) return false;
+          return debitBet(p.uid, roundId, bet, p.name).then(function (done) {
+            if (!done) {
+              fail((p.uid === uid ? "Your balance is too low" : p.name + "'s balance is too low") + " — add money first");
+              return false;
+            }
+            charged.push(p);
+            return db.ref("ludoRooms/" + id + "/startEscrow/" + p.seat).set({
+              uid: p.uid, name: p.name, amount: bet, roundId: roundId
+            }).then(function () { return true; }).catch(function () { return true; });
+          });
+        });
+      });
+      return chain.then(function (ok) {
+        if (!ok || aborted) return;
+        return db.ref("ludoRooms/" + id).once("value").then(function (snap) {
+          var cur = snap.val();
+          if (!cur || cur.status !== "waiting" || !cur.starting || cur.starting.roundId !== roundId) {
+            fail("Start cancelled — bets refunded");
+            return;
+          }
+          var escrow = {};
+          var players = [];
+          seatList(cur.mode).forEach(function (s) {
+            var p = cur.seats && cur.seats[s];
+            if (!p) return;
+            var c = null;
+            charged.forEach(function (x) { if (x.uid === String(p.uid)) c = x; });
+            if (!c) return;
+            escrow[s] = { uid: String(p.uid), name: c.name, amount: bet };
+            players.push(String(s));
+          });
+          charged.forEach(function (x) {
+            var keep = false;
+            Object.keys(escrow).forEach(function (s) {
+              if (escrow[s].uid === x.uid) keep = true;
+            });
+            if (!keep) refundBet(x.uid, roundId, x.name);
+          });
+          if (players.length < 2) { fail("Players left — bets refunded"); return; }
+          var total = bet * players.length;
+          return txRetry(roomRef, function (roomNow) {
+            if (!roomNow || roomNow.status !== "waiting" || !roomNow.starting ||
+                roomNow.starting.roundId !== roundId) return;
+            var playersNow = players.filter(function (s) { return roomNow.seats && roomNow.seats[s]; });
+            if (playersNow.length < 2) return;
+            var toks = {};
+            var hc = {};
+            playersNow.forEach(function (s) { toks[s] = [-1, -1, -1, -1]; hc[s] = 0; });
+            roomNow.status = "playing";
+            roomNow.bet = bet;
+            roomNow.pot = total;
+            roomNow.gameNo = no;
+            roomNow.roundId = roundId;
+            roomNow.escrow = escrow;
+            roomNow.startEscrow = null;
+            roomNow.starting = null;
+            roomNow.payout = null;
+            roomNow.payoutDone = false;
+            roomNow.winnerUid = null;
+            roomNow.winnerSeat = null;
+            roomNow.endedReason = "";
+            roomNow.state = {
+              turn: playersNow[0], dice: 0, lastDice: 0, rolled: false,
+              tokens: toks, homeCount: hc,
+              startedAt: Date.now(), turnEndsAt: Date.now() + 45000,
+              removed: {}, lastEvent: "Paid game · pot " + fmtMoney(total)
+            };
+            return roomNow;
+          }).then(function (fin) {
+            if (!fin.committed) fail("Players left — bets refunded");
+          });
+        });
+      }).then(function () { startBusy = false; }).catch(function () { fail("Could not start — try again"); });
+    }).catch(function () { fail("Could not start — try again"); });
   }
 
   function resetGame() {
-    if (!roomRef || !isHost()) return;
+    if (!roomRef || !room || !isHost()) return;
+    var paid = Number(room.bet) > 0;
     txRetry(roomRef, function (r) {
       if (!r || r.status !== "ended") return;
       var seats = roomSeats(r);
-      var all = seatList(r.mode);
       var tokens = {};
       var home = {};
       seats.forEach(function (s) { tokens[s] = [-1, -1, -1, -1]; home[s] = 0; });
       r.winnerUid = null;
       r.winnerSeat = null;
       r.endedReason = "";
-      if (seats.length < 2) {
+      r.roundId = null;
+      r.pot = 0;
+      r.escrow = null;
+      r.starting = null;
+      r.payout = null;
+      r.payoutDone = true;
+      if (paid || seats.length < 2) {
         r.status = "waiting";
         r.state = {
-          turn: seats[0] || all[0], dice: 0, lastDice: 0, rolled: false,
+          turn: seats[0] || seatList(r.mode)[0], dice: 0, lastDice: 0, rolled: false,
           tokens: tokens, homeCount: home,
           startedAt: 0, turnEndsAt: 0, removed: {},
-          lastEvent: "Waiting for players"
+          lastEvent: paid ? "Waiting — host starts the next round" : "Waiting for players"
         };
         return r;
       }
@@ -1878,16 +2484,11 @@
         removed: {}, lastEvent: "New game"
       };
       return r;
-    }).then(function () { endModalKey = ""; }).catch(function () {});
+    }).then(function () { endModalKey = ""; lastDiceKey = ""; }).catch(function () {});
   }
 
   function rollDice() {
     if (!roomRef || !room || !canAct() || room.state.rolled) return;
-    var el = $("dice");
-    el.classList.remove("rolling");
-    void el.offsetWidth;
-    el.classList.add("rolling");
-    setTimeout(function () { el.classList.remove("rolling"); }, 460);
     beep(340, 0.06, 0);
     beep(520, 0.06, 0.07);
     txRetry(roomRef, function (r) {
@@ -2012,9 +2613,23 @@
   }
 
   function tickRoom() {
-    if (!room || room.status !== "playing") return;
+    if (!room) return;
+    maybeClearStuckStart();
+    if (room.status !== "playing") return;
     if (!room.state || !room.state.turnEndsAt) return;
     if (Date.now() >= room.state.turnEndsAt && isLeader()) forceSkip();
+  }
+
+  function maybeClearStuckStart() {
+    if (!room || !roomId || room.status !== "waiting" || !room.starting) return;
+    if (Date.now() - (room.starting.at || 0) < 60000) return;
+    if (!isLeader()) return;
+    var rows = escrowRows(room);
+    var round = room.starting.roundId || roomId;
+    Promise.all(rows.map(function (x) { return refundBet(x.uid, x.roundId || round, x.name); }))
+      .then(function () {
+        return db.ref("ludoRooms/" + roomId).update({ starting: null, startEscrow: null });
+      }).catch(function () {});
   }
 
   /* ---------------- board rendering ---------------- */
@@ -2191,7 +2806,7 @@
       });
       inner.appendChild(bar);
       home.appendChild(inner);
-      $("board").insertBefore(home, $("dice"));
+      $("board").appendChild(home);
 
       homeEls[s] = home;
       homeVideos[s] = video;
@@ -2329,26 +2944,65 @@
     });
   }
 
-  function renderDice() {
-    var el = $("dice");
-    if (!room || room.status !== "playing" || !room.state) {
-      el.classList.add("hidden");
-      return;
-    }
-    el.classList.remove("hidden");
-    var seat = String(room.state.turn);
-    var pos = DICE_POS[seat] || DICE_POS["0"];
-    el.style.left = pos.left + "%";
-    el.style.top = pos.top + "%";
-    var mine = seat === mySeatString();
-    el.classList.toggle("myturn", mine && !room.state.rolled);
-    var face = Number(room.state.lastDice || room.state.dice) || 1;
+  function paintDiceFace(face) {
     var on = PIPS[face] || PIPS[1];
     var html = "";
     for (var i = 0; i < 9; i++) {
       html += '<span class="pip' + (on.indexOf(i) >= 0 ? " on" : "") + '"></span>';
     }
     $("dicePips").innerHTML = html;
+  }
+
+  function startDiceSpin() {
+    spinUntil = Date.now() + 1150;
+    var el = $("dice");
+    if (el) {
+      el.classList.remove("rolling");
+      void el.offsetWidth;
+      el.classList.add("rolling");
+    }
+    clearInterval(spinTimer);
+    spinTimer = setInterval(function () {
+      if (Date.now() >= spinUntil) {
+        stopDiceSpin();
+        renderDice();
+        return;
+      }
+      renderDice();
+    }, 70);
+  }
+
+  function stopDiceSpin() {
+    if (spinTimer) {
+      clearInterval(spinTimer);
+      spinTimer = null;
+    }
+    spinUntil = 0;
+    var el = $("dice");
+    if (el) el.classList.remove("rolling");
+  }
+
+  function renderDice() {
+    var el = $("dice");
+    if (!room || room.status !== "playing" || !room.state) {
+      el.classList.add("hidden");
+      stopDiceSpin();
+      return;
+    }
+    el.classList.remove("hidden");
+    var seat = String(room.state.turn);
+    var pos = DICE_POS[seat] || DICE_POS["0"];
+    el.style.left = pos.left;
+    el.style.top = pos.top;
+    var mine = seat === mySeatString();
+    el.classList.toggle("myturn", mine && !room.state.rolled);
+    var spinning = Date.now() < spinUntil;
+    var face = spinning
+      ? (1 + Math.floor(Math.random() * 6))
+      : (Number(room.state.lastDice || room.state.dice) || 1);
+    paintDiceFace(face);
+    if (spinning) el.classList.add("rolling");
+    else el.classList.remove("rolling");
   }
 
   function renderCenter() {
@@ -2409,22 +3063,37 @@
     if (!room) return;
     $("roomPillCode").textContent = String(roomId).slice(-6).toUpperCase();
     $("meChip").textContent = myName;
+    var rolledNow = !!(room.status === "playing" && room.state && room.state.rolled);
+    var rollKey = rolledNow
+      ? (String(room.state.turn) + ":" + String(room.state.lastDice || 0) + ":" + String(room.state.startedAt || 0))
+      : "";
+    if (rollKey && rollKey !== lastDiceKey) {
+      lastDiceKey = rollKey;
+      startDiceSpin();
+    } else if (!rolledNow) {
+      lastDiceKey = "";
+    }
     renderTokens();
     renderHomes();
     renderDice();
     renderCenter();
     renderStatus();
+    renderPot();
+    if (room.status === "ended") settleRoom();
     if (room.status === "ended") {
-      var key = String(roomId) + ":" + String(room.state && room.state.startedAt || room.createdAt || "");
+      var key = String(roomId) + ":" + String(room.roundId || (room.state && room.state.startedAt) || room.createdAt || "");
       if (key !== endModalKey) {
         endModalKey = key;
         var text;
         if (room.endedReason === "empty") {
           text = "Everyone left the room.";
+          if (Number(room.pot) > 0) text += " All bets are refunded.";
         } else if (room.winnerUid) {
           text = seatName(room, room.winnerSeat) + " wins the game!";
+          if (Number(room.pot) > 0) text += " Prize " + fmtMoney(room.pot) + " is added to the winner's account.";
         } else {
           text = "Game over.";
+          if (Number(room.pot) > 0) text += " All bets are refunded.";
         }
         var actions = [{ label: "Lobby", cls: "ghost", onClick: function () { leaveRoom(); } }];
         if (isHost() && room.endedReason !== "empty") {
@@ -2433,6 +3102,15 @@
         openModal("Game over", bodyText(text), actions, { dismissible: false });
       }
     }
+  }
+
+  function renderPot() {
+    var badge = $("potBadge");
+    if (!badge) return;
+    var pot = Number(room && room.pot) || 0;
+    var show = pot > 0 && room.status !== "waiting";
+    badge.classList.toggle("hidden", !show);
+    if (show) badge.textContent = "POT " + fmtMoney(pot);
   }
 
   /* ---------------- media / webrtc ---------------- */
@@ -2856,6 +3534,7 @@
       roomId: roomId,
       seat: seat,
       mode: Number(room.mode) || 4,
+      bet: Math.max(0, Math.floor(Number(room.bet) || 0)),
       fromUid: uid,
       fromName: myName,
       at: Date.now()
