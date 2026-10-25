@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TM Book Flexiload</title>
+<link rel="icon" href="data:," />
+<style>
+  :root {
+    --primary: #075e54;
+    --primary-dark: #054d44;
+    --accent: #25d366;
+    --accent-dark: #1da851;
+    --bg: #eef4f1;
+    --card: #ffffff;
+    --text: #111111;
+    --muted: #5b6b66;
+    --red: #e53935;
+    --orange: #ef6c00;
+    --border: #dbe6e1;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Noto Sans Bengali", Arial, sans-serif;
+    line-height: 1.45;
+  }
+  .top {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    padding: 18px 16px 22px;
+    border-radius: 0 0 22px 22px;
+  }
+  .top h1 { margin: 0; font-size: 21px; letter-spacing: .3px; }
+  .top p { margin: 4px 0 0; font-size: 12.5px; opacity: .85; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 0 14px 40px; }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 14px;
+    box-shadow: 0 2px 10px rgba(7, 94, 84, .07);
+    border: 1px solid var(--border);
+  }
+  .card h2 { margin: 0 0 10px; font-size: 15px; color: var(--primary); }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > * { flex: 1; }
+  input {
+    width: 100%;
+    padding: 12px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    background: #fbfdfc;
+    color: var(--text);
+    outline: none;
+  }
+  input:focus { border-color: var(--accent-dark); background: #fff; }
+  input[readonly] { background: #f1f5f3; color: var(--muted); }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin: 12px 0 5px; }
+  button {
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--accent);
+    color: #043d2a;
+    transition: transform .06s ease, opacity .15s ease;
+  }
+  button:active { transform: scale(.985); }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  button.primary { width: 100%; background: var(--accent); color: #04322a; padding: 14px; font-size: 16px; }
+  button.ghost { background: #e8f5ef; color: var(--primary); padding: 10px 12px; font-size: 13px; }
+  button.danger { background: #fdecea; color: var(--red); }
+  .balance-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f0faf4;
+    border: 1px dashed #b7e4cc;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 10px;
+  }
+  .balance-box .amount { font-size: 22px; font-weight: 800; color: var(--primary); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .chip {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .packages { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
+  .pkg {
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+  }
+  .pkg.active { border-color: var(--accent-dark); background: #f0faf4; box-shadow: 0 2px 8px rgba(37,211,102,.18); }
+  .pkg .name { font-size: 13.5px; font-weight: 700; }
+  .pkg .price { font-size: 15px; font-weight: 800; color: var(--primary); margin-top: 2px; }
+  .pkg .op { font-size: 10.5px; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; }
+  .status {
+    margin-top: 12px;
+    padding: 11px 13px;
+    border-radius: 10px;
+    font-size: 13px;
+    display: none;
+    white-space: pre-line;
+  }
+  .status.ok { display: block; background: #e8f5e9; color: #1b5e20; }
+  .status.err { display: block; background: #fdecea; color: #b71c1c; }
+  .status.info { display: block; background: #fff8e1; color: #8d6e00; }
+  .deposit {
+    display: none;
+    margin-top: 12px;
+    border: 1px solid #ffd699;
+    background: #fff8ec;
+    border-radius: 12px;
+    padding: 13px;
+  }
+  .deposit h3 { margin: 0 0 6px; font-size: 14px; color: #a35a00; }
+  .deposit ol { margin: 6px 0 0; padding-left: 20px; font-size: 12.5px; color: #7a4a00; }
+  .requests { margin-top: 4px; }
+  .req {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 11px 13px;
+    margin-top: 8px;
+    font-size: 12.5px;
+    background: #fbfdfc;
+  }
+  .req .line1 { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; }
+  .req .line2 { color: var(--muted); margin-top: 3px; }
+  .badge { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 999px; letter-spacing: .4px; }
+  .badge.pending { background: #fff3e0; color: var(--orange); }
+  .badge.approved { background: #e8f5e9; color: #1b5e20; }
+  .badge.rejected { background: #fdecea; color: var(--red); }
+  .hidden { display: none !important; }
+  .footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 18px; }
+  .small-btn { font-size: 12px; padding: 8px 12px; }
+  .account-name { font-size: 15px; font-weight: 800; }
+  .operator-note { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap" style="padding-bottom:0">
+    <h1>TM Book Flexiload</h1>
+    <p>GP · BL · AIRTEL · ROBI · SKITTO — প্যাকেজ সিলেক্ট করে রিচার্জ করুন</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Account -->
+  <div class="card" id="accountCard">
+    <h2>১. আপনার অ্যাকাউন্ট</h2>
+    <div id="accountLogin">
+      <label for="usernameInput">টিএম বুক ইউজারনেম</label>
+      <div class="row">
+        <input id="usernameInput" type="text" placeholder="username" autocomplete="username" />
+        <button class="ghost" id="loadAccountBtn" style="flex:0 0 auto">লোড করুন</button>
+      </div>
+      <div class="muted" style="margin-top:8px">অ্যাপে যে ইউজারনেম দিয়ে একাউন্ট খুলেছেন সেটাই দিন।</div>
+    </div>
+    <div id="accountInfo" class="hidden">
+      <div class="row">
+        <div>
+          <div class="account-name" id="accountName">—</div>
+          <div class="muted" id="accountUser">@—</div>
+        </div>
+        <button class="ghost small-btn" id="changeAccountBtn" style="flex:0 0 auto">পরিবর্তন</button>
+      </div>
+      <div class="balance-box">
+        <div>
+          <div class="muted">বর্তমান ব্যালেন্স</div>
+          <div class="amount" id="balanceText">৳0</div>
+        </div>
+        <button class="ghost small-btn" id="depositHelpBtn2">ডিপোজিট</button>
+      </div>
+    </div>
+    <div class="status err" id="accountError"></div>
+  </div>
+
+  <!-- Deposit help -->
+  <div class="card deposit" id="depositPanel">
+    <h3>ব্যালেন্স যথেষ্ট নয়</h3>
+    <div class="muted">একাউন্টে পর্যাপ্ত ব্যালেন্স নেই। আগে ডিপোজিট করুন, তারপর আবার প্রসেস করুন।</div>
+    <ol>
+      <li>TM Book অ্যাপ খুলুন</li>
+      <li>হোম স্ক্রিনে <b>Deposit</b> এ যান</li>
+      <li>মেথড সিলেক্ট করে টাকা পাঠিয়ে ট্রানজেকশন আইডি দিন</li>
+      <li>অ্যাডমিন অ্যাপ্রুভ করলে ব্যালেন্স যোগ হবে</li>
+      <li>এরপর এই পেজে ফিরে আবার সাবমিট করুন</li>
+    </ol>
+  </div>
+
+  <!-- Packages -->
+  <div class="card">
+    <h2>২. অপারেটর ও প্যাকেজ</h2>
+    <div class="chips" id="operatorChips"></div>
+    <div class="packages" id="packageList"></div>
+    <div class="muted" id="packageEmpty" style="margin-top:12px">এই অপারেটরের কোনো প্যাকেজ এখনো সেট করা হয়নি।</div>
+    <div class="operator-note">প্যাকেজগুলো অ্যাডমিন TM Book কন্ট্রোল প্যানেল থেকে সেট করেন।</div>
+  </div>
+
+  <!-- Form -->
+  <div class="card">
+    <h2>৩. ফ্লেক্সিলোড তথ্য</h2>
+    <label for="numberInput">নম্বর (Number)</label>
+    <input id="numberInput" type="tel" inputmode="numeric" maxlength="13" placeholder="01XXXXXXXXX" />
+
+    <label for="amountInput">অ্যামাউন্ট (Amount)</label>
+    <input id="amountInput" type="number" inputmode="decimal" min="1" step="1" placeholder="0" />
+
+    <label for="trxInput">ট্রানজেকশন নম্বর (Transaction number)</label>
+    <input id="trxInput" type="text" placeholder="TrxID" autocomplete="off" />
+
+    <label for="userNameInput">ইউজার নেম (User name)</label>
+    <input id="userNameInput" type="text" readonly placeholder="অ্যাকাউন্ট লোড করুন" />
+
+    <div style="height:14px"></div>
+    <button class="primary" id="submitBtn">প্রসেস করুন</button>
+    <div class="status" id="submitStatus"></div>
+  </div>
+
+  <!-- My requests -->
+  <div class="card" id="requestsCard">
+    <h2>আমার ফ্লেক্সিলোড রিকোয়েস্ট</h2>
+    <div class="muted" id="requestsEmpty">এখনো কোনো রিকোয়েস্ট নেই।</div>
+    <div class="requests" id="requestsList"></div>
+  </div>
+
+  <div class="footer">
+    TM Book Flexiload · রিকোয়েস্ট অ্যাডমিন অ্যাপ্রুভ করলে অ্যাকাউন্ট থেকে ব্যালেন্স কাটা হবে।
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var OPERATORS = ["GP", "BL", "AIRTEL", "ROBI", "SKITTO"];
+  var STATUS_PENDING = "pending";
+  var KIND_FLEXILOAD = "flexiload";
+
+  firebase.initializeApp({ databaseURL: "https://easylife-e96f6-default-rtdb.firebaseio.com" });
+  var db = firebase.database();
+
+  var state = {
+    uid: "",
+    userName: "",
+    username: "",
+    balance: 0,
+    operator: "GP",
+    packages: [],
+    selectedPackage: null,
+    submitting: false
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var balanceRef = null;
+  var balanceListener = null;
+  var requestsRef = null;
+  var requestsListener = null;
+
+  function setStatus(el, type, message) {
+    el.className = "status" + (type ? " " + type : "");
+    el.textContent = message || "";
+  }
+
+  function formatAmount(value) {
+    var number = Number(value) || 0;
+    return number % 1 === 0 ? String(number) : number.toFixed(2);
+  }
+
+  function taka(value) {
+    return "\u09F3" + formatAmount(value);
+  }
+
+  function normalizeUsername(value) {
+    return (value || "").trim().toLowerCase();
+  }
+
+  function normalizeNumber(value) {
+    return (value || "").replace(/[\s\-()+]/g, "");
+  }
+
+  /* ---------- Operators ---------- */
+  function renderOperators() {
+    var box = $("operatorChips");
+    box.textContent = "";
+    OPERATORS.forEach(function (op) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip" + (op === state.operator ? " active" : "");
+      chip.textContent = op;
+      chip.addEventListener("click", function () {
+        state.operator = op;
+        state.selectedPackage = null;
+        renderOperators();
+        renderPackages();
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  /* ---------- Packages ---------- */
+  function attachPackages() {
+    db.ref("flexiloadConfig/packages").on("value", function (snapshot) {
+      var list = [];
+      snapshot.forEach(function (child) {
+        var value = child.val() || {};
+        var amount = Number(value.amount) || 0;
+        if (!value.operator || amount <= 0) return;
+        list.push({
+          id: child.key,
+          operator: String(value.operator).toUpperCase(),
+          name: String(value.name || ""),
+          amount: amount
+        });
+      });
+      state.packages = list;
+      renderPackages();
+    }, function () {
+      setStatus($("submitStatus"), "err", "প্যাকেজ লোড করা যায়নি। ইন্টারনেট চেক করুন।");
+    });
+  }
+
+  function renderPackages() {
+    var box = $("packageList");
+    box.textContent = "";
+    var filtered = state.packages
+      .filter(function (p) { return p.operator === state.operator; })
+      .sort(function (a, b) { return a.amount - b.amount; });
+
+    $("packageEmpty").style.display = filtered.length ? "none" : "block";
+
+    filtered.forEach(function (pkg) {
+      var card = document.createElement("button");
+      card.type = "button";
+      card.className = "pkg" + (state.selectedPackage && state.selectedPackage.id === pkg.id ? " active" : "");
+
+      var op = document.createElement("div");
+      op.className = "op";
+      op.textContent = pkg.operator;
+
+      var name = document.createElement("div");
+      name.className = "name";
+      name.textContent = pkg.name || "Flexiload";
+
+      var price = document.createElement("div");
+      price.className = "price";
+      price.textContent = taka(pkg.amount);
+
+      card.appendChild(op);
+      card.appendChild(name);
+      card.appendChild(price);
+
+      card.addEventListener("click", function () {
+        state.selectedPackage = pkg;
+        $("amountInput").value = formatAmount(pkg.amount);
+        renderPackages();
+      });
+      box.appendChild(card);
+    });
+  }
+
+  /* ---------- Account ---------- */
+  function attachBalance() {
+    detachBalance();
+    if (!state.uid) return;
+    balanceRef = db.ref("users/" + state.uid + "/balance");
+    balanceListener = balanceRef.on("value", function (snapshot) {
+      state.balance = Number(snapshot.val()) || 0;
+      $("balanceText").textContent = taka(state.balance);
+    }, function () {
+      setStatus($("accountError"), "err", "ব্যালেন্স পড়া যায়নি।");
+    });
+  }
+
+  function detachBalance() {
+    if (balanceRef && balanceListener) balanceRef.off("value", balanceListener);
+    balanceRef = null;
+    balanceListener = null;
+  }
+
+  function loadAccount() {
+    var username = normalizeUsername($("usernameInput").value);
+    setStatus($("accountError"), "", "");
+    if (!username) {
+      setStatus($("accountError"), "err", "ইউজারনেম দিন।");
+      return;
+    }
+    $("loadAccountBtn").disabled = true;
+    db.ref("usernames/" + username).once("value").then(function (snapshot) {
+      var uid = snapshot.val();
+      if (!uid) {
+        $("loadAccountBtn").disabled = false;
+        setStatus($("accountError"), "err", "এই ইউজারনেমে কোনো একাউন্ট পাওয়া যায়নি।");
+        return;
+      }
+      return db.ref("users/" + uid).once("value").then(function (userSnap) {
+        var user = userSnap.val() || {};
+        state.uid = uid;
+        state.username = username;
+        state.userName = String(user.fullName || user.username || username);
+        state.balance = Number(user.balance) || 0;
+        $("accountLogin").classList.add("hidden");
+        $("accountInfo").classList.remove("hidden");
+        $("accountName").textContent = state.userName || username;
+        $("accountUser").textContent = "@" + username;
+        $("balanceText").textContent = taka(state.balance);
+        $("userNameInput").value = state.userName;
+        $("loadAccountBtn").disabled = false;
+        attachBalance();
+        attachRequests();
+      });
+    }).catch(function () {
+      $("loadAccountBtn").disabled = false;
+      setStatus($("accountError"), "err", "লোড করা যায়নি। ইন্টারনেট চেক করে আবার চেষ্টা করুন।");
+    });
+  }
+
+  function resetAccount() {
+    detachBalance();
+    detachRequests();
+    state.uid = "";
+    state.userName = "";
+    state.username = "";
+    state.balance = 0;
+    $("usernameInput").value = "";
+    $("userNameInput").value = "";
+    $("balanceText").textContent = taka(0);
+    $("accountInfo").classList.add("hidden");
+    $("accountLogin").classList.remove("hidden");
+    $("requestsList").textContent = "";
+    $("requestsEmpty").style.display = "block";
+    setStatus($("accountError"), "", "");
+    setStatus($("submitStatus"), "", "");
+  }
+
+  /* ---------- Submit ---------- */
+  function showDeposit() {
+    $("depositPanel").style.display = "block";
+    $("depositPanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function submitRequest() {
+    if (state.submitting) return;
+    setStatus($("submitStatus"), "", "");
+    $("depositPanel").style.display = "none";
+
+    if (!state.uid) {
+      setStatus($("submitStatus"), "err", "আগে আপনার ইউজারনেম দিয়ে অ্যাকাউন্ট লোড করুন।");
+      return;
+    }
+    var number = normalizeNumber($("numberInput").value);
+    var amount = Number($("amountInput").value);
+    var trxId = ($("trxInput").value || "").trim();
+
+    if (number.length < 10 || number.length > 13) {
+      setStatus($("submitStatus"), "err", "সঠিক মোবাইল নম্বর দিন।");
+      return;
+    }
+    if (!amount || amount <= 0) {
+      setStatus($("submitStatus"), "err", "সঠিক অ্যামাউন্ট দিন।");
+      return;
+    }
+    if (!trxId) {
+      setStatus($("submitStatus"), "err", "ট্রানজেকশন নম্বর দিন।");
+      return;
+    }
+    if (state.balance + 0.0001 < amount) {
+      setStatus($("submitStatus"), "err", "ব্যালেন্স যথেষ্ট নয়। আগে ডিপোজিট করুন।");
+      showDeposit();
+      return;
+    }
+
+    var pkg = state.selectedPackage;
+    var packageName = pkg ? (pkg.name || taka(pkg.amount)) : "";
+    var operator = state.operator;
+
+    var ok = window.confirm(
+      "কনফার্ম করুন\n\n" +
+      "নম্বর: " + number + "\n" +
+      "অপারেটর: " + operator + "\n" +
+      "প্যাকেজ: " + (packageName || "-") + "\n" +
+      "অ্যামাউন্ট: " + taka(amount) + "\n" +
+      "TrxID: " + trxId + "\n\n" +
+      "অ্যাডমিন অ্যাপ্রুভ করলে " + taka(amount) + " ব্যালেন্স থেকে কাটা হবে।"
+    );
+    if (!ok) return;
+
+    state.submitting = true;
+    $("submitBtn").disabled = true;
+    $("submitBtn").textContent = "সাবমিট হচ্ছে…";
+
+    var requestRef = db.ref("flexiloadRequests").push();
+    var requestId = requestRef.key;
+    var txRef = db.ref("transactions/" + state.uid).push();
+    var txId = txRef.key;
+    var now = Date.now();
+
+    var request = {
+      uid: state.uid,
+      userName: state.userName || state.username,
+      number: number,
+      amount: amount,
+      operator: operator,
+      packageName: packageName,
+      trxId: trxId,
+      status: STATUS_PENDING,
+      at: now,
+      txId: txId
+    };
+    var transaction = {
+      kind: KIND_FLEXILOAD,
+      amount: -amount,
+      status: STATUS_PENDING,
+      method: operator,
+      number: number,
+      note: "Flexiload " + operator + (packageName ? " \u2014 " + packageName : ""),
+      refId: requestId,
+      at: now,
+      userName: state.userName || state.username
+    };
+
+    var updates = {};
+    updates["flexiloadRequests/" + requestId] = request;
+    updates["transactions/" + state.uid + "/" + txId] = transaction;
+
+    db.ref().update(updates).then(function () {
+      state.submitting = false;
+      $("submitBtn").disabled = false;
+      $("submitBtn").textContent = "প্রসেস করুন";
+      setStatus(
+        $("submitStatus"),
+        "ok",
+        "রিকোয়েস্ট পাঠানো হয়েছে। অ্যাডমিন অ্যাপ্রুভ করলে ব্যালেন্স কাটা হবে।\nRequest ID: " + requestId
+      );
+      $("trxInput").value = "";
+      $("numberInput").value = "";
+      state.selectedPackage = null;
+      renderPackages();
+      attachRequests();
+    }).catch(function () {
+      state.submitting = false;
+      $("submitBtn").disabled = false;
+      $("submitBtn").textContent = "প্রসেস করুন";
+      setStatus($("submitStatus"), "err", "সাবমিট করা যায়নি। ইন্টারনেট চেক করে আবার চেষ্টা করুন।");
+    });
+  }
+
+  /* ---------- My requests ---------- */
+  function attachRequests() {
+    detachRequests();
+    if (!state.uid) return;
+    requestsRef = db.ref("flexiloadRequests").orderByChild("uid").equalTo(state.uid);
+    requestsListener = requestsRef.on("value", function (snapshot) {
+      var list = [];
+      snapshot.forEach(function (child) {
+        list.push(Object.assign({ id: child.key }, child.val()));
+      });
+      list.sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+      renderRequests(list.slice(0, 12));
+    }, function () {});
+  }
+
+  function detachRequests() {
+    if (requestsRef && requestsListener) requestsRef.off("value", requestsListener);
+    requestsRef = null;
+    requestsListener = null;
+  }
+
+  function renderRequests(list) {
+    var box = $("requestsList");
+    box.textContent = "";
+    $("requestsEmpty").style.display = list.length ? "none" : "block";
+
+    list.forEach(function (req) {
+      var row = document.createElement("div");
+      row.className = "req";
+
+      var line1 = document.createElement("div");
+      line1.className = "line1";
+
+      var left = document.createElement("span");
+      left.textContent = (req.operator || "") + " · " + taka(req.amount);
+
+      var badge = document.createElement("span");
+      var status = String(req.status || STATUS_PENDING);
+      badge.className = "badge " + (status === "approved" || status === "rejected" ? status : "pending");
+      badge.textContent = status === "approved" ? "APPROVED" : (status === "rejected" ? "REJECTED" : "PENDING");
+
+      line1.appendChild(left);
+      line1.appendChild(badge);
+
+      var line2 = document.createElement("div");
+      line2.className = "line2";
+      line2.textContent = "নম্বর: " + (req.number || "-") + " · TrxID: " + (req.trxId || "-");
+
+      var line3 = document.createElement("div");
+      line3.className = "line2";
+      var when = req.at ? new Date(req.at).toLocaleString() : "-";
+      line3.textContent = when + (req.packageName ? " · " + req.packageName : "");
+
+      row.appendChild(line1);
+      row.appendChild(line2);
+      row.appendChild(line3);
+      box.appendChild(row);
+    });
+  }
+
+  /* ---------- Wire up ---------- */
+  $("loadAccountBtn").addEventListener("click", loadAccount);
+  $("usernameInput").addEventListener("keydown", function (event) {
+    if (event.key === "Enter") loadAccount();
+  });
+  $("changeAccountBtn").addEventListener("click", resetAccount);
+  $("submitBtn").addEventListener("click", submitRequest);
+  $("depositHelpBtn2").addEventListener("click", showDeposit);
+
+  renderOperators();
+  attachPackages();
+})();
+</script>
+</body>
+</html>
