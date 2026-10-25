@@ -361,6 +361,14 @@
     var match = new RegExp("[?&]" + name + "=([^&]*)").exec(window.location.search);
     return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : "";
   }
+  function hashParam(name) {
+    var hash = String(window.location.hash || "").replace(/^#/, "");
+    var match = new RegExp("(?:^|[?&])" + name + "=([^&]*)").exec(hash);
+    return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : "";
+  }
+  function readParam(name) {
+    return queryParam(name) || hashParam(name);
+  }
   function normalizeUsername(value) {
     return String(value || "").trim().replace(/^@+/, "").toLowerCase();
   }
@@ -413,8 +421,8 @@
 
   /* ---------- Admin check ---------- */
   function boot() {
-    var uid = (queryParam("uid") || "").trim();
-    var username = normalizeUsername(queryParam("username"));
+    var uid = (readParam("uid") || "").trim();
+    var username = normalizeUsername(readParam("username"));
     if (!uid) {
       showNotice(
         "এই পেজটি TM Book অ্যাডমিন প্রোফাইল থেকে খুলুন — Control Panel এর নিচে Chat Control বাটনে ক্লিক করুন।",
@@ -440,6 +448,10 @@
         setText("adminPhone", user.phone || "-");
         $("main").classList.remove("hidden");
         updateLoadMore();
+        if (!state.users.length) {
+          $("userListEmpty").style.display = "block";
+          setText("userListEmpty", "লোড হচ্ছে… অপেক্ষা করুন");
+        }
         loadUsersPage();
       });
     }).catch(function (error) {
@@ -499,6 +511,10 @@
     }
     state.usersLoading = true;
     updateLoadMore();
+    if (!state.users.length) {
+      $("userListEmpty").style.display = "block";
+      setText("userListEmpty", "লোড হচ্ছে… অপেক্ষা করুন");
+    }
     var ref = db.ref(state.source).orderByKey();
     if (state.lastKey) ref = ref.startAt(state.lastKey, true);
     ref.limitToFirst(PAGE_SIZE + 1).once("value").then(function (snap) {
