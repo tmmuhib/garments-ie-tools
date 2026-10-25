@@ -601,6 +601,7 @@
     level: 1,
     points: 0,
     hearts: 3,
+    maxHearts: 3,
     board: null,
     size: 6,
     remaining: 0,
@@ -747,13 +748,23 @@
     };
   }
   function boardSizeFor(level) {
-    if (level <= 5) return 6;
-    if (level <= 20) return 7;
-    return 8;
+    if (level <= 3) return 6;
+    if (level <= 10) return 7;
+    if (level <= 25) return 8;
+    if (level <= 50) return 9;
+    return 10;
   }
   function arrowTargetFor(level, size) {
-    var densityCap = Math.floor(size * size * 0.46);
-    return Math.max(7, Math.min(densityCap, 8 + Math.floor(level * 0.6)));
+    var cellCount = size * size;
+    var density = Math.min(0.60, 0.24 + level * 0.011);
+    var target = Math.round(cellCount * density);
+    var densityCap = Math.floor(cellCount * 0.62);
+    return Math.max(6, Math.min(densityCap, target));
+  }
+  function heartsFor(level) {
+    if (level >= 25) return 1;
+    if (level >= 10) return 2;
+    return 3;
   }
   function pathClear(grid, row, col, dir) {
     var vec = VECTORS[dir];
@@ -778,7 +789,7 @@
     }
     var placed = 0;
     var attempts = 0;
-    while (placed < target && attempts < 9000) {
+    while (placed < target && attempts < 24000) {
       attempts++;
       var row = Math.floor(rng() * size);
       var col = Math.floor(rng() * size);
@@ -791,11 +802,12 @@
     return { grid: grid, size: size, count: placed };
   }
   function difficultyFor(level) {
-    if (level < 6) return "Beginner";
-    if (level < 16) return "Easy";
-    if (level < 31) return "Smart";
-    if (level < 61) return "Expert";
-    return "Master";
+    if (level < 4) return "Beginner";
+    if (level < 11) return "Easy";
+    if (level < 26) return "Smart";
+    if (level < 51) return "Expert";
+    if (level < 101) return "Master";
+    return "Legend";
   }
 
   /* ---------- UI ---------- */
@@ -805,7 +817,7 @@
   function renderHearts(animateLost) {
     var wrap = $("hearts");
     var html = "";
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < state.maxHearts; i++) {
       var lost = i >= state.hearts;
       html += heartSvg().replace('class="heart"', 'class="heart' + (lost ? " lost" : "") + '"');
     }
@@ -876,7 +888,8 @@
   function startLevel(level, options) {
     options = options || {};
     state.level = Math.max(1, level);
-    state.hearts = 3;
+    state.maxHearts = heartsFor(state.level);
+    state.hearts = state.maxHearts;
     state.busy = false;
     state.cleared = 0;
     state.levelPoints = 0;
