@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#eaf7ff" />
+<title>TM Book Arrow Escape</title>
+<style>
+  :root {
+    --bg1: #eef9ff;
+    --bg2: #d8ecfd;
+    --ink: #123a5c;
+    --muted: #5c7d99;
+    --blue: #2e7dd1;
+    --blue-dark: #1b5fa8;
+    --card: #ffffff;
+    --line: #b7d7f2;
+    --red: #ef5350;
+    --green: #25a56a;
+    --shadow: 0 6px 18px rgba(27, 95, 168, .13);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100dvh;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 15% 0%, #ffffff 0%, rgba(255,255,255,0) 45%),
+      linear-gradient(180deg, var(--bg1), var(--bg2));
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+  button { font-family: inherit; }
+
+  /* ---------- Banner ad (always on top) ---------- */
+  .bannerWrap {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    width: 100%;
+    height: 62px;
+    background: rgba(255, 255, 255, .92);
+    border-bottom: 1px solid rgba(46, 125, 209, .14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+  }
+  .bannerWrap .adTag {
+    position: absolute;
+    top: 3px;
+    left: 6px;
+    font-size: 8px;
+    letter-spacing: .8px;
+    color: #88a3ba;
+    text-transform: uppercase;
+  }
+  .bannerWrap iframe {
+    width: 100%;
+    height: 60px;
+    border: 0;
+    display: block;
+    background: transparent;
+  }
+  .bannerEmpty {
+    font-size: 11px;
+    color: #9ab2c6;
+    letter-spacing: .6px;
+  }
+
+  /* ---------- HUD ---------- */
+  .hud {
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 12px 14px 2px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .roundBtn {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--card);
+    color: var(--blue-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .roundBtn:active { transform: scale(.94); }
+  .roundBtn svg { width: 22px; height: 22px; }
+
+  .hudCenter { flex: 1; text-align: center; min-width: 0; }
+  .levelPill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 8px 20px;
+    border-radius: 20px;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: .2px;
+  }
+  .levelPill small { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .difficulty {
+    margin-top: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--blue);
+  }
+  .hearts { display: flex; align-items: center; gap: 4px; height: 44px; }
+  .heart { width: 22px; height: 22px; transition: transform .2s ease, opacity .2s ease; }
+  .heart.lost { opacity: .22; transform: scale(.82); }
+  .heart.beat { animation: beat .5s ease; }
+  @keyframes beat { 0%,100%{transform:scale(1)} 35%{transform:scale(1.4)} }
+
+  .metaRow {
+    width: 100%;
+    max-width: 520px;
+    margin: 8px auto 0;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.75);
+    color: var(--blue-dark);
+    font-weight: 700;
+    border: 1px solid rgba(46,125,209,.12);
+    max-width: 58%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex: 0 0 auto; }
+  #pointsChip.bump { animation: bump .35s ease; }
+  @keyframes bump { 50% { transform: scale(1.12); background: #dff3e9; } }
+
+  /* ---------- Play area ---------- */
+  .playArea {
+    flex: 1;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 12px 12px 6px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+  }
+  .boardWrap { position: relative; flex: 0 1 auto; }
+  .board {
+    display: grid;
+    gap: 5px;
+    width: min(84vw, 404px);
+    padding: 10px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, .38);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+    touch-action: manipulation;
+    user-select: none;
+  }
+  .cell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 2px solid var(--line);
+    box-shadow: 0 2px 0 rgba(27, 95, 168, .08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+  .cell.empty { background: rgba(255, 255, 255, .28); border-color: rgba(183, 215, 242, .55); box-shadow: none; }
+  .arrowBtn {
+    position: absolute;
+    inset: 2px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform .22s ease-in, opacity .22s ease-in;
+  }
+  .arrowBtn svg { width: 72%; height: 72%; filter: drop-shadow(0 2px 2px rgba(27,95,168,.18)); }
+  .arrowBtn svg path { fill: var(--blue); }
+  .cell:nth-child(3n) .arrowBtn svg path { fill: #3d8bff; }
+  .cell:nth-child(4n) .arrowBtn svg path { fill: #2570c0; }
+  .arrowBtn.fly-up { transform: translateY(-190%) scale(.7); opacity: 0; }
+  .arrowBtn.fly-down { transform: translateY(190%) scale(.7); opacity: 0; }
+  .arrowBtn.fly-left { transform: translateX(-190%) scale(.7); opacity: 0; }
+  .arrowBtn.fly-right { transform: translateX(190%) scale(.7); opacity: 0; }
+  .arrowBtn.shake { animation: shake .38s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-5px) rotate(-4deg); }
+    45% { transform: translateX(5px) rotate(4deg); }
+    70% { transform: translateX(-3px); }
+  }
+  .arrowBtn.hintPulse { animation: hintPulse .9s ease-in-out 3; }
+  @keyframes hintPulse {
+    0%,100% { filter: none; transform: scale(1); }
+    50% { filter: drop-shadow(0 0 10px #ffd54f); transform: scale(1.12); }
+  }
+
+  .tools {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 4px;
+  }
+  .toolBtn {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 16px;
+    background: var(--card);
+    color: var(--blue-dark);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .toolBtn:active { transform: scale(.94); }
+  .toolBtn svg { width: 24px; height: 24px; }
+  .toolBtn .adBadge {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    background: #ffb300;
+    color: #4a2b00;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .4px;
+    padding: 2px 4px;
+    border-radius: 5px;
+    border: 2px solid var(--bg1);
+  }
+
+  .bottomBar {
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 4px 18px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .bottomBar .bar {
+    flex: 1;
+    height: 8px;
+    border-radius: 6px;
+    background: rgba(46, 125, 209, .14);
+    overflow: hidden;
+  }
+  .bottomBar .bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #58b7ff, var(--blue));
+    transition: width .3s ease;
+  }
+
+  /* ---------- Modals ---------- */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(9, 39, 66, .48);
+    backdrop-filter: blur(4px);
+  }
+  .modal.show { display: flex; }
+  .sheet {
+    width: 100%;
+    max-width: 380px;
+    background: #fff;
+    border-radius: 24px;
+    padding: 18px;
+    box-shadow: 0 18px 50px rgba(8, 40, 70, .32);
+    animation: sheetIn .22s ease;
+    max-height: 92dvh;
+    overflow-y: auto;
+  }
+  @keyframes sheetIn { from { transform: translateY(14px) scale(.97); opacity: 0; } }
+  .sheet h2 { margin: 0; font-size: 20px; }
+  .sheet p { margin: 6px 0 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
+  .sheetHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .adTimer {
+    min-width: 38px;
+    height: 30px;
+    padding: 0 9px;
+    border-radius: 10px;
+    background: #f0f7fe;
+    color: var(--blue-dark);
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .adFrameWrap {
+    margin-top: 12px;
+    height: 240px;
+    border-radius: 14px;
+    background: #f4f9fe;
+    border: 1px solid #dcecfa;
+    overflow: hidden;
+    position: relative;
+  }
+  .adFrameWrap iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #fff;
+  }
+  .adFallback {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 18px;
+    font-size: 12px;
+    color: #7d99b0;
+    background: #f4f9fe;
+  }
+  .sheetActions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn {
+    flex: 1;
+    border: 0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .btn.primary { background: var(--blue); color: #fff; box-shadow: 0 5px 14px rgba(46,125,209,.3); }
+  .btn.primary:disabled { background: #b9d3ea; box-shadow: none; cursor: default; }
+  .btn.ghost { background: #eef7ff; color: var(--blue-dark); }
+  .btn.danger { background: #ffe9e9; color: #b3261e; }
+  .btn:active:not(:disabled) { transform: scale(.98); }
+
+  .resultScore {
+    margin-top: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+  .scoreBox {
+    flex: 1;
+    background: #f4f9fe;
+    border-radius: 14px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .scoreBox b { display: block; font-size: 20px; color: var(--blue-dark); }
+  .scoreBox span { font-size: 10px; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); }
+
+  .settingRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eef4fa;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .settingRow:last-of-type { border-bottom: 0; }
+  .switch {
+    position: relative;
+    width: 46px;
+    height: 27px;
+    flex: 0 0 auto;
+  }
+  .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; }
+  .switch span {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: #c7d8e7;
+    transition: background .2s;
+  }
+  .switch span::after {
+    content: "";
+    position: absolute;
+    width: 21px;
+    height: 21px;
+    left: 3px;
+    top: 3px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .switch input:checked + span { background: var(--blue); }
+  .switch input:checked + span::after { transform: translateX(19px); }
+
+  .helpList { padding-left: 18px; margin: 10px 0 0; font-size: 13px; line-height: 1.7; color: var(--muted); }
+  .helpList b { color: var(--ink); }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translate(-50%, 20px);
+    z-index: 90;
+    max-width: 86vw;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: rgba(18, 58, 92, .94);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-height: 700px) {
+    .hud { padding-top: 8px; }
+    .levelPill { padding: 7px 16px; font-size: 18px; }
+    .board { width: min(78vw, 360px); gap: 4px; padding: 8px; }
+    .bottomBar { padding-bottom: 10px; }
+  }
+  @media (min-width: 600px) {
+    .board { width: 404px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bannerWrap" id="bannerWrap">
+  <span class="adTag">Ad</span>
+  <span class="bannerEmpty" id="bannerEmpty">Loading ad…</span>
+</div>
+
+<header class="hud">
+  <button class="roundBtn" id="btnSettings" aria-label="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.87a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9c.18.63.74 1.06 1.4 1.09H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03z"></path>
+    </svg>
+  </button>
+  <div class="hudCenter">
+    <div class="levelPill">Level <span id="levelNum">1</span></div>
+    <div class="difficulty" id="difficulty">Beginner</div>
+  </div>
+  <div class="hearts" id="hearts" aria-label="Lives"></div>
+</header>
+
+<div class="metaRow">
+  <span class="chip" id="pointsChip">0 points</span>
+  <span class="chip" id="userChip"><span class="dot"></span>Guest</span>
+</div>
+
+<main class="playArea">
+  <div class="boardWrap">
+    <div class="board" id="board"></div>
+  </div>
+  <div class="tools">
+    <button class="toolBtn" id="btnHint" aria-label="Hint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18h6"></path><path d="M10 22h4"></path>
+        <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"></path>
+      </svg>
+      <span class="adBadge">AD</span>
+    </button>
+    <button class="toolBtn" id="btnReset" aria-label="Reset level">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7l6-4 6 4-6 4-6-4z"></path><path d="M3 12l6 4 6-4"></path><path d="M3 17l6 4 6-4"></path>
+      </svg>
+    </button>
+  </div>
+</main>
+
+<div class="bottomBar">
+  <span id="remainingText">0 arrows</span>
+  <div class="bar"><i id="progressBar"></i></div>
+</div>
+
+<!-- Ad modal -->
+<div class="modal" id="adModal">
+  <div class="sheet">
+    <div class="sheetHead">
+      <h2 id="adTitle">Level Complete</h2>
+      <span class="adTimer" id="adTimer">6</span>
+    </div>
+    <p id="adSub"></p>
+    <div class="resultScore" id="adScoreRow" style="display:none">
+      <div class="scoreBox"><b id="adLevelPts">0</b><span>Level points</span></div>
+      <div class="scoreBox"><b id="adTotalPts">0</b><span>Total points</span></div>
+    </div>
+    <div class="adFrameWrap">
+      <iframe id="adFrame" title="Advertisement"></iframe>
+      <div class="adFallback" id="adFallback">Ad not available.<br />Tap “Open offer” below.</div>
+    </div>
+    <div class="sheetActions">
+      <button class="btn ghost" id="adOpen">Open offer</button>
+      <button class="btn primary" id="adContinue" disabled>Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Fail modal -->
+<div class="modal" id="failModal">
+  <div class="sheet">
+    <div class="sheetHead"><h2>Out of hearts</h2></div>
+    <p>Level <b id="failLevel">1</b> failed. Don’t worry — your saved points are safe. Try this level again.</p>
+    <div class="sheetActions">
+      <button class="btn ghost" id="failClose">Close</button>
+      <button class="btn primary" id="failRetry">Try again</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal" id="settingsModal">
+  <div class="sheet">
+    <div class="sheetHead"><h2>Settings</h2></div>
+    <div class="settingRow">
+      <span>Sound effects</span>
+      <label class="switch"><input type="checkbox" id="soundToggle" checked /><span></span></label>
+    </div>
+    <div class="settingRow">
+      <span>Vibration</span>
+      <label class="switch"><input type="checkbox" id="vibrationToggle" checked /><span></span></label>
+    </div>
+    <div class="settingRow">
+      <span>Signed in as</span>
+      <b id="settingsUser" style="font-size:12px;color:var(--blue-dark)">Guest</b>
+    </div>
+    <p style="margin-top:12px"><b>How to play</b></p>
+    <ul class="helpList">
+      <li>Tap an arrow when its path to the edge is clear — it flies out.</li>
+      <li>If another arrow blocks the way, you lose one heart.</li>
+      <li>Clear every arrow to pass the level. Points are saved with your account.</li>
+      <li>Level <b>pass</b> korle ekta offer ad show hobe, tarpor next level.</li>
+    </ul>
+    <div class="sheetActions">
+      <button class="btn primary" id="settingsClose">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DB = "https://easylife-e96f6-default-rtdb.firebaseio.com";
+  var VECTORS = {
+    up: [-1, 0],
+    right: [0, 1],
+    down: [1, 0],
+    left: [0, -1]
+  };
+  var ROTATION = { up: 180, right: 270, down: 0, left: 90 };
+  var AD_SECONDS = 6;
+
+  var state = {
+    uid: "",
+    username: "",
+    level: 1,
+    points: 0,
+    hearts: 3,
+    board: null,
+    size: 6,
+    remaining: 0,
+    cleared: 0,
+    levelPoints: 0,
+    busy: false,
+    smartLink: "",
+    bannerCode: "",
+    sound: true,
+    vibration: true,
+    adMode: null,
+    adCountdown: 0,
+    adInterval: null,
+    saveTimer: null,
+    started: false
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  function hashParam(name) {
+    var hash = String(window.location.hash || "").replace(/^#/, "");
+    var match = new RegExp("(?:^|[?&])" + name + "=([^&]*)").exec(hash);
+    return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : "";
+  }
+  function readParam(name) {
+    var value = "";
+    try {
+      value = new URLSearchParams(window.location.search).get(name) || "";
+    } catch (error) {
+      value = "";
+    }
+    return String(value || hashParam(name) || "").trim();
+  }
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function toast(message) {
+    var el = $("toast");
+    el.textContent = message;
+    el.classList.add("show");
+    clearTimeout(el._timer);
+    el._timer = setTimeout(function () { el.classList.remove("show"); }, 2200);
+  }
+
+  /* ---------- Firebase REST ---------- */
+  function getJson(path) {
+    return fetch(DB + "/" + path + ".json", { cache: "no-store" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("http-" + response.status);
+        return response.json();
+      });
+  }
+  function putJson(path, value, keepalive) {
+    return fetch(DB + "/" + path + ".json", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(value),
+      keepalive: !!keepalive
+    });
+  }
+
+  function saveProgress(immediate) {
+    if (!state.uid) return;
+    if (state.saveTimer) clearTimeout(state.saveTimer);
+    var write = function () {
+      putJson("gameProgress/" + encodeURIComponent(state.uid), {
+        level: state.level,
+        points: state.points,
+        username: state.username || "",
+        updatedAt: Date.now()
+      }, true).catch(function () {});
+    };
+    if (immediate) {
+      write();
+    } else {
+      state.saveTimer = setTimeout(write, 700);
+    }
+  }
+
+  /* ---------- Sound ---------- */
+  var audioContext = null;
+  function audio() {
+    if (!state.sound) return null;
+    try {
+      if (!audioContext) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        audioContext = new Ctx();
+      }
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    } catch (error) {
+      return null;
+    }
+  }
+  function tone(freq, duration, delay, type, gainValue) {
+    var ctx = audio();
+    if (!ctx) return;
+    try {
+      var start = ctx.currentTime + (delay || 0);
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = type || "sine";
+      osc.frequency.setValueAtTime(freq, start);
+      var peak = gainValue == null ? 0.08 : gainValue;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(peak, start + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration + 0.02);
+    } catch (error) {}
+  }
+  function soundClear() {
+    tone(660, 0.08, 0, "triangle", 0.07);
+    tone(920, 0.1, 0.06, "triangle", 0.05);
+  }
+  function soundWrong() {
+    tone(180, 0.18, 0, "sawtooth", 0.06);
+    tone(120, 0.22, 0.08, "sawtooth", 0.05);
+  }
+  function soundLevel() {
+    [523, 659, 784, 1046].forEach(function (freq, index) {
+      tone(freq, 0.2, index * 0.11, "triangle", 0.08);
+    });
+  }
+  function vibrate(pattern) {
+    if (!state.vibration) return;
+    try { navigator.vibrate(pattern); } catch (error) {}
+  }
+
+  /* ---------- Level generation ---------- */
+  function mulberry32(seed) {
+    var value = seed >>> 0;
+    return function () {
+      value = (value + 0x6D2B79F5) >>> 0;
+      var t = value;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function boardSizeFor(level) {
+    if (level <= 5) return 6;
+    if (level <= 20) return 7;
+    return 8;
+  }
+  function arrowTargetFor(level, size) {
+    var densityCap = Math.floor(size * size * 0.46);
+    return Math.max(7, Math.min(densityCap, 8 + Math.floor(level * 0.6)));
+  }
+  function pathClear(grid, row, col, dir) {
+    var vec = VECTORS[dir];
+    var r = row + vec[0];
+    var c = col + vec[1];
+    while (r >= 0 && r < grid.length && c >= 0 && c < grid.length) {
+      if (grid[r][c]) return false;
+      r += vec[0];
+      c += vec[1];
+    }
+    return true;
+  }
+  function generateLevel(level, extraSeed) {
+    var size = boardSizeFor(level);
+    var target = arrowTargetFor(level, size);
+    var seed = level * 104729 + 31 + (extraSeed || 0) * 7919;
+    var rng = mulberry32(seed);
+    var dirs = ["up", "right", "down", "left"];
+    var grid = [];
+    for (var r = 0; r < size; r++) {
+      grid.push(new Array(size).fill(null));
+    }
+    var placed = 0;
+    var attempts = 0;
+    while (placed < target && attempts < 9000) {
+      attempts++;
+      var row = Math.floor(rng() * size);
+      var col = Math.floor(rng() * size);
+      var dir = dirs[Math.floor(rng() * 4)];
+      if (grid[row][col]) continue;
+      if (!pathClear(grid, row, col, dir)) continue;
+      grid[row][col] = { row: row, col: col, dir: dir, id: "a" + placed };
+      placed++;
+    }
+    return { grid: grid, size: size, count: placed };
+  }
+  function difficultyFor(level) {
+    if (level < 6) return "Beginner";
+    if (level < 16) return "Easy";
+    if (level < 31) return "Smart";
+    if (level < 61) return "Expert";
+    return "Master";
+  }
+
+  /* ---------- UI ---------- */
+  function heartSvg() {
+    return '<svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ef5350" d="M12 21s-7.5-4.7-9.5-9.1C1.1 8.6 3 5 6.5 5c2 0 3.4 1.1 4.3 2.3h2.4C14.1 6.1 15.5 5 17.5 5 21 5 22.9 8.6 21.5 11.9 19.5 16.3 12 21 12 21z"/></svg>';
+  }
+  function renderHearts(animateLost) {
+    var wrap = $("hearts");
+    var html = "";
+    for (var i = 0; i < 3; i++) {
+      var lost = i >= state.hearts;
+      html += heartSvg().replace('class="heart"', 'class="heart' + (lost ? " lost" : "") + '"');
+    }
+    wrap.innerHTML = html;
+    if (animateLost) {
+      var lostEl = wrap.querySelectorAll(".heart")[Math.max(0, state.hearts)];
+      if (lostEl) lostEl.classList.add("beat");
+    }
+  }
+  function updateHud() {
+    $("levelNum").textContent = state.level;
+    $("difficulty").textContent = difficultyFor(state.level);
+    $("pointsChip").textContent = state.points + " points";
+    $("remainingText").textContent = state.remaining + (state.remaining === 1 ? " arrow" : " arrows");
+    var total = state.board ? state.size * state.size : 1;
+    var pct = state.board ? Math.round(((total - state.remaining) / Math.max(1, total - 0)) * 100) : 0;
+    var placed = state.size * state.size;
+    var initial = state.initialArrows || 1;
+    var cleared = Math.max(0, initial - state.remaining);
+    pct = Math.round((cleared / initial) * 100);
+    $("progressBar").style.width = Math.max(0, Math.min(100, pct)) + "%";
+    renderHearts(false);
+  }
+
+  function arrowSvg(dir) {
+    return '<svg viewBox="0 0 24 24" style="transform:rotate(' + ROTATION[dir] + 'deg)">' +
+      '<path d="M3.5 4.5 L12 13 L20.5 4.5 L20.5 10.5 L12 19 L3.5 10.5 Z"></path>' +
+      '</svg>';
+  }
+
+  function renderBoard() {
+    var board = $("board");
+    board.innerHTML = "";
+    board.style.gridTemplateColumns = "repeat(" + state.size + ", 1fr)";
+    for (var r = 0; r < state.size; r++) {
+      for (var c = 0; c < state.size; c++) {
+        var cell = document.createElement("div");
+        cell.className = "cell" + (state.board[r][c] ? "" : " empty");
+        cell.dataset.row = String(r);
+        cell.dataset.col = String(c);
+        var arrow = state.board[r][c];
+        if (arrow) {
+          var button = document.createElement("button");
+          button.type = "button";
+          button.className = "arrowBtn";
+          button.dataset.row = String(r);
+          button.dataset.col = String(c);
+          button.innerHTML = arrowSvg(arrow.dir);
+          button.setAttribute("aria-label", "Arrow pointing " + arrow.dir);
+          button.addEventListener("click", function (event) {
+            event.preventDefault();
+            var el = event.currentTarget;
+            tapArrow(Number(el.dataset.row), Number(el.dataset.col));
+          });
+          arrow.element = button;
+          cell.appendChild(button);
+        }
+        board.appendChild(cell);
+      }
+    }
+    board.style.gridTemplateColumns = "repeat(" + state.size + ", 1fr)";
+  }
+
+  function cellAt(row, col) {
+    return $("board").children[row * state.size + col];
+  }
+
+  function startLevel(level, options) {
+    options = options || {};
+    state.level = Math.max(1, level);
+    state.hearts = 3;
+    state.busy = false;
+    state.cleared = 0;
+    state.levelPoints = 0;
+    var generated = generateLevel(state.level, 0);
+    var guard = 0;
+    while (generated.count < 6 && guard < 5) {
+      guard++;
+      generated = generateLevel(state.level, guard);
+    }
+    state.board = generated.grid;
+    state.size = generated.size;
+    state.remaining = generated.count;
+    state.initialArrows = generated.count;
+    renderBoard();
+    updateHud();
+    saveProgress(false);
+    if (options.resume) {
+      toast("Level " + state.level + " theke continue korchen");
+    }
+  }
+
+  function canMove(row, col) {
+    var arrow = state.board[row][col];
+    if (!arrow) return false;
+    return pathClear(state.board, row, col, arrow.dir);
+  }
+
+  function tapArrow(row, col) {
+    if (state.busy) return;
+    var arrow = state.board[row][col];
+    if (!arrow) return;
+    if (!canMove(row, col)) {
+      wrongTap(arrow);
+      return;
+    }
+    state.busy = true;
+    var button = arrow.element;
+    if (button) {
+      button.classList.add("fly-" + arrow.dir);
+      button.disabled = true;
+    }
+    state.board[row][col] = null;
+    state.remaining -= 1;
+    state.cleared += 1;
+    soundClear();
+    vibrate(18);
+    setTimeout(function () {
+      var cell = cellAt(row, col);
+      if (cell) {
+        cell.classList.add("empty");
+        cell.innerHTML = "";
+      }
+      state.busy = false;
+      updateHud();
+      if (state.remaining <= 0) {
+        completeLevel();
+      }
+    }, 230);
+  }
+
+  function wrongTap(arrow) {
+    state.hearts = Math.max(0, state.hearts - 1);
+    var button = arrow.element;
+    if (button) {
+      button.classList.remove("shake");
+      void button.offsetWidth;
+      button.classList.add("shake");
+      setTimeout(function () { button.classList.remove("shake"); }, 420);
+    }
+    soundWrong();
+    vibrate(90);
+    updateHud();
+    if (state.hearts <= 0) {
+      state.busy = true;
+      setTimeout(function () {
+        state.busy = false;
+        $("failLevel").textContent = String(state.level);
+        $("failModal").classList.add("show");
+      }, 320);
+    } else {
+      toast("Blocked! " + state.hearts + " heart" + (state.hearts === 1 ? "" : "s") + " left");
+    }
+  }
+
+  function completeLevel() {
+    var gained = state.cleared * 10 + 40 + Math.min(state.level * 5, 160);
+    state.levelPoints = gained;
+    state.points += gained;
+    state.level = state.level + 1;
+    $("pointsChip").classList.remove("bump");
+    void $("pointsChip").offsetWidth;
+    $("pointsChip").classList.add("bump");
+    updateHud();
+    soundLevel();
+    vibrate([40, 60, 40, 60, 90]);
+    saveProgress(true);
+    openAd("level", gained);
+  }
+
+  function openAd(mode, gained) {
+    state.adMode = mode;
+    var title = mode === "hint" ? "Hint offer" : "Level complete!";
+    var sub = mode === "hint"
+      ? "Watch this short offer to reveal one arrow that can move."
+      : "Smart offer dekhe next level e jan. Level points add hoye gese.";
+    $("adTitle").textContent = title;
+    $("adSub").textContent = sub;
+    $("adScoreRow").style.display = mode === "level" ? "flex" : "none";
+    $("adLevelPts").textContent = "+" + (gained || 0);
+    $("adTotalPts").textContent = String(state.points);
+    $("adContinue").textContent = mode === "hint" ? "Show hint" : "Continue";
+    $("adContinue").disabled = true;
+    $("adTimer").style.display = "flex";
+    $("adTimer").textContent = String(AD_SECONDS);
+    var frame = $("adFrame");
+    var fallback = $("adFallback");
+    fallback.style.display = "none";
+    state.adCountdown = AD_SECONDS;
+    if (state.smartLink) {
+      frame.style.display = "block";
+      frame.src = state.smartLink;
+      setTimeout(function () {
+        if (!state.adMode) return;
+        if (!frame.src) fallback.style.display = "flex";
+      }, 2600);
+    } else {
+      frame.style.display = "none";
+      fallback.style.display = "flex";
+      state.adCountdown = 2;
+      $("adTimer").textContent = "2";
+      $("adOpen").style.display = "none";
+    }
+    $("adOpen").style.display = state.smartLink ? "block" : "none";
+    $("adModal").classList.add("show");
+    if (state.adInterval) clearInterval(state.adInterval);
+    state.adInterval = setInterval(function () {
+      state.adCountdown -= 1;
+      if (state.adCountdown <= 0) {
+        clearInterval(state.adInterval);
+        state.adInterval = null;
+        $("adTimer").textContent = "✓";
+        $("adContinue").disabled = false;
+        return;
+      }
+      $("adTimer").textContent = String(state.adCountdown);
+    }, 1000);
+  }
+
+  function closeAd() {
+    if (state.adInterval) clearInterval(state.adInterval);
+    state.adInterval = null;
+    $("adModal").classList.remove("show");
+    $("adFrame").src = "about:blank";
+    state.adMode = null;
+  }
+
+  function continueFromAd() {
+    var mode = state.adMode;
+    closeAd();
+    if (mode === "level") {
+      startLevel(state.level, {});
+    } else if (mode === "hint") {
+      showHintArrow();
+    }
+  }
+
+  function showHintArrow() {
+    var free = [];
+    for (var r = 0; r < state.size; r++) {
+      for (var c = 0; c < state.size; c++) {
+        if (state.board[r][c] && canMove(r, c)) free.push(state.board[r][c]);
+      }
+    }
+    if (!free.length) {
+      toast("No arrow can move right now — reset the level.");
+      return;
+    }
+    var pick = free[Math.floor(Math.random() * free.length)];
+    if (pick.element) {
+      pick.element.classList.add("hintPulse");
+      setTimeout(function () { pick.element.classList.remove("hintPulse"); }, 2800);
+    }
+    toast("This arrow can move now");
+  }
+
+  function resetLevel() {
+    if (state.adMode) return;
+    startLevel(state.level, {});
+    toast("Level reset");
+  }
+
+  /* ---------- Banner ad ---------- */
+  function renderBanner(code) {
+    state.bannerCode = code || "";
+    var wrap = $("bannerWrap");
+    var empty = $("bannerEmpty");
+    if (!state.bannerCode.trim()) {
+      if (empty) empty.style.display = "inline";
+      return;
+    }
+    if (empty) empty.style.display = "none";
+    var existing = wrap.querySelector("iframe");
+    if (existing) existing.remove();
+    var iframe = document.createElement("iframe");
+    iframe.title = "Banner advertisement";
+    iframe.setAttribute("scrolling", "no");
+    var trimmed = state.bannerCode.trim();
+    var isUrl = /^https?:\/\//i.test(trimmed) && trimmed.indexOf("<") === -1;
+    if (isUrl) {
+      iframe.src = trimmed;
+    } else {
+      iframe.srcdoc = "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>" +
+        "<style>html,body{margin:0;padding:0;overflow:hidden;background:transparent;display:flex;align-items:center;justify-content:center}iframe{border:0;max-width:100%}script{display:none}</style>" +
+        "</head><body>" + state.bannerCode + "</body></html>";
+    }
+    wrap.appendChild(iframe);
+  }
+
+  function loadAds() {
+    getJson("adsConfig").then(function (config) {
+      config = config || {};
+      var banner = config.banner || {};
+      var rewards = config.rewards || {};
+      renderBanner(banner.code || "");
+      var link = String(rewards.link || rewards.code || "").trim();
+      if (!/^https?:\/\//i.test(link)) link = "";
+      state.smartLink = link;
+    }).catch(function () {
+      renderBanner("");
+    });
+  }
+
+  /* ---------- Boot ---------- */
+  function updateUserChip() {
+    var label = state.username ? "@" + state.username : (state.uid ? "Player" : "Guest");
+    $("userChip").innerHTML = '<span class="dot"></span>' + escapeHtml(label);
+    $("settingsUser").textContent = label;
+  }
+
+  function applySettings() {
+    $("soundToggle").checked = state.sound;
+    $("vibrationToggle").checked = state.vibration;
+  }
+
+  function bindEvents() {
+    $("btnSettings").addEventListener("click", function () {
+      applySettings();
+      $("settingsModal").classList.add("show");
+    });
+    $("settingsClose").addEventListener("click", function () {
+      $("settingsModal").classList.remove("show");
+    });
+    $("soundToggle").addEventListener("change", function (event) {
+      state.sound = event.target.checked;
+      if (state.sound) tone(880, 0.1, 0, "sine", 0.06);
+    });
+    $("vibrationToggle").addEventListener("change", function (event) {
+      state.vibration = event.target.checked;
+      if (state.vibration) vibrate(40);
+    });
+    $("btnHint").addEventListener("click", function () {
+      if (state.adMode || state.busy) return;
+      openAd("hint", 0);
+    });
+    $("btnReset").addEventListener("click", resetLevel);
+    $("adContinue").addEventListener("click", continueFromAd);
+    $("adOpen").addEventListener("click", function () {
+      if (!state.smartLink) return;
+      try { window.location.href = state.smartLink; } catch (error) {}
+    });
+    $("failRetry").addEventListener("click", function () {
+      $("failModal").classList.remove("show");
+      startLevel(state.level, {});
+    });
+    $("failClose").addEventListener("click", function () {
+      $("failModal").classList.remove("show");
+      startLevel(state.level, {});
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") saveProgress(true);
+    });
+    window.addEventListener("pagehide", function () { saveProgress(true); });
+    window.addEventListener("resize", function () {
+      if (state.started) {
+        var board = $("board");
+        board.style.gridTemplateColumns = "repeat(" + state.size + ", 1fr)";
+      }
+    });
+  }
+
+  function boot() {
+    state.uid = readParam("uid");
+    state.username = readParam("username").replace(/^@+/, "");
+    bindEvents();
+    updateUserChip();
+    loadAds();
+    setInterval(function () {
+      if (state.bannerCode) renderBanner(state.bannerCode);
+    }, 240000);
+
+    var progressPromise = state.uid
+      ? getJson("gameProgress/" + encodeURIComponent(state.uid)).catch(function () { return null; })
+      : Promise.resolve(null);
+    var userPromise = (state.uid && !state.username)
+      ? getJson("users/" + encodeURIComponent(state.uid)).catch(function () { return null; })
+      : Promise.resolve(null);
+
+    Promise.all([progressPromise, userPromise]).then(function (results) {
+      var progress = results[0];
+      var user = results[1];
+      if (!state.username && user) {
+        state.username = String(user.username || user.fullName || "").trim();
+      }
+      if (progress && typeof progress === "object") {
+        var savedLevel = Number(progress.level);
+        var savedPoints = Number(progress.points);
+        if (isFinite(savedLevel) && savedLevel >= 1) state.level = Math.floor(savedLevel);
+        if (isFinite(savedPoints) && savedPoints >= 0) state.points = Math.floor(savedPoints);
+      }
+      updateUserChip();
+      state.started = true;
+      startLevel(state.level, { resume: state.level > 1 });
+      if (!state.uid) {
+        toast("Guest mode — app theke khulle level save hobe");
+      }
+    }).catch(function () {
+      state.started = true;
+      startLevel(1, {});
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+</body>
+</html>
