@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#075E54" />
+<title>TM247 Adda · Ludo</title>
+<style>
+  :root {
+    --green: #075E54;
+    --green2: #0b7a6b;
+    --accent: #25D366;
+    --accent-dark: #128C4A;
+    --bg: #eef2f0;
+    --card: #ffffff;
+    --ink: #15211d;
+    --muted: #61716b;
+    --line: #e2e8e5;
+    --gold: #FFB300;
+    --red: #E53935;
+    --shadow: 0 4px 16px rgba(7, 94, 84, .12);
+    --cell: 6.6666%;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100dvh;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Bengali", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding-bottom: 24px;
+  }
+  button, input { font-family: inherit; }
+  .hidden { display: none !important; }
+  button { cursor: pointer; }
+
+  /* topbar */
+  #topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: linear-gradient(135deg, var(--green), var(--green2));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 5px 16px rgba(7, 94, 84, .25);
+  }
+  .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+  .logo {
+    width: 40px; height: 40px; flex: 0 0 40px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.3);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 11px; letter-spacing: .5px;
+  }
+  .brand h1 { margin: 0; font-size: 17px; line-height: 1.15; }
+  .brand p { margin: 2px 0 0; font-size: 10px; color: rgba(255,255,255,.8); }
+  .me {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+    min-width: 0;
+  }
+  .meName {
+    font-size: 12px; font-weight: 700;
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.26);
+    padding: 5px 9px; border-radius: 20px;
+    max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .iconBtn {
+    border: 1px solid rgba(255,255,255,.3);
+    background: rgba(255,255,255,.14);
+    color: #fff; border-radius: 10px;
+    width: 32px; height: 32px; font-size: 15px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  main { width: 100%; max-width: 760px; margin: 0 auto; padding: 10px; }
+
+  /* generic */
+  .card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); border: 1px solid rgba(7,94,84,.05); }
+  .sectionTitle { font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin: 16px 3px 8px; }
+  .btn {
+    border: 0; border-radius: 11px; padding: 11px 14px;
+    font-size: 13px; font-weight: 800; background: var(--accent); color: #fff;
+  }
+  .btn:disabled { opacity: .45; }
+  .btn.primary { background: linear-gradient(135deg, #1fb859, var(--accent-dark)); }
+  .btn.danger { background: var(--red); }
+  .btn.ghost { background: #e8eeeb; color: var(--ink); }
+  .btn.small { padding: 7px 10px; font-size: 11.5px; border-radius: 9px; }
+  .emptyText { color: var(--muted); font-size: 12.5px; padding: 16px 8px; text-align: center; }
+
+  /* lobby */
+  .hero {
+    background: linear-gradient(135deg, #06443c, #0b7a6b 62%, #1a9c78);
+    border-radius: 18px; color: #fff; padding: 15px;
+    box-shadow: 0 8px 20px rgba(7,94,84,.22);
+  }
+  .hero h2 { margin: 0; font-size: 19px; }
+  .hero p { margin: 5px 0 0; font-size: 11.5px; line-height: 1.5; color: rgba(255,255,255,.82); }
+  .modeRow { display: flex; gap: 7px; margin-top: 12px; }
+  .modeBtn {
+    flex: 1; border: 1px solid rgba(255,255,255,.3);
+    background: rgba(255,255,255,.12); color: #fff;
+    border-radius: 11px; padding: 9px 4px; font-weight: 800; font-size: 12px;
+  }
+  .modeBtn.active { background: #fff; color: var(--green); border-color: #fff; }
+  .createRow { display: flex; gap: 8px; margin-top: 10px; }
+  .createRow .btn { flex: 1; background: #fff; color: var(--green); }
+  .inviteCard {
+    display: flex; align-items: center; gap: 9px;
+    padding: 10px; margin-bottom: 8px;
+    border: 1px solid #cdebdc; background: #f2fcf6; border-radius: 13px;
+  }
+  .inviteCard .info { flex: 1; min-width: 0; }
+  .inviteCard strong { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .inviteCard span { font-size: 11px; color: var(--muted); }
+  .roomRow {
+    display: flex; align-items: center; gap: 9px;
+    padding: 11px 12px; margin-bottom: 8px;
+    background: #fff; border-radius: 13px; box-shadow: 0 2px 8px rgba(7,94,84,.07);
+  }
+  .roomRow .info { flex: 1; min-width: 0; }
+  .roomRow strong { display: block; font-size: 13.5px; }
+  .roomRow span { font-size: 11px; color: var(--muted); }
+  .badge {
+    display: inline-block; font-size: 9.5px; font-weight: 800;
+    padding: 2px 7px; border-radius: 20px; margin-left: 4px;
+  }
+  .badge.wait { background: #fff3d6; color: #9a6400; }
+  .badge.play { background: #dff5e6; color: var(--accent-dark); }
+  .joinCode { display: flex; gap: 7px; margin-top: 9px; }
+  .joinCode input {
+    flex: 1; min-width: 0; border: 1px solid var(--line); background: #fff;
+    border-radius: 11px; padding: 10px; font-size: 12.5px; outline: none;
+  }
+  .footNote { text-align: center; font-size: 10.5px; color: #8b9a94; line-height: 1.6; margin: 18px 6px 0; }
+  #bootError {
+    margin-top: 16px; padding: 18px; border-radius: 14px;
+    background: #fff4f4; border: 1px solid #f3c3c3; color: #8a1f1f;
+    font-size: 13px; line-height: 1.6; display: none;
+  }
+
+  /* room */
+  .roomHead { display: flex; align-items: center; gap: 8px; padding: 2px 2px 8px; }
+  .roomPill {
+    background: #fff; border-radius: 20px; padding: 5px 10px;
+    font-size: 11px; font-weight: 800; color: var(--green);
+    box-shadow: 0 2px 6px rgba(7,94,84,.08);
+  }
+  .roomPill.mutedPill { color: var(--muted); font-weight: 700; }
+  .roomHead .spacer { flex: 1; }
+  .copyBtn { border: 0; background: none; color: var(--accent-dark); font-size: 11px; font-weight: 800; padding: 5px; }
+
+  #seatStrip { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 8px; }
+  .seatChip {
+    flex: 0 0 auto; background: #fff; border-radius: 12px;
+    padding: 8px 10px; min-width: 112px;
+    border-left: 4px solid var(--seat, #999);
+    box-shadow: 0 2px 8px rgba(7,94,84,.07);
+    position: relative;
+  }
+  .seatChip .who { font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 5px; }
+  .seatChip .sub { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .seatChip.empty { background: #f8fbfa; border-style: dashed; border-left-style: solid; }
+  .seatChip.turn { box-shadow: 0 0 0 2px var(--accent), 0 4px 12px rgba(37,211,102,.24); }
+  .seatChip .dot { width: 7px; height: 7px; border-radius: 50%; background: #b9c6c0; display: inline-block; }
+  .seatChip .dot.on { background: var(--accent); }
+  .seatChip .inviteBtn {
+    margin-top: 6px; border: 1px solid #c9ddd5; background: #eefaf3;
+    color: var(--accent-dark); font-weight: 800; font-size: 10.5px;
+    border-radius: 8px; padding: 5px 8px;
+  }
+  .startBox { margin: 2px 0 10px; }
+  .startBox .btn { width: 100%; }
+  .startHint { font-size: 11px; color: var(--muted); text-align: center; padding: 4px 0 8px; }
+
+  .tableWrap { position: relative; padding: 68px 2px; }
+  #board {
+    position: relative;
+    width: min(100%, 520px);
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f7f3e7;
+    box-shadow: 0 8px 22px rgba(7,94,84,.18), inset 0 0 0 2px #e6dfcd;
+  }
+  #cells { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); }
+  .cell { position: relative; }
+  .cell.path { background: #fffdf6; box-shadow: inset 0 0 0 .5px #d8d1bf; }
+  .cell.safe::after {
+    content: "★"; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #d5a021; font-size: clamp(6px, 1.5vw, 11px);
+  }
+  .cell.s0 { background: #ef4444; }
+  .cell.s0.inner { background: #fff1f2; }
+  .cell.s1 { background: #22c55e; }
+  .cell.s1.inner { background: #f0fdf4; }
+  .cell.s2 { background: #eab308; }
+  .cell.s2.inner { background: #fefce8; }
+  .cell.s3 { background: #3b82f6; }
+  .cell.s3.inner { background: #eff6ff; }
+  .cell.lane0 { background: #fca5a5; }
+  .cell.lane1 { background: #86efac; }
+  .cell.lane2 { background: #fde047; }
+  .cell.lane3 { background: #93c5fd; }
+  .cell.center { background: #0e3b31; }
+  .cell.startpath { box-shadow: inset 0 0 0 2px rgba(0,0,0,.14); }
+  #tokens { position: absolute; inset: 0; }
+  .token {
+    position: absolute; border-radius: 50%;
+    border: 1.5px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 900; line-height: 1;
+    transition: left .22s ease, top .22s ease, transform .15s ease;
+    z-index: 3; user-select: none;
+  }
+  .token .num { font-size: clamp(6px, 1.6vw, 10px); opacity: .95; }
+  .token.t0 { background: radial-gradient(circle at 32% 28%, #ff8a8a, #dc2626 65%); }
+  .token.t1 { background: radial-gradient(circle at 32% 28%, #86efac, #16a34a 65%); }
+  .token.t2 { background: radial-gradient(circle at 32% 28%, #fde047, #ca8a04 65%); color: #3f2c00; }
+  .token.t3 { background: radial-gradient(circle at 32% 28%, #93c5fd, #2563eb 65%); }
+  .token.movable { outline: 2px solid #fff; animation: tokenPulse .9s ease-in-out infinite; z-index: 5; }
+  @keyframes tokenPulse { 50% { transform: scale(1.14); } }
+  #centerBadge {
+    position: absolute; left: 40%; top: 40%; width: 20%; height: 20%;
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    background: conic-gradient(from 45deg, #ef4444 0 25%, #22c55e 0 50%, #eab308 0 75%, #3b82f6 0);
+    box-shadow: 0 0 0 2px #f7f3e7, 0 3px 10px rgba(0,0,0,.25);
+    z-index: 2;
+  }
+  #centerBadge span {
+    background: rgba(5, 30, 24, .78); color: #fff;
+    font-size: clamp(6px, 1.5vw, 10px); font-weight: 900; letter-spacing: .5px;
+    padding: 2px 4px; border-radius: 5px;
+  }
+
+  /* video corners */
+  #videoLayer { position: absolute; inset: 0; pointer-events: none; }
+  .vtile {
+    position: absolute; width: 82px; height: 100px;
+    border-radius: 13px; overflow: hidden;
+    background: #0c2a23; border: 2px solid var(--seat, #2f5c50);
+    box-shadow: 0 6px 14px rgba(0,0,0,.25);
+    pointer-events: auto;
+  }
+  .vtile[data-seat="0"] { top: 0; left: 0; }
+  .vtile[data-seat="1"] { top: 0; right: 0; }
+  .vtile[data-seat="2"] { bottom: 0; right: 0; }
+  .vtile[data-seat="3"] { bottom: 0; left: 0; }
+  .vtile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
+  .vtile .vph {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 30px; font-weight: 900; background: linear-gradient(135deg, #12554a, #0a2c26);
+  }
+  .vtile.live .vph { display: none; }
+  .vtile.videooff .vph { display: flex; }
+  .vtile.videooff video { opacity: 0; }
+  .vtile .vname {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 8px 4px 3px; font-size: 9px; font-weight: 700; color: #fff;
+    text-align: center; background: linear-gradient(transparent, rgba(0,0,0,.75));
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .vtile .vbadge {
+    position: absolute; top: 3px; left: 4px;
+    background: rgba(0,0,0,.55); color: #fff; font-size: 8px; font-weight: 800;
+    padding: 1px 4px; border-radius: 5px;
+  }
+
+  /* hud */
+  .hud { margin-top: 2px; display: flex; flex-direction: column; gap: 8px; }
+  .diceRow { display: flex; align-items: center; gap: 9px; }
+  .diceBox {
+    flex: 0 0 68px; height: 68px; border-radius: 16px;
+    background: linear-gradient(145deg, #ffffff, #f0f6f3);
+    box-shadow: inset 0 0 0 1px #e1e9e5, 0 4px 12px rgba(7,94,84,.09);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #dice { font-size: 32px; font-weight: 900; color: var(--green); }
+  #dice.rolling { animation: diceShake .45s ease; }
+  @keyframes diceShake {
+    0% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-14deg) scale(1.14); }
+    50% { transform: rotate(12deg) scale(.94); }
+    75% { transform: rotate(-6deg) scale(1.08); }
+    100% { transform: rotate(0) scale(1); }
+  }
+  .turnInfo { flex: 1; min-width: 0; }
+  #turnText { font-size: 13.5px; font-weight: 800; line-height: 1.25; }
+  #timerText { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+  #btnRoll { flex: 0 0 86px; height: 50px; border-radius: 13px; font-size: 15px; background: linear-gradient(135deg, #22c55e, #128C4A); box-shadow: 0 5px 12px rgba(18,140,74,.3); }
+  #btnRoll:disabled { background: #cdd8d3; box-shadow: none; }
+  #btnPass { width: 100%; height: 38px; border-radius: 11px; font-size: 12px; background: #fff3d6; color: #8a5a00; }
+  .tools { display: flex; gap: 6px; }
+  .toolBtn {
+    flex: 1; border: 1px solid #dbe5e0; background: #fff; color: var(--ink);
+    border-radius: 11px; padding: 9px 3px; font-size: 10.5px; font-weight: 800;
+  }
+  .toolBtn.off { background: #ffecec; border-color: #f5c2c2; color: #b3261e; }
+  .toolBtn.on { background: #eefaf3; border-color: #bfe8d2; color: var(--accent-dark); }
+  #eventTicker {
+    margin-top: 8px; background: #fff; border-radius: 11px;
+    padding: 9px 11px; font-size: 11.5px; color: var(--muted);
+    min-height: 36px; display: flex; align-items: center;
+    box-shadow: 0 2px 6px rgba(7,94,84,.06);
+  }
+  #mediaNotice {
+    margin-top: 8px; background: #fff8e8; border: 1px solid #f0dfae;
+    border-radius: 11px; padding: 9px 11px; font-size: 11px; color: #7a5a12;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #mediaNotice span { flex: 1; line-height: 1.4; }
+  #mediaNotice button { border: 0; background: #7a5a12; color: #fff; border-radius: 8px; padding: 6px 9px; font-size: 10.5px; font-weight: 800; }
+
+  /* gifts floating */
+  #giftLayer { position: fixed; inset: 0; pointer-events: none; z-index: 80; overflow: hidden; }
+  .giftFly {
+    position: absolute; bottom: 90px; left: 50%;
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(8, 40, 33, .92); color: #fff;
+    border-radius: 30px; padding: 7px 12px 7px 7px;
+    font-size: 12px; font-weight: 700;
+    box-shadow: 0 6px 18px rgba(0,0,0,.28);
+    animation: giftUp 3.2s ease forwards;
+  }
+  .giftFly .gIcon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; flex: 0 0 30px; }
+  .giftFly svg { width: 18px; height: 18px; fill: currentColor; }
+  @keyframes giftUp {
+    0% { transform: translate(-50%, 20px) scale(.8); opacity: 0; }
+    12% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+    75% { opacity: 1; }
+    100% { transform: translate(-50%, -210px) scale(1.02); opacity: 0; }
+  }
+
+  /* modal */
+  .modalBack {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(4, 20, 16, .55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 18px;
+    animation: fadeIn .16s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } }
+  .modalCard {
+    width: 100%; max-width: 380px; max-height: 86dvh; overflow-y: auto;
+    background: #fff; border-radius: 18px; padding: 16px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.3);
+  }
+  .modalCard h3 { margin: 0 0 9px; font-size: 16px; }
+  .modalBody { font-size: 12.5px; color: #3c4a45; }
+  .modalText { margin: 0 0 8px; line-height: 1.55; white-space: pre-line; }
+  .modalActions { display: flex; gap: 7px; margin-top: 13px; }
+  .modalActions .btn { flex: 1; }
+  .modalInput {
+    width: 100%; border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px; font-size: 13px; outline: none; margin: 4px 0 9px;
+  }
+  .userRow {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 2px; border-bottom: 1px solid #edf2ef;
+  }
+  .userRow:last-child { border-bottom: 0; }
+  .userRow .uAvatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #0b7a6b, #25D366);
+    color: #fff; font-weight: 900; font-size: 12px;
+    display: flex; align-items: center; justify-content: center; flex: 0 0 30px;
+  }
+  .userRow .uInfo { flex: 1; min-width: 0; }
+  .userRow .uInfo strong { display: block; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .userRow .uInfo span { font-size: 10.5px; color: var(--muted); }
+  .userList { max-height: 46dvh; overflow-y: auto; }
+  .giftGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
+  .giftPick {
+    border: 0; border-radius: 13px; padding: 12px 6px 9px;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    color: #fff; font-size: 10.5px; font-weight: 800;
+    box-shadow: 0 4px 10px rgba(0,0,0,.12);
+  }
+  .giftPick svg { width: 26px; height: 26px; fill: currentColor; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 16px);
+    background: rgba(8, 40, 33, .94); color: #fff;
+    padding: 9px 14px; border-radius: 22px; font-size: 12px; font-weight: 700;
+    opacity: 0; pointer-events: none; transition: all .22s ease;
+    z-index: 120; max-width: 88vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (min-width: 640px) {
+    .vtile { width: 96px; height: 118px; }
+    .tableWrap { padding: 84px 2px; }
+    main { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand">
+    <div class="logo">LUDO</div>
+    <div>
+      <h1>TM247 Adda</h1>
+      <p>লুডু · ভিডিও · ভয়েস · গিফট</p>
+    </div>
+  </div>
+  <div class="me">
+    <span class="meName" id="meName">Player</span>
+    <button class="iconBtn hidden" id="btnLeaveTop" type="button" title="Leave">×</button>
+  </div>
+</header>
+
+<main>
+  <div id="bootError"></div>
+
+  <section id="lobbyView">
+    <div class="hero">
+      <h2>বন্ধুদের সাথে লুডু</h2>
+      <p>২, ৩ বা ৪ জন খেলতে পারবেন। রুম বানিয়ে খেলোয়াড় যোগ করুন — তার কাছে কল যাবে, সে যোগ দিলেই বোর্ডে বসে যাবে। ভিডিও, ভয়েস আর গিফটও চলবে।</p>
+      <div class="modeRow" id="modeRow">
+        <button class="modeBtn" type="button" data-mode="2">২ জন</button>
+        <button class="modeBtn" type="button" data-mode="3">৩ জন</button>
+        <button class="modeBtn active" type="button" data-mode="4">৪ জন</button>
+      </div>
+      <div class="createRow">
+        <button class="btn" id="btnCreate" type="button">রুম তৈরি করুন</button>
+      </div>
+    </div>
+
+    <div id="lobbyInvitesWrap" class="hidden">
+      <div class="sectionTitle">আপনার কাছে কল</div>
+      <div id="lobbyInvites"></div>
+    </div>
+
+    <div class="sectionTitle">খোলা রুম</div>
+    <div id="roomList"><div class="emptyText">লোড হচ্ছে…</div></div>
+
+    <div class="joinCode">
+      <input id="joinCode" type="text" placeholder="রুম কোড / Room ID" autocomplete="off" />
+      <button class="btn primary small" id="btnJoinCode" type="button">ঢুকুন</button>
+    </div>
+
+    <div class="footNote">
+      খেলা চলার সময় কেউ বেরিয়ে গেলে তার টোকেন বোর্ড থেকে উঠে যাবে, বাকিরা খেলা চালিয়ে যাবে।<br />
+      ভিডিও ও ভয়েসের জন্য ক্যামেরা ও মাইকের অনুমতি দিতে হবে। সবাই সবাইকে দেখতে ও শুনতে পাবে।
+    </div>
+  </section>
+
+  <section id="roomView" class="hidden">
+    <div class="roomHead">
+      <span class="roomPill" id="roomCode">ROOM</span>
+      <span class="roomPill mutedPill" id="roomMode">৪ জন</span>
+      <span class="roomPill mutedPill" id="roomStatus">অপেক্ষা করছে</span>
+      <span class="spacer"></span>
+      <button class="copyBtn" id="btnCopyCode" type="button">কোড কপি</button>
+    </div>
+
+    <div id="seatStrip"></div>
+    <div class="startBox" id="startBox"></div>
+
+    <div class="tableWrap" id="tableWrap">
+      <div id="videoLayer">
+        <div class="vtile" data-seat="0">
+          <video autoplay playsinline></video>
+          <div class="vph">R</div>
+          <div class="vname">Red</div>
+          <div class="vbadge">P1</div>
+        </div>
+        <div class="vtile" data-seat="1">
+          <video autoplay playsinline></video>
+          <div class="vph">G</div>
+          <div class="vname">Green</div>
+          <div class="vbadge">P2</div>
+        </div>
+        <div class="vtile" data-seat="2">
+          <video autoplay playsinline></video>
+          <div class="vph">Y</div>
+          <div class="vname">Yellow</div>
+          <div class="vbadge">P3</div>
+        </div>
+        <div class="vtile" data-seat="3">
+          <video autoplay playsinline></video>
+          <div class="vph">B</div>
+          <div class="vname">Blue</div>
+          <div class="vbadge">P4</div>
+        </div>
+      </div>
+      <div id="board">
+        <div id="cells"></div>
+        <div id="centerBadge"><span>LUDO</span></div>
+        <div id="tokens"></div>
+      </div>
+    </div>
+
+    <div class="hud">
+      <div class="diceRow">
+        <div class="diceBox"><div id="dice">–</div></div>
+        <div class="turnInfo">
+          <div id="turnText">খেলোয়াড়দের অপেক্ষা…</div>
+          <div id="timerText"></div>
+        </div>
+        <button class="btn" id="btnRoll" type="button" disabled>রোল</button>
+      </div>
+      <button class="btn hidden" id="btnPass" type="button">চাল নেই — পরের জন</button>
+      <div class="tools">
+        <button class="toolBtn" id="btnMic" type="button">মাইক</button>
+        <button class="toolBtn" id="btnCam" type="button">ক্যামেরা</button>
+        <button class="toolBtn" id="btnGift" type="button">গিফট</button>
+        <button class="toolBtn" id="btnVideo" type="button">ভিডিও</button>
+        <button class="toolBtn" id="btnLeave" type="button">বের হন</button>
+      </div>
+      <div id="eventTicker">—</div>
+      <div id="mediaNotice" class="hidden">
+        <span id="mediaNoticeText">ভিডিও/ভয়েস চালু হয়নি — ক্যামেরা ও মাইকের অনুমতি দিন।</span>
+        <button type="button" id="btnRetryMedia">আবার চেষ্টা</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="giftLayer"></div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var DB_URL = "https://easylife-e96f6-default-rtdb.firebaseio.com";
+  var PATH = [
+    [6,13],[6,12],[6,11],[6,10],[6,9],
+    [5,8],[4,8],[3,8],[2,8],[1,8],[0,8],
+    [0,7],[0,6],
+    [1,6],[2,6],[3,6],[4,6],[5,6],
+    [6,5],[6,4],[6,3],[6,2],[6,1],[6,0],
+    [7,0],
+    [8,0],[8,1],[8,2],[8,3],[8,4],[8,5],
+    [9,6],[10,6],[11,6],[12,6],[13,6],[14,6],
+    [14,7],
+    [14,8],[13,8],[12,8],[11,8],[10,8],[9,8],
+    [8,9],[8,10],[8,11],[8,12],[8,13],[8,14],
+    [7,14],
+    [6,14]
+  ];
+  var SAFE = { 0:1, 8:1, 13:1, 21:1, 26:1, 34:1, 39:1, 47:1 };
+  var SEATS = {
+    "0": {
+      name: "Red", color: "#ef4444", start: 13,
+      base: [[2,2],[4,2],[2,4],[4,4]],
+      lane: [[1,7],[2,7],[3,7],[4,7],[5,7]],
+      box: [0,0]
+    },
+    "1": {
+      name: "Green", color: "#22c55e", start: 26,
+      base: [[11,2],[13,2],[11,4],[13,4]],
+      lane: [[7,1],[7,2],[7,3],[7,4],[7,5]],
+      box: [9,0]
+    },
+    "2": {
+      name: "Yellow", color: "#eab308", start: 39,
+      base: [[11,11],[13,11],[11,13],[13,13]],
+      lane: [[13,7],[12,7],[11,7],[10,7],[9,7]],
+      box: [9,9]
+    },
+    "3": {
+      name: "Blue", color: "#3b82f6", start: 0,
+      base: [[2,11],[4,11],[2,13],[4,13]],
+      lane: [[7,13],[7,12],[7,11],[7,10],[7,9]],
+      box: [0,9]
+    }
+  };
+  var MODES = { "2": ["0","2"], "3": ["0","1","2"], "4": ["0","1","2","3"] };
+  var ICE = {
+    iceServers: [
+      { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+      {
+        urls: [
+          "turn:openrelay.metered.ca:80",
+          "turn:openrelay.metered.ca:443",
+          "turn:openrelay.metered.ca:443?transport=tcp"
+        ],
+        username: "openrelayproject",
+        credential: "openrelayproject"
+      }
+    ]
+  };
+  var GIFTS = [
+    { id: "rose", label: "গোলাপ", color: "#f43f5e", svg: '<path d="M12 21s-7-4.4-9-8.6A4.7 4.7 0 0 1 12 7a4.7 4.7 0 0 1 9 5.4C19 16.6 12 21 12 21z"/>' },
+    { id: "choco", label: "চকলেট", color: "#92400e", svg: '<path d="M4 5h16v14H4zM4 9h16M4 13h16M8 5v14M12 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="1.6"/>' },
+    { id: "teddy", label: "টেডি", color: "#b45309", svg: '<path d="M7 6a2.5 2.5 0 1 1 2.4-3.2h5.2A2.5 2.5 0 1 1 17 6h.5A3.5 3.5 0 0 1 21 9.5v3a3.5 3.5 0 0 1-3.5 3.5H6.5A3.5 3.5 0 0 1 3 12.5v-3A3.5 3.5 0 0 1 6.5 6H7zm2 7.5a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8zm6 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z"/>' },
+    { id: "diamond", label: "ডায়মন্ড", color: "#0891b2", svg: '<path d="M12 2l8 7-8 13L4 9z"/>' },
+    { id: "crown", label: "মুকুট", color: "#a16207", svg: '<path d="M3 7l4.5 3.5L12 4l4.5 6.5L21 7l-2 12H5z"/>' },
+    { id: "star", label: "স্টার", color: "#ca8a04", svg: '<path d="M12 2l2.9 6.2 6.8.8-5 4.7 1.4 6.7L12 17.8 5.9 20.4l1.4-6.7-5-4.7 6.8-.8z"/>' }
+  ];
+
+  var params = new URLSearchParams(
+    ((location.search || "").replace(/^\?/, "") + "&" + (location.hash || "").replace(/^#/, ""))
+      .replace(/^&/, "")
+  );
+  var uid = String(params.get("uid") || "").trim();
+  var usernameParam = String(params.get("username") || "").trim();
+  var bootAt = Date.now();
+
+  var db = null;
+  var roomRef = null;
+  var room = null;
+  var roomId = null;
+  var mySeat = null;
+  var myName = usernameParam || "Player";
+  var selectedMode = "4";
+  var leaving = false;
+  var presenceArmed = false;
+  var roomListener = null;
+  var giftsRef = null;
+  var giftCallback = null;
+  var roomsListener = null;
+  var invitesListener = null;
+  var lastRooms = null;
+  var autoPassTimer = null;
+  var endModalKey = "";
+  var currentInvite = null;
+  var lastInvites = [];
+  var ringTimer = null;
+  var audioCtx = null;
+  var currentModal = null;
+  var modalOnClose = null;
+  var lastForceAt = 0;
+
+  var rtcStarted = false;
+  var mediaReady = false;
+  var localStream = null;
+  var micOn = true;
+  var camOn = true;
+  var peers = new Map();
+  var myRtcStart = Date.now();
+  var rtcEpochRef = null;
+  var rtcEpochCb = null;
+
+  var tokenEls = [];
+  var boardBuilt = false;
+
+  function $(id) { return document.getElementById(id); }
+  function seatList(mode) { return MODES[String(mode)] || MODES["4"]; }
+  function roomSeats(r) {
+    return seatList(r.mode).filter(function (s) { return r.seats && r.seats[s]; });
+  }
+  function seatName(r, s) {
+    var p = r && r.seats && r.seats[s];
+    return p && p.name ? p.name : (SEATS[s] ? SEATS[s].name : "Player");
+  }
+  function mySeatString() { return mySeat === null ? "" : String(mySeat); }
+  function pairKey(a, b) { return a < b ? a + "__" + b : b + "__" + a; }
+
+  function toast(text) {
+    var el = $("toast");
+    if (!el) return;
+    el.textContent = text;
+    el.classList.add("show");
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(function () { el.classList.remove("show"); }, 2600);
+  }
+
+  function showFatal(text) {
+    var el = $("bootError");
+    if (!el) return;
+    el.textContent = text;
+    el.style.display = "block";
+  }
+
+  function bodyText(text) {
+    var p = document.createElement("p");
+    p.className = "modalText";
+    p.textContent = text;
+    return p;
+  }
+
+  function openModal(title, bodyEl, actions, opts) {
+    closeModal();
+    var back = document.createElement("div");
+    back.className = "modalBack";
+    var card = document.createElement("div");
+    card.className = "modalCard";
+    var h = document.createElement("h3");
+    h.textContent = title;
+    var body = document.createElement("div");
+    body.className = "modalBody";
+    if (bodyEl) body.appendChild(bodyEl);
+    var acts = document.createElement("div");
+    acts.className = "modalActions";
+    (actions || []).forEach(function (a) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn " + (a.cls || "ghost");
+      b.textContent = a.label;
+      if (a.disabled) b.disabled = true;
+      b.addEventListener("click", function () {
+        if (!a.keepOpen) closeModal();
+        if (a.onClick) a.onClick();
+      });
+      acts.appendChild(b);
+    });
+    card.appendChild(h);
+    card.appendChild(body);
+    card.appendChild(acts);
+    back.appendChild(card);
+    if (!opts || opts.dismissible !== false) {
+      back.addEventListener("click", function (e) { if (e.target === back) closeModal(); });
+    }
+    document.body.appendChild(back);
+    currentModal = back;
+    modalOnClose = opts && opts.onClose ? opts.onClose : null;
+  }
+
+  function closeModal() {
+    var back = currentModal;
+    var cb = modalOnClose;
+    currentModal = null;
+    modalOnClose = null;
+    if (back && back.parentNode) back.parentNode.removeChild(back);
+    if (cb) { try { cb(); } catch (e) {} }
+  }
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      try { audioCtx = new Ctx(); } catch (e) { audioCtx = null; }
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume().catch(function () {});
+    }
+    return audioCtx;
+  }
+
+  function beep(freq, dur, delay) {
+    var ctx = ensureAudio();
+    if (!ctx) return;
+    var t = ctx.currentTime + (delay || 0);
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = freq;
+    o.connect(g);
+    g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.13, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.start(t);
+    o.stop(t + dur + 0.05);
+  }
+
+  function startRing() {
+    stopRing();
+    var tick = function () {
+      beep(880, 0.2, 0);
+      beep(660, 0.2, 0.27);
+      if (navigator.vibrate) { try { navigator.vibrate([260, 150, 260]); } catch (e) {} }
+    };
+    tick();
+    ringTimer = setInterval(tick, 1700);
+  }
+
+  function stopRing() {
+    if (ringTimer) { clearInterval(ringTimer); ringTimer = null; }
+    if (navigator.vibrate) { try { navigator.vibrate(0); } catch (e) {} }
+  }
+
+  function bindUi() {
+    var modeRow = $("modeRow");
+    if (modeRow) {
+      modeRow.addEventListener("click", function (e) {
+        var btn = e.target.closest(".modeBtn");
+        if (!btn) return;
+        selectedMode = String(btn.getAttribute("data-mode"));
+        Array.prototype.forEach.call(modeRow.querySelectorAll(".modeBtn"), function (b) {
+          b.classList.toggle("active", b === btn);
+        });
+      });
+    }
+    $("btnCreate").addEventListener("click", createRoom);
+    $("btnJoinCode").addEventListener("click", function () {
+      var v = $("joinCode").value.trim();
+      if (!v) { toast("রুম কোড দিন"); return; }
+      joinRoom(v);
+    });
+    $("joinCode").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") $("btnJoinCode").click();
+    });
+    $("btnLeaveTop").addEventListener("click", leaveRoom);
+    $("btnLeave").addEventListener("click", leaveRoom);
+    $("btnCopyCode").addEventListener("click", function () {
+      if (!roomId) return;
+      var done = function () { toast("রুম কোড কপি হয়েছে"); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(roomId).then(done).catch(function () { prompt("Room ID", roomId); });
+      } else {
+        prompt("Room ID", roomId);
+      }
+    });
+    $("btnRoll").addEventListener("click", rollDice);
+    $("btnPass").addEventListener("click", passTurn);
+    $("btnMic").addEventListener("click", toggleMic);
+    $("btnCam").addEventListener("click", toggleCam);
+    $("btnGift").addEventListener("click", openGiftSheet);
+    $("btnVideo").addEventListener("click", function () {
+      $("videoLayer").classList.toggle("hidden");
+    });
+    $("btnRetryMedia").addEventListener("click", retryMedia);
+    document.addEventListener("pointerdown", ensureAudio, { passive: true });
+    window.addEventListener("pagehide", function () {
+      if (roomId && mySeat && db) {
+        try {
+          db.ref("ludoRooms/" + roomId + "/seats/" + mySeat + "/online").set(false);
+          db.ref("ludoRooms/" + roomId + "/rtcEpoch/" + uid).remove();
+        } catch (e) {}
+      }
+      closePeers();
+      stopRing();
+    });
+    setInterval(tickRoomClock, 1000);
+    setInterval(function () {
+      if (roomId && mySeat && mediaReady) syncPeers();
+    }, 9000);
+    setInterval(function () {
+      if (roomId && mySeat && db) {
+        db.ref("ludoRooms/" + roomId + "/seats/" + mySeat + "/lastSeenAt").set(Date.now()).catch(function () {});
+      }
+    }, 15000);
+  }
+
+  function boot() {
+    $("meName").textContent = myName;
+    bindUi();
+    if (!uid) {
+      showFatal("এই পেজটি TM247 অ্যাপের Adda বাটন থেকে খুলুন। অ্যাপ ইনস্টল করে Home → Adda চাপুন।");
+      return;
+    }
+    if (!window.firebase || !window.firebase.database) {
+      showFatal("Firebase লোড হয়নি। ইন্টারনেট চেক করে পেজটি আবার খুলুন।");
+      return;
+    }
+    try {
+      if (!firebase.apps.length) firebase.initializeApp({ databaseURL: DB_URL });
+      db = firebase.database();
+    } catch (e) {
+      showFatal("Firebase চালু হয়নি: " + (e && e.message ? e.message : e));
+      return;
+    }
+    fetchMe();
+    attachInvites();
+    attachRooms();
+    maybeRejoin();
+  }
+
+  function fetchMe() {
+    db.ref("users/" + uid).once("value").then(function (snap) {
+      var v = snap.val() || {};
+      myName = (v.name || v.fullName || usernameParam || v.username || "Player").toString().trim() || "Player";
+      $("meName").textContent = myName;
+      if (roomId && mySeat) {
+        db.ref("ludoRooms/" + roomId + "/seats/" + mySeat + "/name").set(myName).catch(function () {});
+      }
+    }).catch(function () {});
+  }
+
+  /* ---------------- rooms list / invites ---------------- */
+
+  function attachRooms() {
+    roomsListener = db.ref("ludoRooms").orderByKey().limitToLast(60).on("value", function (snap) {
+      lastRooms = snap.val() || {};
+      if (!roomId) renderRooms(lastRooms);
+    });
+  }
+
+  function renderRooms(rooms) {
+    var wrap = $("roomList");
+    if (!wrap) return;
+    wrap.textContent = "";
+    var list = Object.keys(rooms || {}).map(function (id) {
+      return { id: id, r: rooms[id] || {} };
+    }).filter(function (x) {
+      return x.r && (x.r.status === "waiting" || x.r.status === "playing");
+    }).sort(function (a, b) {
+      return (b.r.createdAt || 0) - (a.r.createdAt || 0);
+    });
+    if (!list.length) {
+      var empty = document.createElement("div");
+      empty.className = "emptyText";
+      empty.textContent = "এখন কোনো রুম নেই — নতুন রুম তৈরি করুন।";
+      wrap.appendChild(empty);
+      return;
+    }
+    list.slice(0, 30).forEach(function (x) {
+      var r = x.r;
+      var total = seatList(r.mode).length;
+      var filled = roomSeats(r).length;
+      var row = document.createElement("div");
+      row.className = "roomRow";
+      var info = document.createElement("div");
+      info.className = "info";
+      var title = document.createElement("strong");
+      title.textContent = total + " জন · " + filled + "/" + total + " খেলোয়াড়";
+      var badge = document.createElement("span");
+      badge.className = "badge " + (r.status === "waiting" ? "wait" : "play");
+      badge.textContent = r.status === "waiting" ? "অপেক্ষা" : "চলছে";
+      title.appendChild(badge);
+      var sub = document.createElement("span");
+      sub.textContent = "রুম " + x.id.slice(-6).toUpperCase();
+      info.appendChild(title);
+      info.appendChild(sub);
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn small primary";
+      var mine = roomSeats(r).some(function (s) { return r.seats[s].uid === uid; });
+      if (r.status === "playing") {
+        btn.textContent = mine ? "ফিরুন" : "চলছে";
+        btn.disabled = !mine;
+      } else if (filled >= total) {
+        btn.textContent = "ভরা";
+        btn.disabled = true;
+      } else {
+        btn.textContent = "ঢুকুন";
+      }
+      btn.addEventListener("click", function () { joinRoom(x.id); });
+      row.appendChild(info);
+      row.appendChild(btn);
+      wrap.appendChild(row);
+    });
+  }
+
+  function attachInvites() {
+    invitesListener = db.ref("ludoInvites/" + uid).on("value", function (snap) {
+      var val = snap.val() || {};
+      var list = Object.keys(val).map(function (k) { return val[k]; }).filter(function (v) {
+        return v && v.roomId;
+      }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+      lastInvites = list;
+      renderLobbyInvites(list);
+      if (!list.length) {
+        if (currentInvite) {
+          currentInvite = null;
+          stopRing();
+          closeModal();
+        }
+        return;
+      }
+      var inv = list[0];
+      if (roomId) {
+        return;
+      }
+      if (!currentInvite || currentInvite.roomId !== inv.roomId || currentInvite.at !== inv.at) {
+        showInviteRing(inv);
+      }
+    });
+  }
+
+  function renderLobbyInvites(list) {
+    var wrap = $("lobbyInvites");
+    var box = $("lobbyInvitesWrap");
+    if (!wrap || !box) return;
+    wrap.textContent = "";
+    box.classList.toggle("hidden", !list.length);
+    list.forEach(function (inv) {
+      var card = document.createElement("div");
+      card.className = "inviteCard";
+      var info = document.createElement("div");
+      info.className = "info";
+      var strong = document.createElement("strong");
+      strong.textContent = (inv.fromName || "Player") + " আপনাকে ডাকছে";
+      var span = document.createElement("span");
+      span.textContent = (inv.mode || 4) + " জনের লুডু · রুম " + String(inv.roomId).slice(-6).toUpperCase();
+      info.appendChild(strong);
+      info.appendChild(span);
+      var join = document.createElement("button");
+      join.type = "button";
+      join.className = "btn small primary";
+      join.textContent = "যোগ দিন";
+      join.addEventListener("click", function () { joinFromInvite(inv); });
+      var no = document.createElement("button");
+      no.type = "button";
+      no.className = "btn small ghost";
+      no.textContent = "না";
+      no.addEventListener("click", function () { declineInvite(inv); });
+      card.appendChild(info);
+      card.appendChild(join);
+      card.appendChild(no);
+      wrap.appendChild(card);
+    });
+  }
+
+  function showInviteRing(inv) {
+    currentInvite = inv;
+    startRing();
+    var body = document.createElement("div");
+    var p = document.createElement("p");
+    p.className = "modalText";
+    p.textContent = (inv.fromName || "Player") + " আপনাকে " + (inv.mode || 4) + "-প্লেয়ার লুডুতে ডাকছে।\nরুম " + String(inv.roomId).slice(-6).toUpperCase() + " — যোগ দিলে আপনি বোর্ডে বসে খেলতে পারবেন।";
+    body.appendChild(p);
+    openModal("লুডু কল", body, [
+      { label: "যোগ দিন", cls: "primary", onClick: function () { joinFromInvite(inv); } },
+      { label: "না", cls: "ghost", onClick: function () { declineInvite(inv); } }
+    ], {
+      dismissible: false,
+      onClose: function () {
+        stopRing();
+        if (currentInvite === inv) currentInvite = null;
+      }
+    });
+  }
+
+  function declineInvite(inv) {
+    if (!inv || !inv.roomId) return;
+    db.ref("ludoInvites/" + uid + "/" + inv.roomId).remove().catch(function () {});
+    if (currentInvite && currentInvite.roomId === inv.roomId) currentInvite = null;
+    stopRing();
+  }
+
+  function joinFromInvite(inv) {
+    if (!inv || !inv.roomId) return;
+    stopRing();
+    closeModal();
+    var id = inv.roomId;
+    db.ref("ludoRooms/" + id).once("value").then(function (snap) {
+      var r = snap.val();
+      if (!r) {
+        toast("রুমটি আর নেই");
+        db.ref("ludoInvites/" + uid + "/" + id).remove().catch(function () {});
+        return;
+      }
+      var mine = roomSeats(r).filter(function (s) { return r.seats[s].uid === uid; })[0];
+      if (mine !== undefined) {
+        db.ref("ludoInvites/" + uid + "/" + id).remove().catch(function () {});
+        enterRoom(id, mine);
+        return;
+      }
+      if (r.status !== "waiting") { toast("খেলা শুরু হয়ে গেছে"); return; }
+      claimSeat(id).then(function (assigned) {
+        if (assigned === null) { toast("রুম ভরে গেছে"); return; }
+        db.ref("ludoInvites/" + uid + "/" + id).remove().catch(function () {});
+        enterRoom(id, assigned);
+      }).catch(function () { toast("যোগ দেওয়া যায়নি"); });
+    }).catch(function () { toast("রুম পাওয়া যায়নি"); });
+  }
+
+  function claimSeat(id) {
+    return new Promise(function (resolve, reject) {
+      var assigned = null;
+      db.ref("ludoRooms/" + id).transaction(function (r) {
+        assigned = null;
+        if (!r || r.status !== "waiting" || !r.seats) return;
+        var free = seatList(r.mode).filter(function (s) { return !r.seats[s]; })[0];
+        if (free === undefined) return;
+        r.seats[free] = {
+          uid: uid, name: myName, online: true,
+          joinedAt: Date.now(), lastSeenAt: Date.now()
+        };
+        if (!r.hostUid) r.hostUid = uid;
+        if (r.state) {
+          r.state.tokens = r.state.tokens || {};
+          r.state.tokens[free] = [-1, -1, -1, -1];
+          r.state.homeCount = r.state.homeCount || {};
+          r.state.homeCount[free] = 0;
+          if (r.state.removed) delete r.state.removed[free];
+        }
+        assigned = free;
+        return r;
+      }, function (err) {
+        if (err) reject(err);
+        else resolve(assigned);
+      });
+    });
+  }
+
+  function createRoom() {
+    if (!db) return;
+    if (roomId) { toast("আগে বর্তমান রুম থেকে বের হন"); return; }
+    var mode = selectedMode;
+    var list = seatList(mode);
+    var seat = list[0];
+    var ref = db.ref("ludoRooms").push();
+    var now = Date.now();
+    var tokens = {};
+    var home = {};
+    list.forEach(function (s) { tokens[s] = [-1, -1, -1, -1]; home[s] = 0; });
+    var data = {
+      hostUid: uid,
+      mode: Number(mode),
+      status: "waiting",
+      createdAt: now,
+      seats: {},
+      state: {
+        turn: seat, dice: 0, rolled: false,
+        tokens: tokens, homeCount: home,
+        startedAt: 0, turnEndsAt: 0, removed: {},
+        lastEvent: "রুম তৈরি হয়েছে — খেলোয়াড় যোগ করুন"
+      }
+    };
+    data.seats[seat] = {
+      uid: uid, name: myName, online: true,
+      joinedAt: now, lastSeenAt: now
+    };
+    ref.set(data).then(function () {
+      enterRoom(ref.key, seat);
+    }).catch(function (e) {
+      toast("রুম তৈরি হয়নি: " + (e && e.message ? e.message : e));
+    });
+  }
+
+  function joinRoom(id) {
+    if (!db) return;
+    if (roomId) { toast("আগে বর্তমান রুম থেকে বের হন"); return; }
+    db.ref("ludoRooms/" + id).once("value").then(function (snap) {
+      var r = snap.val();
+      if (!r) { toast("রুমটি পাওয়া যায়নি"); return; }
+      var mine = roomSeats(r).filter(function (s) { return r.seats[s].uid === uid; })[0];
+      if (mine !== undefined) { enterRoom(id, mine); return; }
+      if (r.status !== "waiting") { toast("খেলা শুরু হয়ে গেছে"); return; }
+      claimSeat(id).then(function (assigned) {
+        if (assigned === null) toast("রুম ভরে গেছে");
+        else enterRoom(id, assigned);
+      }).catch(function () { toast("যোগ দেওয়া যায়নি"); });
+    }).catch(function () { toast("রুম পাওয়া যায়নি"); });
+  }
+
+  function maybeRejoin() {
+    var id = sessionStorage.getItem("tm247_ludo_room");
+    if (!id) return;
+    db.ref("ludoRooms/" + id).once("value").then(function (snap) {
+      var r = snap.val();
+      if (!r || !r.seats) {
+        sessionStorage.removeItem("tm247_ludo_room");
+        return;
+      }
+      var seat = roomSeats(r).filter(function (s) { return r.seats[s].uid === uid; })[0];
+      if (seat === undefined) {
+        sessionStorage.removeItem("tm247_ludo_room");
+        return;
+      }
+      enterRoom(id, seat);
+    }).catch(function () {});
+  }
+
+  /* ---------------- room lifecycle ---------------- */
+
+  function enterRoom(id, seat) {
+    leaveLocalRoom(false);
+    roomId = id;
+    mySeat = String(seat);
+    sessionStorage.setItem("tm247_ludo_room", id);
+    sessionStorage.setItem("tm247_ludo_seat", mySeat);
+    roomRef = db.ref("ludoRooms/" + id);
+    $("lobbyView").classList.add("hidden");
+    $("roomView").classList.remove("hidden");
+    $("btnLeaveTop").classList.remove("hidden");
+    $("roomCode").textContent = String(id).slice(-6).toUpperCase();
+    buildBoardOnce();
+    armPresence();
+    attachRoom();
+    attachGifts();
+    attachRtcEpoch();
+    var seatRef = roomRef.child("seats/" + mySeat);
+    seatRef.update({ name: myName, online: true, lastSeenAt: Date.now() }).catch(function () {});
+    db.ref("ludoRooms/" + id + "/rtcEpoch/" + uid).set(Date.now()).catch(function () {});
+    startMedia();
+    toast("রুমে ঢুকেছেন");
+  }
+
+  function armPresence() {
+    if (presenceArmed || !roomRef) return;
+    var seatRef = roomRef.child("seats/" + mySeat);
+    seatRef.child("online").onDisconnect().set(false);
+    seatRef.child("lastSeenAt").onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
+    presenceArmed = true;
+  }
+
+  function attachRoom() {
+    if (roomListener) {
+      roomRef.off("value", roomListener);
+      roomListener = null;
+    }
+    roomListener = roomRef.on("value", function (snap) {
+      if (leaving) return;
+      var data = snap.val();
+      if (!data) {
+        toast("রুমটি আর নেই");
+        leaveLocalRoom(true);
+        return;
+      }
+      room = data;
+      if (!room.seats || !room.seats[mySeat]) {
+        toast("আপনি এই রুমে নেই");
+        leaveLocalRoom(true);
+        return;
+      }
+      renderRoom();
+      syncPeers();
+      maybeAutoPass();
+      cleanupOffline();
+    });
+  }
+
+  function attachGifts() {
+    if (giftsRef) { giftsRef.off("child_added", giftCallback); giftsRef = null; }
+    giftsRef = roomRef.child("gifts");
+    giftCallback = giftsRef.limitToLast(40).on("child_added", function (snap) {
+      var g = snap.val();
+      if (!g || !g.at || g.at < bootAt) return;
+      showGift(g);
+    });
+  }
+
+  function attachRtcEpoch() {
+    if (rtcEpochRef && rtcEpochCb) {
+      rtcEpochRef.off("value", rtcEpochCb);
+    }
+    rtcEpochRef = roomRef.child("rtcEpoch");
+    rtcEpochCb = rtcEpochRef.on("value", function (snap) {
+      var v = snap.val() || {};
+      Object.keys(v).forEach(function (peerUid) {
+        if (peerUid === uid) return;
+        var entry = peers.get(peerUid);
+        if (entry && v[peerUid] > entry.createdAt + 800) {
+          closePeer(peerUid);
+          ensurePeer(peerUid);
+        }
+      });
+    });
+  }
+
+  function leaveRoom() {
+    if (!roomId) return;
+    var id = roomId;
+    var seat = mySeat;
+    var played = room && room.status === "playing";
+    var doLeave = function () {
+      leaving = true;
+      var seatRef = db.ref("ludoRooms/" + id + "/seats/" + seat);
+      try { seatRef.onDisconnect().cancel(); } catch (e) {}
+      presenceArmed = false;
+      removeSeat(id, seat, uid, false).catch(function () {}).then(function () {
+        leaveLocalRoom(true);
+      });
+    };
+    if (played) {
+      openModal("খেলা ছেড়ে যাবেন?", bodyText("আপনার সব টোকেন বোর্ড থেকে উঠে যাবে। বাকি খেলোয়াড়রা খেলা চালিয়ে যাবে।"), [
+        { label: "বের হন", cls: "danger", onClick: doLeave },
+        { label: "থাকুন", cls: "ghost" }
+      ]);
+    } else {
+      doLeave();
+    }
+  }
+
+  function leaveLocalRoom(clearSession) {
+    if (roomListener && roomRef) {
+      try { roomRef.off("value", roomListener); } catch (e) {}
+    }
+    roomListener = null;
+    if (giftsRef && giftCallback) {
+      try { giftsRef.off("child_added", giftCallback); } catch (e) {}
+    }
+    giftsRef = null;
+    giftCallback = null;
+    if (rtcEpochRef && rtcEpochCb) {
+      try { rtcEpochRef.off("value", rtcEpochCb); } catch (e) {}
+    }
+    rtcEpochRef = null;
+    rtcEpochCb = null;
+    if (roomId && db) {
+      db.ref("ludoRooms/" + roomId + "/rtcEpoch/" + uid).remove().catch(function () {});
+    }
+    stopMedia();
+    stopRing();
+    clearTimeout(autoPassTimer);
+    autoPassTimer = null;
+    closeModal();
+    if (clearSession) {
+      sessionStorage.removeItem("tm247_ludo_room");
+      sessionStorage.removeItem("tm247_ludo_seat");
+    }
+    room = null;
+    roomRef = null;
+    roomId = null;
+    mySeat = null;
+    leaving = false;
+    presenceArmed = false;
+    endModalKey = "";
+    $("roomView").classList.add("hidden");
+    $("lobbyView").classList.remove("hidden");
+    $("btnLeaveTop").classList.add("hidden");
+    if (!roomId) renderRooms(lastRooms);
+    if (clearSession && lastInvites.length) {
+      showInviteRing(lastInvites[0]);
+    }
+    if (db) db.ref("ludoRooms").orderByKey().limitToLast(60).once("value").then(function (s) {
+      lastRooms = s.val() || {};
+      if (!roomId) renderRooms(lastRooms);
+    }).catch(function () {});
+  }
+
+  function removeSeat(id, seat, seatUid, system) {
+    return db.ref("ludoRooms/" + id).transaction(function (r) {
+      if (!r || !r.seats || !r.seats[seat]) return;
+      if (seatUid && r.seats[seat].uid !== seatUid) return;
+      if (system && r.seats[seat].online !== false) return;
+      delete r.seats[seat];
+      if (r.state) {
+        if (r.state.tokens) delete r.state.tokens[seat];
+        if (r.state.homeCount) delete r.state.homeCount[seat];
+        r.state.removed = r.state.removed || {};
+        r.state.removed[seat] = true;
+        r.state.lastEvent = (seatUid === uid ? "আপনি" : "একজন খেলোয়াড়") + " খেলা ছেড়ে গেছেন";
+        if (r.status === "playing") {
+          var left = roomSeats(r);
+          if (left.length < 2) {
+            r.status = "ended";
+            r.endedReason = "not_enough";
+            r.winnerUid = null;
+            r.winnerSeat = null;
+            r.state.turnEndsAt = 0;
+            r.state.lastEvent = "পর্যাপ্ত খেলোয়াড় নেই — খেলা বন্ধ";
+          } else if (String(r.state.turn) === String(seat)) {
+            r.state.turn = nextSeat(r, seat);
+            r.state.dice = 0;
+            r.state.rolled = false;
+            r.state.turnEndsAt = Date.now() + 45000;
+          }
+        }
+      }
+      if (r.hostUid === seatUid) {
+        var rest = roomSeats(r);
+        r.hostUid = rest.length ? r.seats[rest[0]].uid : "";
+      }
+      if (!r.seats || !Object.keys(r.seats).length) return null;
+      return r;
+    });
+  }
+
+  function isHost() {
+    return room && room.hostUid === uid;
+  }
+
+  function isLeader() {
+    if (!room) return false;
+    if (room.hostUid === uid) return true;
+    var hostSeat = roomSeats(room).filter(function (s) { return room.seats[s].uid === room.hostUid; })[0];
+    if (hostSeat !== undefined && room.seats[hostSeat].online !== false) return false;
+    var online = roomSeats(room).filter(function (s) {
+      return room.seats[s].online !== false;
+    }).map(function (s) { return room.seats[s].uid; }).sort();
+    return online[0] === uid;
+  }
+
+  function cleanupOffline() {
+    if (!room || !roomId || !isLeader()) return;
+    var now = Date.now();
+    var limit = room.status === "playing" ? 8000 : 20000;
+    roomSeats(room).forEach(function (s) {
+      var p = room.seats[s];
+      if (!p || p.uid === uid) return;
+      if (p.online === false && now - (p.lastSeenAt || 0) > limit) {
+        removeSeat(roomId, s, p.uid, true).catch(function () {});
+      }
+    });
+  }
+
+  function startGame() {
+    if (!roomRef || !isHost()) return;
+    roomRef.transaction(function (r) {
+      if (!r || r.status !== "waiting") return;
+      var all = seatList(r.mode);
+      var filled = all.filter(function (s) { return r.seats && r.seats[s]; });
+      if (filled.length !== all.length) return;
+      var tokens = {};
+      var home = {};
+      filled.forEach(function (s) { tokens[s] = [-1, -1, -1, -1]; home[s] = 0; });
+      r.status = "playing";
+      r.state = {
+        turn: filled[0], dice: 0, rolled: false,
+        tokens: tokens, homeCount: home,
+        startedAt: Date.now(), turnEndsAt: Date.now() + 45000,
+        removed: {}, lastEvent: "খেলা শুরু হয়েছে"
+      };
+      return r;
+    }).then(function (res) {
+      if (!res.committed) toast("সব খেলোয়াড় এখনো যোগ দেয়নি");
+    });
+  }
+
+  function resetGame() {
+    if (!roomRef || !isHost()) return;
+    roomRef.transaction(function (r) {
+      if (!r || r.status !== "ended") return;
+      var seats = roomSeats(r);
+      var all = seatList(r.mode);
+      var tokens = {};
+      var home = {};
+      seats.forEach(function (s) { tokens[s] = [-1, -1, -1, -1]; home[s] = 0; });
+      r.winnerUid = null;
+      r.winnerSeat = null;
+      r.endedReason = "";
+      if (seats.length < all.length) {
+        r.status = "waiting";
+        r.state = {
+          turn: seats[0] || all[0], dice: 0, rolled: false,
+          tokens: tokens, homeCount: home,
+          startedAt: 0, turnEndsAt: 0, removed: {},
+          lastEvent: "খেলোয়াড়ের অপেক্ষা — কল করুন"
+        };
+        return r;
+      }
+      r.status = "playing";
+      r.state = {
+        turn: seats[0], dice: 0, rolled: false,
+        tokens: tokens, homeCount: home,
+        startedAt: Date.now(), turnEndsAt: Date.now() + 45000,
+        removed: {}, lastEvent: "নতুন খেলা শুরু!"
+      };
+      return r;
+    }).then(function () { endModalKey = ""; });
+  }
+
+  /* ---------------- game state ---------------- */
+
+  function canAct() {
+    return !!(room && room.status === "playing" && String(room.state.turn) === mySeatString());
+  }
+
+  function legalMoves(r, seat) {
+    if (!r || !r.state || !r.state.rolled) return [];
+    var d = Number(r.state.dice) || 0;
+    if (!d) return [];
+    var toks = (r.state.tokens && r.state.tokens[seat]) || [];
+    var out = [];
+    for (var i = 0; i < toks.length; i++) {
+      var p = toks[i];
+      if (p < 0) {
+        if (d === 6) out.push(i);
+      } else if (p < 56 && p + d <= 56) {
+        out.push(i);
+      }
+    }
+    return out;
+  }
+
+  function nextSeat(r, from) {
+    var list = seatList(r.mode);
+    var idx = list.indexOf(String(from));
+    if (idx < 0) idx = 0;
+    for (var k = 1; k <= list.length; k++) {
+      var s = list[(idx + k) % list.length];
+      if (r.seats && r.seats[s]) return s;
+    }
+    return String(from);
+  }
+
+  function rollDice() {
+    if (!roomRef || !room) return;
+    if (!canAct() || room.state.rolled) return;
+    var btn = $("btnRoll");
+    btn.classList.add("rolling");
+    setTimeout(function () { btn.classList.remove("rolling"); }, 500);
+    beep(320, 0.07, 0);
+    beep(480, 0.07, 0.08);
+    roomRef.transaction(function (r) {
+      if (!r || r.status !== "playing") return;
+      if (String(r.state.turn) !== mySeatString()) return;
+      if (r.state.rolled) return;
+      r.state.dice = 1 + Math.floor(Math.random() * 6);
+      r.state.rolled = true;
+      r.state.turnEndsAt = Date.now() + 30000;
+      r.state.lastEvent = seatName(r, mySeatString()) + " ডাইসে " + r.state.dice + " পেল";
+      return r;
+    });
+  }
+
+  function moveToken(idx) {
+    if (!roomRef || !room || !canAct() || !room.state.rolled) return;
+    if (legalMoves(room, mySeatString()).indexOf(idx) < 0) return;
+    var seat = mySeatString();
+    var cfg = SEATS[seat];
+    roomRef.transaction(function (r) {
+      if (!r || r.status !== "playing") return;
+      if (String(r.state.turn) !== seat || !r.state.rolled) return;
+      var d = Number(r.state.dice) || 0;
+      var toks = ((r.state.tokens && r.state.tokens[seat]) || [-1, -1, -1, -1]).slice();
+      var p = toks[idx];
+      var np;
+      if (p < 0) {
+        if (d !== 6) return;
+        np = 0;
+      } else {
+        np = p + d;
+        if (np > 56) return;
+      }
+      var captured = 0;
+      if (np <= 50) {
+        var abs = (cfg.start + np) % 52;
+        if (!SAFE[abs]) {
+          seatList(r.mode).forEach(function (os) {
+            if (os === seat || !r.seats[os]) return;
+            var ot = r.state.tokens[os] || [];
+            for (var k = 0; k < ot.length; k++) {
+              var op = ot[k];
+              if (op >= 0 && op <= 50 && ((SEATS[os].start + op) % 52) === abs) {
+                ot[k] = -1;
+                captured++;
+              }
+            }
+            r.state.tokens[os] = ot;
+          });
+        }
+      }
+      toks[idx] = np;
+      r.state.tokens[seat] = toks;
+      if (np === 56) {
+        r.state.homeCount[seat] = (r.state.homeCount[seat] || 0) + 1;
+      }
+      var extra = d === 6 || captured > 0 || np === 56;
+      r.state.dice = 0;
+      r.state.rolled = false;
+      if (np === 56 && (r.state.homeCount[seat] || 0) >= 4) {
+        r.status = "ended";
+        r.winnerUid = uid;
+        r.winnerSeat = seat;
+        r.state.turnEndsAt = 0;
+        r.state.lastEvent = seatName(r, seat) + " সব টোকেন ঘরে তুলে জিতেছে!";
+        return r;
+      }
+      if (!extra) r.state.turn = nextSeat(r, seat);
+      r.state.turnEndsAt = Date.now() + 45000;
+      r.state.lastEvent = seatName(r, seat) + " চাল দিল" +
+        (captured ? " · " + captured + " টোকেন কাটল" : "") +
+        (extra ? " · আবার চাল" : "");
+      return r;
+    });
+  }
+
+  function passTurn() {
+    if (!roomRef || !room) return;
+    if (!canAct() || !room.state.rolled) return;
+    var seat = mySeatString();
+    roomRef.transaction(function (r) {
+      if (!r || r.status !== "playing") return;
+      if (String(r.state.turn) !== seat || !r.state.rolled) return;
+      if (legalMoves(r, seat).length > 0) return;
+      r.state.dice = 0;
+      r.state.rolled = false;
+      r.state.turn = nextSeat(r, seat);
+      r.state.turnEndsAt = Date.now() + 45000;
+      r.state.lastEvent = seatName(r, seat) + " চাল দিতে পারেনি";
+      return r;
+    });
+  }
+
+  function forceSkip() {
+    if (!roomRef || !room) return;
+    if (Date.now() - lastForceAt < 3000) return;
+    lastForceAt = Date.now();
+    roomRef.transaction(function (r) {
+      if (!r || r.status !== "playing") return;
+      if (!r.state.turnEndsAt || Date.now() < r.state.turnEndsAt) return;
+      var old = String(r.state.turn);
+      r.state.dice = 0;
+      r.state.rolled = false;
+      r.state.turn = nextSeat(r, old);
+      r.state.turnEndsAt = Date.now() + 45000;
+      r.state.lastEvent = "সময় শেষ — পরের খেলোয়াড়";
+      return r;
+    });
+  }
+
+  function maybeAutoPass() {
+    if (autoPassTimer) { clearTimeout(autoPassTimer); autoPassTimer = null; }
+    if (!room || room.status !== "playing") return;
+    if (String(room.state.turn) !== mySeatString() || !room.state.rolled) return;
+    if (legalMoves(room, mySeatString()).length > 0) return;
+    autoPassTimer = setTimeout(function () {
+      autoPassTimer = null;
+      passTurn();
+    }, 1600);
+  }
+
+  function tickRoomClock() {
+    if (!room || room.status !== "playing") {
+      $("timerText").textContent = "";
+      return;
+    }
+    if (!room.state.turnEndsAt) {
+      $("timerText").textContent = "";
+      return;
+    }
+    var left = Math.ceil((room.state.turnEndsAt - Date.now()) / 1000);
+    if (left < 0) left = 0;
+    $("timerText").textContent = "সময় " + left + "s";
+    if (left === 0 && isLeader()) forceSkip();
+  }
+
+  /* ---------------- board rendering ---------------- */
+
+  function buildBoardOnce() {
+    if (boardBuilt) return;
+    boardBuilt = true;
+    var cells = $("cells");
+    cells.textContent = "";
+    var pathMap = {};
+    PATH.forEach(function (xy, i) { pathMap[xy[0] + "," + xy[1]] = i; });
+    var laneMap = {};
+    Object.keys(SEATS).forEach(function (s) {
+      SEATS[s].lane.forEach(function (xy) { laneMap[xy[0] + "," + xy[1]] = s; });
+    });
+    var baseMap = {};
+    Object.keys(SEATS).forEach(function (s) {
+      var b = SEATS[s].box;
+      for (var dx = 0; dx < 6; dx++) {
+        for (var dy = 0; dy < 6; dy++) {
+          var x = b[0] + dx;
+          var y = b[1] + dy;
+          var inner = dx >= 1 && dx <= 4 && dy >= 1 && dy <= 4;
+          baseMap[x + "," + y] = { seat: s, inner: inner, edge: dx === 0 || dx === 5 || dy === 0 || dy === 5 };
+        }
+      }
+    });
+    for (var y = 0; y < 15; y++) {
+      for (var x = 0; x < 15; x++) {
+        var cell = document.createElement("div");
+        cell.className = "cell";
+        var key = x + "," + y;
+        var baseInfo = baseMap[key];
+        var lane = laneMap[key];
+        var idx = pathMap[key];
+        if (baseInfo) {
+          cell.classList.add("s" + baseInfo.seat);
+          if (baseInfo.inner) cell.classList.add("inner");
+        } else if (lane !== undefined) {
+          cell.classList.add("lane" + lane);
+        } else if (idx !== undefined) {
+          cell.classList.add("path");
+          if (SAFE[idx]) cell.classList.add("safe");
+          Object.keys(SEATS).forEach(function (s) {
+            if (SEATS[s].start === idx) {
+              cell.classList.add("startpath");
+              cell.style.boxShadow = "inset 0 0 0 2px " + SEATS[s].color;
+            }
+          });
+        } else if (x >= 6 && x <= 8 && y >= 6 && y <= 8) {
+          cell.classList.add("center");
+        }
+        cells.appendChild(cell);
+      }
+    }
+    var tokensWrap = $("tokens");
+    tokensWrap.textContent = "";
+    tokenEls = [];
+    Object.keys(SEATS).forEach(function (s) {
+      for (var i = 0; i < 4; i++) {
+        (function (idx) {
+          var el = document.createElement("div");
+          el.className = "token t" + s;
+          var num = document.createElement("span");
+          num.className = "num";
+          num.textContent = String(idx + 1);
+          el.appendChild(num);
+          el.addEventListener("click", function () {
+            moveToken(idx);
+          });
+          tokensWrap.appendChild(el);
+          tokenEls.push({ seat: s, idx: idx, el: el });
+        })(i);
+      }
+    });
+  }
+
+  function centerFor(seat, progress, idx) {
+    var cfg = SEATS[seat];
+    if (progress < 0) {
+      var b = cfg.base[idx];
+      return { cx: b[0], cy: b[1], key: "b" + seat + "_" + idx };
+    }
+    if (progress <= 50) {
+      var abs = (cfg.start + progress) % 52;
+      var xy = PATH[abs];
+      return { cx: xy[0] + 0.5, cy: xy[1] + 0.5, key: "p" + abs };
+    }
+    if (progress <= 55) {
+      var lane = cfg.lane[progress - 51];
+      return { cx: lane[0] + 0.5, cy: lane[1] + 0.5, key: "l" + seat };
+    }
+    return null;
+  }
+
+  function renderTokens() {
+    if (!room) return;
+    var seat = mySeatString();
+    var moves = (room.status === "playing" && String(room.state.turn) === seatOld(seat) && room.state.rolled)
+      ? legalMoves(room, seatOld(seat)) : [];
+    var items = [];
+    roomSeats(room).forEach(function (s) {
+      var toks = (room.state.tokens && room.state.tokens[s]) || [-1, -1, -1, -1];
+      toks.forEach(function (p, i) {
+        if (p >= 56) return;
+        var pos = centerFor(s, p, i);
+        if (!pos) return;
+        items.push({ seat: s, idx: i, pos: pos });
+      });
+    });
+    var groups = {};
+    items.forEach(function (it) {
+      if (!groups[it.pos.key]) groups[it.pos.key] = [];
+      groups[it.pos.key].push(it);
+    });
+    var offsets = {
+      1: [[0, 0]],
+      2: [[-0.17, 0], [0.17, 0]],
+      3: [[-0.17, -0.13], [0.17, -0.13], [0, 0.17]],
+      4: [[-0.16, -0.16], [0.16, -0.16], [-0.16, 0.16], [0.16, 0.16]]
+    };
+    tokenEls.forEach(function (t) { t.el.style.display = "none"; });
+    items.forEach(function (it) {
+      var group = groups[it.pos.key];
+      var gi = group.indexOf(it);
+      var off = (offsets[group.length] || offsets[1])[gi] || [0, 0];
+      var cx = it.pos.cx + off[0];
+      var cy = it.pos.cy + off[1];
+      var pct = 100 / 15;
+      var size = pct * 0.64;
+      var el = null;
+      for (var i = 0; i < tokenEls.length; i++) {
+        if (tokenEls[i].seat === it.seat && tokenEls[i].idx === it.idx) { el = tokenEls[i].el; break; }
+      }
+      if (!el) return;
+      el.style.display = "flex";
+      el.style.width = size + "%";
+      el.style.height = size + "%";
+      el.style.left = (cx * pct - size / 2) + "%";
+      el.style.top = (cy * pct - size / 2) + "%";
+      var canMove = String(it.seat) === mySeatString() && moves.indexOf(it.idx) >= 0;
+      el.classList.toggle("movable", canMove);
+      el.style.zIndex = canMove ? 8 : 3;
+    });
+  }
+
+  function seatOld(s) { return String(s); }
+
+  function renderRoom() {
+    if (!room) return;
+    var modeCount = seatList(room.mode).length;
+    $("roomCode").textContent = String(roomId).slice(-6).toUpperCase();
+    $("roomMode").textContent = modeCount + " জন";
+    $("roomStatus").textContent = room.status === "waiting" ? "অপেক্ষা করছে" :
+      (room.status === "playing" ? "চলছে" : "শেষ");
+
+    var strip = $("seatStrip");
+    strip.textContent = "";
+    seatList(room.mode).forEach(function (s) {
+      var p = room.seats[s];
+      var chip = document.createElement("div");
+      chip.className = "seatChip" + (p ? "" : " empty") +
+        (room.status === "playing" && String(room.state.turn) === s ? " turn" : "");
+      chip.style.setProperty("--seat", SEATS[s].color);
+      var who = document.createElement("div");
+      who.className = "who";
+      var dot = document.createElement("span");
+      dot.className = "dot" + (p && p.online !== false ? " on" : "");
+      who.appendChild(dot);
+      var name = document.createElement("span");
+      name.textContent = p ? (p.name || "Player") : "খালি আসন";
+      who.appendChild(name);
+      chip.appendChild(who);
+      var sub = document.createElement("div");
+      sub.className = "sub";
+      if (p) {
+        var hc = (room.state.homeCount && room.state.homeCount[s]) || 0;
+        sub.textContent = SEATS[s].name + " · ঘরে " + hc + "/4" +
+          (room.hostUid === p.uid ? " · হোস্ট" : "") +
+          (p.uid === uid ? " · আপনি" : "");
+      } else {
+        sub.textContent = SEATS[s].name + " আসন";
+      }
+      chip.appendChild(sub);
+      if (!p && room.status === "waiting" && isHost()) {
+        var inviteBtn = document.createElement("button");
+        inviteBtn.type = "button";
+        inviteBtn.className = "inviteBtn";
+        inviteBtn.textContent = "+ কল দিন";
+        inviteBtn.addEventListener("click", function () { openInviteSearch(s); });
+        chip.appendChild(inviteBtn);
+      }
+      strip.appendChild(chip);
+    });
+
+    var startBox = $("startBox");
+    startBox.textContent = "";
+    if (room.status === "waiting") {
+      var filled = roomSeats(room).length;
+      var all = seatList(room.mode).length;
+      if (isHost()) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "btn primary";
+        b.textContent = filled === all ? "খেলা শুরু করুন" : "সব খেলোয়াড় এলে শুরু করুন (" + filled + "/" + all + ")";
+        b.disabled = filled !== all;
+        b.addEventListener("click", startGame);
+        startBox.appendChild(b);
+      } else {
+        var hint = document.createElement("div");
+        hint.className = "startHint";
+        hint.textContent = "হোস্ট খেলা শুরু করলে আপনি খেলতে পারবেন (" + filled + "/" + all + ")";
+        startBox.appendChild(hint);
+      }
+    }
+
+    $("dice").textContent = room.state.dice ? String(room.state.dice) : "–";
+    var turnText;
+    if (room.status === "ended") {
+      turnText = room.endedReason === "not_enough" ? "খেলা বন্ধ — খেলোয়াড় কমে গেছে" :
+        (room.winnerUid ? (seatName(room, room.winnerSeat) + " জিতেছে!") : "খেলা শেষ");
+    } else if (room.status === "waiting") {
+      turnText = "খেলোয়াড়দের অপেক্ষা…";
+    } else if (String(room.state.turn) === mySeatString()) {
+      turnText = room.state.rolled ? "আপনার চাল — টোকেন বেছে নিন" : "আপনার পালা — ডাইস রোল করুন";
+    } else {
+      turnText = seatName(room, room.state.turn) + "-এর পালা";
+    }
+    $("turnText").textContent = turnText;
+
+    var roll = $("btnRoll");
+    roll.disabled = !(room.status === "playing" && String(room.state.turn) === mySeatString() && !room.state.rolled);
+    var myMoves = (room.status === "playing" && String(room.state.turn) === mySeatString() && room.state.rolled)
+      ? legalMoves(room, mySeatString()) : [];
+    $("btnPass").classList.toggle("hidden", !(room.status === "playing" && String(room.state.turn) === mySeatString() && room.state.rolled && myMoves.length === 0));
+
+    $("eventTicker").textContent = room.state.lastEvent || "—";
+
+    renderTokens();
+    renderVideoTiles();
+    refreshMediaUi();
+
+    if (room.status === "ended") {
+      var key = String(roomId) + ":" + String(room.state.startedAt || room.createdAt || "");
+      if (key !== endModalKey) {
+        endModalKey = key;
+        var title = "খেলা শেষ";
+        var text;
+        if (room.endedReason === "not_enough") {
+          text = "পর্যাপ্ত খেলোয়াড় নেই — খেলা বন্ধ হয়েছে।";
+        } else if (room.winnerUid) {
+          text = seatName(room, room.winnerSeat) + " সব টোকেন ঘরে তুলে জিতেছে!";
+        } else {
+          text = "খেলা শেষ হয়েছে।";
+        }
+        var actions = [{ label: "লবি", cls: "ghost", onClick: function () { leaveRoom(); } }];
+        if (isHost()) {
+          actions.unshift({ label: "আবার খেলুন", cls: "primary", onClick: resetGame });
+        }
+        openModal(title, bodyText(text), actions, { dismissible: false });
+      }
+    }
+  }
+
+  /* ---------------- media / webrtc ---------------- */
+
+  function localSeatTile() {
+    return document.querySelector('.vtile[data-seat="' + mySeatString() + '"]');
+  }
+
+  function startMedia() {
+    if (rtcStarted) return;
+    rtcStarted = true;
+    mediaReady = false;
+    myRtcStart = Date.now();
+    closePeers();
+    refreshMediaUi();
+    var constraints = {
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 640 }, frameRate: { ideal: 20, max: 24 } }
+    };
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      mediaReady = true;
+      refreshMediaUi();
+      toast("এই ব্রাউজারে ক্যামেরা/মাইক সাপোর্ট নেই");
+      return;
+    }
+    navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+      localStream = stream;
+      micOn = true;
+      camOn = true;
+      mediaReady = true;
+      attachLocalStream();
+      refreshMediaUi();
+      syncPeers();
+      publishEpoch();
+    }).catch(function () {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        localStream = stream;
+        micOn = true;
+        camOn = false;
+        mediaReady = true;
+        attachLocalStream();
+        refreshMediaUi();
+        syncPeers();
+        publishEpoch();
+      }).catch(function () {
+        localStream = null;
+        mediaReady = true;
+        micOn = false;
+        camOn = false;
+        refreshMediaUi();
+        syncPeers();
+        publishEpoch();
+      });
+    });
+  }
+
+  function publishEpoch() {
+    if (roomId && db) {
+      db.ref("ludoRooms/" + roomId + "/rtcEpoch/" + uid).set(Date.now()).catch(function () {});
+    }
+  }
+
+  function attachLocalStream() {
+    var tile = localSeatTile();
+    if (!tile || !localStream) return;
+    var video = tile.querySelector("video");
+    video.muted = true;
+    if (video.srcObject !== localStream) video.srcObject = localStream;
+    var play = video.play();
+    if (play && play.catch) play.catch(function () {});
+    tile.classList.add("live");
+    tile.classList.toggle("videooff", !camOn);
+  }
+
+  function stopMedia() {
+    closePeers();
+    if (localStream) {
+      localStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+    }
+    localStream = null;
+    rtcStarted = false;
+    mediaReady = false;
+    micOn = false;
+    camOn = false;
+    ["0","1","2","3"].forEach(function (s) {
+      var tile = document.querySelector('.vtile[data-seat="' + s + '"]');
+      if (!tile) return;
+      var v = tile.querySelector("video");
+      if (v) v.srcObject = null;
+      tile.classList.remove("live");
+      tile.classList.remove("videooff");
+    });
+    refreshMediaUi();
+  }
+
+  function retryMedia() {
+    stopMedia();
+    startMedia();
+  }
+
+  function refreshMediaUi() {
+    var has = !!localStream;
+    var mic = $("btnMic");
+    var cam = $("btnCam");
+    if (mic) {
+      mic.textContent = has ? (micOn ? "মাইক চালু" : "মাইক বন্ধ") : "মাইক";
+      mic.classList.toggle("off", has && !micOn);
+      mic.classList.toggle("on", has && micOn);
+    }
+    if (cam) {
+      cam.textContent = has ? (camOn ? "ক্যামেরা চালু" : "ক্যামেরা বন্ধ") : "ক্যামেরা";
+      cam.classList.toggle("off", has && !camOn);
+      cam.classList.toggle("on", has && camOn);
+    }
+    var notice = $("mediaNotice");
+    if (notice) {
+      var show = mediaReady && !localStream;
+      notice.classList.toggle("hidden", !show);
+    }
+  }
+
+  function toggleMic() {
+    if (!localStream) { retryMedia(); return; }
+    micOn = !micOn;
+    localStream.getAudioTracks().forEach(function (t) { t.enabled = micOn; });
+    refreshMediaUi();
+  }
+
+  function toggleCam() {
+    if (!localStream) { retryMedia(); return; }
+    if (!localStream.getVideoTracks().length) { toast("ক্যামেরা পাওয়া যায়নি"); return; }
+    camOn = !camOn;
+    localStream.getVideoTracks().forEach(function (t) { t.enabled = camOn; });
+    var tile = localSeatTile();
+    if (tile) tile.classList.toggle("videooff", !camOn);
+    refreshMediaUi();
+  }
+
+  function syncPeers() {
+    if (!room || !mediaReady || !roomId) return;
+    var others = roomSeats(room).filter(function (s) {
+      return room.seats[s] && room.seats[s].uid !== uid;
+    }).map(function (s) { return room.seats[s].uid; });
+    others.forEach(function (p) { ensurePeer(p); });
+    Array.from(peers.keys()).forEach(function (p) {
+      if (others.indexOf(p) < 0) closePeer(p);
+    });
+    renderVideoTiles();
+  }
+
+  function ensurePeer(peerUid) {
+    if (!peerUid || peerUid === uid || !roomId || !mediaReady || peers.has(peerUid)) return;
+    var pair = pairKey(uid, peerUid);
+    var base = "ludoRooms/" + roomId + "/rtc/" + pair;
+    var pc;
+    try { pc = new RTCPeerConnection(ICE); } catch (e) { return; }
+    var entry = {
+      pc: pc, peerUid: peerUid, pair: pair, base: base,
+      pendingIce: [], refs: [], createdAt: Date.now(), offerAt: 0
+    };
+    peers.set(peerUid, entry);
+    if (localStream) {
+      localStream.getTracks().forEach(function (t) {
+        try { pc.addTrack(t, localStream); } catch (e) {}
+      });
+    } else {
+      try {
+        pc.addTransceiver("audio", { direction: "recvonly" });
+        pc.addTransceiver("video", { direction: "recvonly" });
+      } catch (e) {}
+    }
+    pc.ontrack = function (ev) {
+      if (ev.streams && ev.streams[0]) attachRemote(peerUid, ev.streams[0]);
+    };
+    pc.onicecandidate = function (ev) {
+      if (ev.candidate && db) {
+        db.ref(base + "/ice/" + uid).push(ev.candidate.toJSON()).catch(function () {});
+      }
+    };
+    pc.onconnectionstatechange = function () {
+      if (pc.connectionState === "failed") {
+        try { pc.restartIce(); } catch (e) {}
+      }
+    };
+
+    var offerRef = db.ref(base + "/offer");
+    var answerRef = db.ref(base + "/answer");
+    var iceRef = db.ref(base + "/ice/" + peerUid);
+    var addIce = function (c) {
+      if (!c) return;
+      if (pc.remoteDescription && pc.remoteDescription.type) {
+        pc.addIceCandidate(c).catch(function () {});
+      } else {
+        entry.pendingIce.push(c);
+      }
+    };
+    var flushIce = function () {
+      entry.pendingIce.splice(0).forEach(function (c) {
+        pc.addIceCandidate(c).catch(function () {});
+      });
+    };
+    var iceCb = iceRef.on("child_added", function (snap) { addIce(snap.val()); });
+    entry.refs.push({ ref: iceRef, type: "child_added", cb: iceCb });
+
+    if (uid < peerUid) {
+      pc.createOffer().then(function (offer) {
+        return pc.setLocalDescription(offer);
+      }).then(function () {
+        entry.offerAt = Date.now();
+        return offerRef.set({
+          sdp: pc.localDescription.sdp,
+          type: pc.localDescription.type,
+          from: uid,
+          at: entry.offerAt
+        });
+      }).then(function () {
+        var ansCb = answerRef.on("value", function (snap) {
+          var v = snap.val();
+          if (!v || !v.sdp) return;
+          if (v.at && v.at < entry.offerAt) return;
+          if (pc.signalingState !== "have-local-offer") return;
+          pc.setRemoteDescription({ type: "answer", sdp: v.sdp }).then(flushIce).catch(function () {});
+        });
+        entry.refs.push({ ref: answerRef, type: "value", cb: ansCb });
+      }).catch(function () {});
+    } else {
+      var offCb = offerRef.on("value", function (snap) {
+        var v = snap.val();
+        if (!v || !v.sdp) return;
+        if (v.at && v.at < myRtcStart) return;
+        if (pc.remoteDescription) return;
+        pc.setRemoteDescription({ type: v.type || "offer", sdp: v.sdp }).then(function () {
+          return pc.createAnswer();
+        }).then(function (ans) {
+          return pc.setLocalDescription(ans);
+        }).then(function () {
+          flushIce();
+          return answerRef.set({
+            sdp: pc.localDescription.sdp,
+            type: pc.localDescription.type,
+            from: uid,
+            at: Date.now()
+          });
+        }).catch(function () {});
+      });
+      entry.refs.push({ ref: offerRef, type: "value", cb: offCb });
+    }
+  }
+
+  function attachRemote(peerUid, stream) {
+    if (!room) return;
+    var seat = roomSeats(room).filter(function (s) {
+      return room.seats[s].uid === peerUid;
+    })[0];
+    if (seat === undefined) return;
+    var tile = document.querySelector('.vtile[data-seat="' + seat + '"]');
+    if (!tile) return;
+    var video = tile.querySelector("video");
+    video.muted = false;
+    if (video.srcObject !== stream) video.srcObject = stream;
+    var play = video.play();
+    if (play && play.catch) play.catch(function () {});
+    if (stream.getVideoTracks().length) {
+      tile.classList.add("live");
+      tile.classList.remove("videooff");
+    }
+  }
+
+  function closePeer(peerUid) {
+    var entry = peers.get(peerUid);
+    if (!entry) return;
+    entry.refs.forEach(function (r) {
+      try { r.ref.off(r.type, r.cb); } catch (e) {}
+    });
+    try { entry.pc.close(); } catch (e) {}
+    peers.delete(peerUid);
+    if (room) {
+      var seat = roomSeats(room).filter(function (s) {
+        return room.seats[s].uid === peerUid;
+      })[0];
+      if (seat !== undefined) {
+        var tile = document.querySelector('.vtile[data-seat="' + seat + '"]');
+        if (tile) {
+          var v = tile.querySelector("video");
+          if (v) v.srcObject = null;
+          tile.classList.remove("live");
+        }
+      }
+    }
+  }
+
+  function closePeers() {
+    Array.from(peers.keys()).forEach(function (p) { closePeer(p); });
+  }
+
+  function renderVideoTiles() {
+    if (!room) return;
+    var all = ["0","1","2","3"];
+    all.forEach(function (s) {
+      var tile = document.querySelector('.vtile[data-seat="' + s + '"]');
+      if (!tile) return;
+      var p = room.seats[s];
+      var active = seatList(room.mode).indexOf(s) >= 0;
+      tile.classList.toggle("hidden", !active || !p);
+      if (!p) return;
+      tile.style.setProperty("--seat", SEATS[s].color);
+      var name = tile.querySelector(".vname");
+      if (name) name.textContent = p.name || "Player";
+      var ph = tile.querySelector(".vph");
+      if (ph) ph.textContent = String(p.name || "P").trim().charAt(0).toUpperCase() || "P";
+      var badge = tile.querySelector(".vbadge");
+      if (badge) badge.textContent = SEATS[s].name;
+      if (p.uid === uid) {
+        var v = tile.querySelector("video");
+        if (localStream) {
+          v.muted = true;
+          if (v.srcObject !== localStream) v.srcObject = localStream;
+          var play = v.play();
+          if (play && play.catch) play.catch(function () {});
+          tile.classList.add("live");
+          tile.classList.toggle("videooff", !camOn);
+        } else {
+          v.srcObject = null;
+          tile.classList.remove("live");
+        }
+      }
+    });
+  }
+
+  /* ---------------- invites ---------------- */
+
+  function openInviteSearch(seat) {
+    if (!room || room.status !== "waiting" || !isHost()) return;
+    var body = document.createElement("div");
+    var input = document.createElement("input");
+    input.className = "modalInput";
+    input.type = "text";
+    input.placeholder = "নাম বা @username লিখুন";
+    input.autocomplete = "off";
+    var status = document.createElement("div");
+    status.className = "emptyText";
+    status.textContent = "লোড হচ্ছে…";
+    var list = document.createElement("div");
+    list.className = "userList";
+    body.appendChild(input);
+    body.appendChild(status);
+    body.appendChild(list);
+
+    var existing = {};
+    roomSeats(room).forEach(function (s) { existing[room.seats[s].uid] = true; });
+
+    function renderResults(items) {
+      list.textContent = "";
+      status.textContent = items.length ? "" : "কাউকে পাওয়া যায়নি";
+      status.classList.toggle("hidden", items.length > 0);
+      items.slice(0, 60).forEach(function (u) {
+        if (u.uid === uid || existing[u.uid]) return;
+        var row = document.createElement("div");
+        row.className = "userRow";
+        var av = document.createElement("div");
+        av.className = "uAvatar";
+        av.textContent = String(u.name || "P").charAt(0).toUpperCase();
+        var info = document.createElement("div");
+        info.className = "uInfo";
+        var strong = document.createElement("strong");
+        strong.textContent = u.name;
+        var span = document.createElement("span");
+        span.textContent = u.username ? "@" + u.username : u.uid;
+        info.appendChild(strong);
+        info.appendChild(span);
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn small primary";
+        btn.textContent = "কল দিন";
+        btn.addEventListener("click", function () { sendInvite(seat, u); });
+        row.appendChild(av);
+        row.appendChild(info);
+        row.appendChild(btn);
+        list.appendChild(row);
+      });
+    }
+
+    openModal("খেলোয়াড় কল করুন", body, [{ label: "বন্ধ", cls: "ghost" }]);
+
+    loadDirectory().then(function (items) {
+      status.textContent = "";
+      status.classList.add("hidden");
+      renderResults(items);
+      input.addEventListener("input", function () {
+        var q = input.value.trim().toLowerCase();
+        if (!q) { renderResults(items); return; }
+        var filtered = items.filter(function (u) {
+          return u.name.toLowerCase().indexOf(q) >= 0 ||
+            (u.username && u.username.toLowerCase().indexOf(q) >= 0) ||
+            u.uid.toLowerCase() === q;
+        });
+        renderResults(filtered);
+        if (q.replace(/^@/, "").length >= 3) {
+          lookupUsername(q.replace(/^@/, "")).then(function (u) {
+            if (u && filtered.every(function (x) { return x.uid !== u.uid; })) {
+              renderResults([u].concat(filtered));
+            }
+          });
+        }
+      });
+    }).catch(function () {
+      status.classList.remove("hidden");
+      status.textContent = "ইউজার লিস্ট লোড হয়নি";
+    });
+  }
+
+  var directoryCache = null;
+  var directoryAt = 0;
+
+  function loadDirectory() {
+    if (directoryCache && Date.now() - directoryAt < 60000) {
+      return Promise.resolve(directoryCache);
+    }
+    return db.ref("users").orderByKey().limitToLast(500).once("value").then(function (snap) {
+      var items = [];
+      snap.forEach(function (child) {
+        var v = child.val() || {};
+        var name = (v.name || v.fullName || v.username || "").toString().trim();
+        if (!name) return;
+        items.push({ uid: child.key, name: name, username: v.username || "" });
+      });
+      items.sort(function (a, b) { return a.name.localeCompare(b.name); });
+      directoryCache = items;
+      directoryAt = Date.now();
+      return items;
+    });
+  }
+
+  function lookupUsername(username) {
+    if (!username) return Promise.resolve(null);
+    return db.ref("usernames/" + username).once("value").then(function (snap) {
+      var value = snap.val();
+      var id = value && typeof value === "object" ? (value.uid || value.userId || "") : value;
+      if (!id) return null;
+      return db.ref("users/" + id).once("value").then(function (u) {
+        var v = u.val() || {};
+        return {
+          uid: String(id),
+          name: (v.name || v.fullName || v.username || username).toString(),
+          username: v.username || username
+        };
+      });
+    }).catch(function () { return null; });
+  }
+
+  function sendInvite(seat, target) {
+    if (!room || !roomId || room.status !== "waiting") return;
+    if (!target || target.uid === uid) return;
+    db.ref("ludoInvites/" + target.uid + "/" + roomId).set({
+      roomId: roomId,
+      seat: seat,
+      mode: Number(room.mode) || 4,
+      fromUid: uid,
+      fromName: myName,
+      at: Date.now()
+    }).then(function () {
+      toast("কল পাঠানো হয়েছে: " + target.name);
+      closeModal();
+    }).catch(function () {
+      toast("কল পাঠানো যায়নি");
+    });
+  }
+
+  /* ---------------- gifts ---------------- */
+
+  function giftById(id) {
+    for (var i = 0; i < GIFTS.length; i++) {
+      if (GIFTS[i].id === id) return GIFTS[i];
+    }
+    return GIFTS[0];
+  }
+
+  function openGiftSheet() {
+    if (!room || !roomId) return;
+    var grid = document.createElement("div");
+    grid.className = "giftGrid";
+    GIFTS.forEach(function (g) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "giftPick";
+      b.style.background = "linear-gradient(145deg, " + g.color + ", #0b3b31)";
+      b.innerHTML = '<svg viewBox="0 0 24 24">' + g.svg + "</svg>";
+      var span = document.createElement("span");
+      span.textContent = g.label;
+      b.appendChild(span);
+      b.addEventListener("click", function () {
+        closeModal();
+        sendGift(g);
+      });
+      grid.appendChild(b);
+    });
+    openModal("গিফট পাঠান", grid, [{ label: "বন্ধ", cls: "ghost" }]);
+  }
+
+  function sendGift(g) {
+    if (!roomId || !db) return;
+    db.ref("ludoRooms/" + roomId + "/gifts").push({
+      fromUid: uid,
+      fromName: myName,
+      giftId: g.id,
+      giftName: g.label,
+      at: Date.now()
+    }).catch(function () {});
+  }
+
+  function showGift(g) {
+    var gift = giftById(g.giftId);
+    var layer = $("giftLayer");
+    if (!layer) return;
+    var fly = document.createElement("div");
+    fly.className = "giftFly";
+    var icon = document.createElement("div");
+    icon.className = "gIcon";
+    icon.style.background = gift.color;
+    icon.innerHTML = '<svg viewBox="0 0 24 24">' + gift.svg + "</svg>";
+    var text = document.createElement("span");
+    text.textContent = (g.fromName || "Player") + " → " + (g.giftName || gift.label);
+    fly.appendChild(icon);
+    fly.appendChild(text);
+    layer.appendChild(fly);
+    setTimeout(function () { if (fly.parentNode) fly.parentNode.removeChild(fly); }, 3300);
+  }
+
+  /* ---------------- boot ---------------- */
+
+  boot();
+})();
+</script>
+</body>
+</html>
