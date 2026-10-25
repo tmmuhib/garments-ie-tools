@@ -12,12 +12,10 @@
     --accent: #25D366;
     --accent-dark: #128C4A;
     --bg: #eef2f0;
-    --card: #ffffff;
     --ink: #15211d;
     --muted: #61716b;
-    --line: #e2e8e5;
-    --amber: #FFB300;
-    --shadow: 0 4px 14px rgba(7, 94, 84, .10);
+    --gold: #FFD54F;
+    --shadow: 0 6px 18px rgba(7, 94, 84, .14);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
@@ -26,7 +24,7 @@
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Bengali", sans-serif;
     background: var(--bg);
     color: var(--ink);
-    padding-bottom: 28px;
+    padding-bottom: 26px;
   }
   button, input { font-family: inherit; }
 
@@ -35,19 +33,15 @@
     top: 0;
     z-index: 20;
     background: linear-gradient(135deg, var(--green), var(--green2));
-    padding: 14px 14px 12px;
+    padding: 13px 14px 11px;
     box-shadow: 0 6px 18px rgba(7, 94, 84, .22);
   }
-  .hero-inner {
-    width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
-  }
+  .hero-inner { width: 100%; max-width: 960px; margin: 0 auto; }
   .brand { display: flex; align-items: center; gap: 11px; }
   .logo {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
     border-radius: 13px;
     background: rgba(255, 255, 255, .16);
     border: 1px solid rgba(255, 255, 255, .28);
@@ -55,7 +49,7 @@
     align-items: center;
     justify-content: center;
   }
-  .logo svg { width: 25px; height: 25px; fill: #ffffff; }
+  .logo svg { width: 24px; height: 24px; fill: #ffffff; }
   .brand h1 {
     margin: 0;
     font-size: 20px;
@@ -66,13 +60,9 @@
   .brand p {
     margin: 2px 0 0;
     font-size: 11px;
-    color: rgba(255, 255, 255, .78);
+    color: rgba(255, 255, 255, .8);
   }
-  .tools {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-  }
+  .tools { display: flex; gap: 8px; margin-top: 11px; }
   .searchWrap {
     flex: 1;
     display: flex;
@@ -98,29 +88,18 @@
     width: 42px;
     height: 42px;
     flex: 0 0 42px;
-    border: 0;
+    border: 1px solid rgba(255, 255, 255, .30);
     border-radius: 11px;
     background: rgba(255, 255, 255, .17);
-    border: 1px solid rgba(255, 255, 255, .30);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
   }
-  .refresh svg {
-    width: 20px;
-    height: 20px;
-    fill: #ffffff;
-    transition: transform .4s ease;
-  }
+  .refresh svg { width: 20px; height: 20px; fill: #ffffff; transition: transform .4s ease; }
   .refresh.spin svg { transform: rotate(360deg); }
 
-  .wrap {
-    width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 12px 12px 0;
-  }
+  .wrap { width: 100%; max-width: 960px; margin: 0 auto; padding: 12px 12px 0; }
   .meta {
     display: flex;
     align-items: center;
@@ -144,93 +123,129 @@
     padding: 3px 9px;
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
   @media (min-width: 840px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
   .card {
-    background: var(--card);
+    position: relative;
+    height: 190px;
     border-radius: 14px;
     overflow: hidden;
+    background: #dfe7e3;
     box-shadow: var(--shadow);
-    display: flex;
-    flex-direction: column;
     cursor: pointer;
-    transition: transform .14s ease, box-shadow .14s ease;
-    border: 1px solid rgba(7, 94, 84, .05);
+    transition: transform .14s ease;
   }
+  @media (min-width: 560px) { .card { height: 212px; } }
   .card:active { transform: scale(.975); }
-  .thumb {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    background: #e7ece9;
+
+  .pic {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
   }
-  .thumb .letter {
-    font-size: 46px;
+  .letter {
+    font-size: 52px;
     font-weight: 800;
-    color: #ffffff;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, .13);
+    color: rgba(255, 255, 255, .92);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .18);
     user-select: none;
   }
-  .thumb img {
+  .pic img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    background: #ffffff;
+    opacity: 0;
+    transition: opacity .25s ease;
+    background: #dfe7e3;
+  }
+  .pic.has-img img { opacity: 1; cursor: zoom-in; }
+  .pic .favicon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 54px;
+    height: 54px;
+    transform: translate(-50%, -62%);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, .94);
+    padding: 7px;
+    object-fit: contain;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
     opacity: 0;
     transition: opacity .25s ease;
   }
-  .thumb.has-img img { opacity: 1; }
-  .body {
+  .pic.has-badge .favicon { opacity: 1; }
+  .pic.has-badge .letter { opacity: 0; }
+
+  .shade {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to top,
+      rgba(0, 0, 0, .94) 0%,
+      rgba(0, 0, 0, .62) 34%,
+      rgba(0, 0, 0, .06) 68%,
+      rgba(0, 0, 0, 0) 100%);
+  }
+
+  .info {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
     padding: 9px 10px 10px;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
   }
   .name {
     margin: 0;
     font-size: 13px;
-    line-height: 1.3;
-    font-weight: 700;
-    color: var(--ink);
+    line-height: 1.25;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 34px;
+    max-height: 33px;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 6px;
   }
   .rate {
-    margin-top: 5px;
-    font-size: 15px;
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
     font-weight: 800;
-    color: var(--accent-dark);
+    color: var(--gold);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .rate.link-only { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: .3px; }
+  .rate.link-only { font-size: 10.5px; letter-spacing: .5px; color: #d9e7e1; }
   .buy {
-    margin-top: 8px;
-    width: 100%;
+    flex: 0 0 auto;
     border: 0;
-    border-radius: 9px;
-    background: var(--accent);
+    border-radius: 20px;
     color: #ffffff;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 800;
-    padding: 9px 6px;
-    cursor: pointer;
     letter-spacing: .2px;
+    padding: 7px 16px;
+    min-width: 62px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .35);
   }
-  .buy:active { background: var(--accent-dark); }
+  .buy:active { filter: brightness(.92); }
 
   .state {
     padding: 48px 20px;
@@ -266,6 +281,39 @@
   }
   [hidden] { display: none !important; }
 
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, .96);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    cursor: zoom-out;
+  }
+  .lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .6);
+  }
+  .lb-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .16);
+    color: #ffffff;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
   .foot {
     max-width: 960px;
     margin: 18px auto 0;
@@ -288,7 +336,7 @@
       </div>
       <div>
         <h1>TM247 Shop</h1>
-        <p>Products added by admin — tap to buy</p>
+        <p>Tap the picture to enlarge · tap Buy to order</p>
       </div>
     </div>
     <div class="tools">
@@ -332,7 +380,12 @@
 
 <div class="foot">
   Products are managed from <strong>TM247 Control Panel → Shop</strong>.<br />
-  Thumbnails are generated automatically from each product link.
+  Add a picture link there to show a full product picture on each card.
+</div>
+
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lb-close" id="lightboxClose" type="button" aria-label="Close">&times;</button>
+  <img id="lightboxImg" alt="Product picture" />
 </div>
 
 <script>
@@ -341,7 +394,17 @@
 
   var DB = "https://easylife-e96f6-default-rtdb.firebaseio.com";
   var REFRESH_MS = 60000;
-  var palette = ["#00897B", "#3949AB", "#D81B60", "#F4511E", "#6D4C41", "#546E7A"];
+  var FALLBACK_COLORS = ["#00897B", "#3949AB", "#D81B60", "#F4511E", "#6D4C41", "#546E7A"];
+  var GRADIENTS = [
+    ["#F12711", "#F5AF19"],
+    ["#8E2DE2", "#4A00E0"],
+    ["#11998E", "#38EF7D"],
+    ["#FC466B", "#3F5EFB"],
+    ["#00B4DB", "#0083B0"],
+    ["#EE0979", "#FF6A00"],
+    ["#C33764", "#1D2671"],
+    ["#43CEA2", "#185A9D"]
+  ];
 
   var grid = document.getElementById("grid");
   var search = document.getElementById("search");
@@ -351,6 +414,9 @@
   var errorEl = document.getElementById("error");
   var refreshBtn = document.getElementById("refresh");
   var retryBtn = document.getElementById("retry");
+  var lightbox = document.getElementById("lightbox");
+  var lightboxImg = document.getElementById("lightboxImg");
+  var lightboxClose = document.getElementById("lightboxClose");
 
   var allItems = [];
   var firstLoad = true;
@@ -372,11 +438,14 @@
   function hostOf(raw) {
     var link = safeLink(raw);
     if (!link) return "";
-    try {
-      return new URL(link).hostname;
-    } catch (e) {
-      return "";
-    }
+    try { return new URL(link).hostname; } catch (e) { return ""; }
+  }
+
+  function hashOf(text) {
+    var hash = 0;
+    var value = String(text || "");
+    for (var i = 0; i < value.length; i++) hash = ((hash * 31) + value.charCodeAt(i)) | 0;
+    return Math.abs(hash);
   }
 
   function formatRate(raw) {
@@ -398,34 +467,21 @@
     return match ? decodeURIComponent(match[1]) : "";
   }
 
-  function thumbFor(item) {
-    var wrap = document.createElement("div");
-    wrap.className = "thumb";
-    var name = String(item.name || "S").trim();
-    var letter = document.createElement("span");
-    letter.className = "letter";
-    letter.textContent = (name.charAt(0) || "S").toUpperCase();
-    var hash = 0;
-    for (var i = 0; i < name.length; i++) hash = ((hash * 31) + name.charCodeAt(i)) | 0;
-    wrap.style.background = palette[Math.abs(hash) % palette.length];
-    wrap.appendChild(letter);
+  function pictureUrl(item) {
+    return safeLink(item.image);
+  }
 
-    var host = hostOf(item.link);
-    if (host) {
-      var img = new Image();
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.alt = "";
-      img.onload = function () {
-        if (img.naturalWidth >= 16) wrap.classList.add("has-img");
-      };
-      img.onerror = function () {
-        if (img.parentNode) img.parentNode.removeChild(img);
-      };
-      img.src = "https://www.google.com/s2/favicons?sz=128&domain=" + encodeURIComponent(host);
-      wrap.appendChild(img);
-    }
-    return wrap;
+  function openLightbox(src) {
+    if (!src) return;
+    lightboxImg.src = src;
+    lightbox.hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    lightbox.hidden = true;
+    lightboxImg.removeAttribute("src");
+    document.body.style.overflow = "";
   }
 
   function openItem(item) {
@@ -438,21 +494,76 @@
   }
 
   function makeCard(item) {
+    var seed = hashOf(item.name || item.id);
+    var colors = GRADIENTS[seed % GRADIENTS.length];
+
     var card = document.createElement("article");
     card.className = "card";
 
-    var thumb = thumbFor(item);
-    card.appendChild(thumb);
+    var pic = document.createElement("div");
+    pic.className = "pic";
+    pic.style.background = "linear-gradient(135deg, " + colors[0] + ", " + colors[1] + ")";
 
-    var body = document.createElement("div");
-    body.className = "body";
+    var letter = document.createElement("span");
+    letter.className = "letter";
+    var name = String(item.name || "S").trim();
+    letter.textContent = (name.charAt(0) || "S").toUpperCase();
+    pic.appendChild(letter);
 
-    var name = document.createElement("h3");
-    name.className = "name";
-    name.textContent = item.name || "Shop item";
-    body.appendChild(name);
+    var src = pictureUrl(item);
+    var img = null;
+    if (src) {
+      img = new Image();
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.alt = "";
+      img.onload = function () {
+        if (img.naturalWidth >= 16) pic.classList.add("has-img");
+        else if (img.parentNode) img.parentNode.removeChild(img);
+      };
+      img.onerror = function () {
+        if (img.parentNode) img.parentNode.removeChild(img);
+      };
+      img.src = src;
+      pic.appendChild(img);
+    } else {
+      var host = hostOf(item.link);
+      if (host) {
+        var icon = new Image();
+        icon.className = "favicon";
+        icon.loading = "lazy";
+        icon.decoding = "async";
+        icon.alt = "";
+        icon.onload = function () {
+          if (icon.naturalWidth >= 8) pic.classList.add("has-badge");
+          else if (icon.parentNode) icon.parentNode.removeChild(icon);
+        };
+        icon.onerror = function () {
+          if (icon.parentNode) icon.parentNode.removeChild(icon);
+        };
+        icon.src = "https://www.google.com/s2/favicons?sz=128&domain=" +
+          encodeURIComponent(host);
+        pic.appendChild(icon);
+      }
+    }
+    card.appendChild(pic);
 
-    var rate = document.createElement("div");
+    var shade = document.createElement("div");
+    shade.className = "shade";
+    card.appendChild(shade);
+
+    var info = document.createElement("div");
+    info.className = "info";
+
+    var title = document.createElement("h3");
+    title.className = "name";
+    title.textContent = item.name || "Shop item";
+    info.appendChild(title);
+
+    var row = document.createElement("div");
+    row.className = "row";
+
+    var rate = document.createElement("span");
     rate.className = "rate";
     var rateText = formatRate(item.rate);
     if (item.product) {
@@ -461,15 +572,28 @@
       rate.textContent = "SHOP LINK";
       rate.className += " link-only";
     }
-    body.appendChild(rate);
+    row.appendChild(rate);
 
     var button = document.createElement("button");
     button.type = "button";
     button.className = "buy";
-    button.textContent = item.product ? "Buy now" : "Open";
-    body.appendChild(button);
+    button.textContent = "Buy";
+    button.style.background = "linear-gradient(135deg, " + colors[0] + ", " + colors[1] + ")";
+    button.addEventListener("click", function (event) {
+      event.stopPropagation();
+      openItem(item);
+    });
+    row.appendChild(button);
 
-    card.appendChild(body);
+    info.appendChild(row);
+    card.appendChild(info);
+
+    if (img) {
+      img.addEventListener("click", function (event) {
+        event.stopPropagation();
+        if (pic.classList.contains("has-img")) openLightbox(img.src);
+      });
+    }
     card.addEventListener("click", function () { openItem(item); });
     return card;
   }
@@ -523,6 +647,7 @@
         name: String(value.name || ""),
         rate: String(value.rate || ""),
         link: String(value.link || value.fileLink || value.githubLink || ""),
+        image: String(value.image || ""),
         createdAt: Number(value.createdAt || 0),
         product: value.product !== false
       };
@@ -588,6 +713,13 @@
   search.addEventListener("input", render);
   refreshBtn.addEventListener("click", function () { load(true); });
   retryBtn.addEventListener("click", function () { load(true); });
+  lightboxClose.addEventListener("click", closeLightbox);
+  lightbox.addEventListener("click", function (event) {
+    if (event.target === lightbox) closeLightbox();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !lightbox.hidden) closeLightbox();
+  });
 
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden) load(false);
