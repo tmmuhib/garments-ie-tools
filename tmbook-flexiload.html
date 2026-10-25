@@ -89,13 +89,13 @@
     margin-top: 10px;
   }
   .balance-box .amount { font-size: 22px; font-weight: 800; color: var(--primary); }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .chip {
-    padding: 8px 14px;
+    padding: 5px 10px;
     border-radius: 999px;
     border: 1px solid var(--border);
     background: #fff;
-    font-size: 13px;
+    font-size: 11.5px;
     font-weight: 700;
     color: var(--muted);
     cursor: pointer;
@@ -220,7 +220,6 @@
 <div class="top">
   <div class="wrap" style="padding-bottom:0">
     <h1>TM Book Flexiload</h1>
-    <p>GP · BL · AIRTEL · ROBI · SKITTO — প্যাকেজ সিলেক্ট করে রিচার্জ করুন</p>
   </div>
 </div>
 
@@ -229,7 +228,7 @@
   <!-- Account (auto from TM Book app) -->
   <div class="card" id="accountCard">
     <h2>১. আপনার অ্যাকাউন্ট</h2>
-    <div id="accountInfo" class="hidden">
+    <div id="accountInfo">
       <div class="row">
         <div>
           <div class="account-name" id="accountName">—</div>
@@ -250,17 +249,33 @@
     <div class="status err" id="accountError"></div>
   </div>
 
-  <!-- Deposit help -->
-  <div class="card deposit" id="depositPanel">
-    <h3>ব্যালেন্স যথেষ্ট নয়</h3>
-    <div class="muted">একাউন্টে পর্যাপ্ত ব্যালেন্স নেই। আগে ডিপোজিট করুন, তারপর আবার চেষ্টা করুন।</div>
-    <ol>
-      <li>TM Book অ্যাপ খুলুন</li>
-      <li>হোম স্ক্রিনে <b>Deposit</b> এ যান</li>
-      <li>মেথড সিলেক্ট করে টাকা পাঠিয়ে ট্রানজেকশন আইডি দিন</li>
-      <li>অ্যাডমিন অ্যাপ্রুভ করলে ব্যালেন্স যোগ হবে</li>
-      <li>এরপর এই পেজে ফিরে আবার কিনুন</li>
-    </ol>
+  <!-- Balance help popup -->
+  <div class="modal" id="depositModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>ব্যালেন্স যথেষ্ট নয়</h2>
+        <button type="button" class="modal-close" id="depositClose">বন্ধ</button>
+      </div>
+      <div class="muted">একাউন্টে পর্যাপ্ত ব্যালেন্স নেই। আগে ডিপোজিট করুন, তারপর আবার চেষ্টা করুন।</div>
+      <ol>
+        <li>TM Book অ্যাপ খুলুন</li>
+        <li>হোম স্ক্রিনে <b>Deposit</b> এ যান</li>
+        <li>মেথড সিলেক্ট করে টাকা পাঠিয়ে ট্রানজেকশন আইডি দিন</li>
+        <li>অ্যাডমিন অ্যাপ্রুভ করলে ব্যালেন্স যোগ হবে</li>
+        <li>এরপর এই পেজে ফিরে আবার কিনুন</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- App-open notice popup -->
+  <div class="modal" id="noticeModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="noticeTitle">TM Book অ্যাপ</h2>
+        <button type="button" class="modal-close" id="noticeClose">বন্ধ</button>
+      </div>
+      <div class="muted" id="noticeText"></div>
+    </div>
   </div>
 
   <!-- Packages -->
@@ -355,6 +370,8 @@
   var balanceListener = null;
   var requestsRef = null;
   var requestsListener = null;
+  var requestRefs = {};
+  var requestListeners = {};
   var txRef = null;
   var txListener = null;
   var transactions = [];
@@ -563,6 +580,9 @@
   function initAccountFromUrl() {
     var uidParam = (queryParam("uid") || "").trim();
     var usernameParam = normalizeUsername(queryParam("username"));
+    if (usernameParam) {
+      $("accountUser").textContent = "@" + usernameParam;
+    }
     if (uidParam) {
       loadAccountById(uidParam, usernameParam);
       return;
@@ -571,9 +591,7 @@
       loadAccountByUsername(usernameParam);
       return;
     }
-    setStatus(
-      $("accountError"),
-      "err",
+    showNotice(
       "এই পেজটি TM Book অ্যাপ থেকে খুলুন। হোম স্ক্রিনে Flexiload বাটনে ক্লিক করলেই আপনার অ্যাকাউন্ট অটোমেটিক লোড হবে।"
     );
   }
@@ -598,17 +616,29 @@
 
   /* ---------- Submit ---------- */
   function showDeposit() {
-    $("depositPanel").style.display = "block";
-    $("depositPanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    $("depositModal").classList.add("show");
+  }
+
+  function closeDeposit() {
+    $("depositModal").classList.remove("show");
+  }
+
+  function showNotice(text, title) {
+    $("noticeTitle").textContent = title || "TM Book অ্যাপ";
+    $("noticeText").textContent = text;
+    $("noticeModal").classList.add("show");
+  }
+
+  function closeNotice() {
+    $("noticeModal").classList.remove("show");
   }
 
   function submitRequest() {
     if (state.submitting) return;
     setStatus($("submitStatus"), "", "");
-    $("depositPanel").style.display = "none";
 
     if (!state.uid) {
-      setStatus($("submitStatus"), "err", "TM Book অ্যাপ থেকে পেজটি খুলুন — অ্যাকাউন্ট অটোমেটিক লোড হবে।");
+      showNotice("TM Book অ্যাপ থেকে পেজটি খুলুন — অ্যাকাউন্ট অটোমেটিক লোড হবে।");
       return;
     }
     var pkg = checkoutPackage;
@@ -628,7 +658,6 @@
       return;
     }
     if (state.balance + 0.0001 < amount) {
-      setStatus($("submitStatus"), "err", "ব্যালেন্স যথেষ্ট নয়। আগে ডিপোজিট করুন।");
       closeCheckout();
       showDeposit();
       return;
@@ -681,6 +710,7 @@
     var updates = {};
     updates["flexiloadRequests/" + requestId] = request;
     updates["transactions/" + state.uid + "/" + txId] = transaction;
+    updates["userFlexiload/" + state.uid + "/" + requestId] = true;
 
     db.ref().update(updates).then(function () {
       state.submitting = false;
@@ -703,13 +733,36 @@
   function attachRequests() {
     detachRequests();
     if (!state.uid) return;
-    requestsRef = db.ref("flexiloadRequests").orderByChild("uid").equalTo(state.uid);
+    requestsRef = db.ref("userFlexiload/" + state.uid);
     requestsListener = requestsRef.on("value", function (snapshot) {
-      var map = {};
+      var keys = [];
       snapshot.forEach(function (child) {
-        map[child.key] = child.val() || {};
+        if (child.key) keys.push(child.key);
       });
-      state.requestsById = map;
+      keys = keys.slice(-100);
+      Object.keys(requestRefs).forEach(function (id) {
+        if (keys.indexOf(id) === -1) {
+          requestRefs[id].off("value", requestListeners[id]);
+          delete requestRefs[id];
+          delete requestListeners[id];
+          delete state.requestsById[id];
+        }
+      });
+      keys.forEach(function (id) {
+        if (requestRefs[id]) return;
+        var ref = db.ref("flexiloadRequests/" + id);
+        var listener = ref.on("value", function (requestSnap) {
+          var value = requestSnap.val();
+          if (value) {
+            state.requestsById[id] = value;
+          } else {
+            delete state.requestsById[id];
+          }
+          renderTransactions();
+        }, function () {});
+        requestRefs[id] = ref;
+        requestListeners[id] = listener;
+      });
       renderTransactions();
     }, function () {});
   }
@@ -718,6 +771,11 @@
     if (requestsRef && requestsListener) requestsRef.off("value", requestsListener);
     requestsRef = null;
     requestsListener = null;
+    Object.keys(requestRefs).forEach(function (id) {
+      requestRefs[id].off("value", requestListeners[id]);
+    });
+    requestRefs = {};
+    requestListeners = {};
   }
 
   /* ---------- Transactions popup ---------- */
@@ -745,7 +803,7 @@
 
   function openTransactions() {
     if (!state.uid) {
-      setStatus($("accountError"), "err", "TM Book অ্যাপ থেকে পেজটি খুলুন।");
+      showNotice("TM Book অ্যাপ থেকে পেজটি খুলুন — অ্যাকাউন্ট অটোমেটিক লোড হবে।");
       return;
     }
     $("transactionsModal").classList.add("show");
@@ -847,11 +905,19 @@
   $("transactionsBtn").addEventListener("click", openTransactions);
   $("checkoutClose").addEventListener("click", closeCheckout);
   $("transactionsClose").addEventListener("click", closeTransactions);
+  $("depositClose").addEventListener("click", closeDeposit);
   $("checkoutModal").addEventListener("click", function (event) {
     if (event.target === $("checkoutModal")) closeCheckout();
   });
   $("transactionsModal").addEventListener("click", function (event) {
     if (event.target === $("transactionsModal")) closeTransactions();
+  });
+  $("depositModal").addEventListener("click", function (event) {
+    if (event.target === $("depositModal")) closeDeposit();
+  });
+  $("noticeClose").addEventListener("click", closeNotice);
+  $("noticeModal").addEventListener("click", function (event) {
+    if (event.target === $("noticeModal")) closeNotice();
   });
 
   renderOperators();
