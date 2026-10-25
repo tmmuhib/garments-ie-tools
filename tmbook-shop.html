@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#075E54" />
+<title>TM247 Shop</title>
+<style>
+  :root {
+    --green: #075E54;
+    --green2: #0b7a6b;
+    --accent: #25D366;
+    --accent-dark: #128C4A;
+    --bg: #eef2f0;
+    --card: #ffffff;
+    --ink: #15211d;
+    --muted: #61716b;
+    --line: #e2e8e5;
+    --amber: #FFB300;
+    --shadow: 0 4px 14px rgba(7, 94, 84, .10);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100dvh;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Bengali", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding-bottom: 28px;
+  }
+  button, input { font-family: inherit; }
+
+  .hero {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: linear-gradient(135deg, var(--green), var(--green2));
+    padding: 14px 14px 12px;
+    box-shadow: 0 6px 18px rgba(7, 94, 84, .22);
+  }
+  .hero-inner {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .logo {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logo svg { width: 25px; height: 25px; fill: #ffffff; }
+  .brand h1 {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.15;
+    color: #ffffff;
+    letter-spacing: .2px;
+  }
+  .brand p {
+    margin: 2px 0 0;
+    font-size: 11px;
+    color: rgba(255, 255, 255, .78);
+  }
+  .tools {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .searchWrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, .96);
+    border-radius: 11px;
+    padding: 0 11px;
+    height: 42px;
+  }
+  .searchWrap svg { width: 17px; height: 17px; fill: #708079; flex: 0 0 17px; }
+  #search {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    width: 100%;
+    height: 100%;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  #search::placeholder { color: #93a19b; }
+  .refresh {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border: 0;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, .17);
+    border: 1px solid rgba(255, 255, 255, .30);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .refresh svg {
+    width: 20px;
+    height: 20px;
+    fill: #ffffff;
+    transition: transform .4s ease;
+  }
+  .refresh.spin svg { transform: rotate(360deg); }
+
+  .wrap {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 12px 12px 0;
+  }
+  .meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 2px 2px 10px;
+  }
+  .meta .label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+  .count {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-dark);
+    background: #dff5e6;
+    border-radius: 20px;
+    padding: 3px 9px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
+  @media (min-width: 840px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform .14s ease, box-shadow .14s ease;
+    border: 1px solid rgba(7, 94, 84, .05);
+  }
+  .card:active { transform: scale(.975); }
+  .thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #e7ece9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .thumb .letter {
+    font-size: 46px;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, .13);
+    user-select: none;
+  }
+  .thumb img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #ffffff;
+    opacity: 0;
+    transition: opacity .25s ease;
+  }
+  .thumb.has-img img { opacity: 1; }
+  .body {
+    padding: 9px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .name {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.3;
+    font-weight: 700;
+    color: var(--ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 34px;
+  }
+  .rate {
+    margin-top: 5px;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--accent-dark);
+  }
+  .rate.link-only { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: .3px; }
+  .buy {
+    margin-top: 8px;
+    width: 100%;
+    border: 0;
+    border-radius: 9px;
+    background: var(--accent);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 800;
+    padding: 9px 6px;
+    cursor: pointer;
+    letter-spacing: .2px;
+  }
+  .buy:active { background: var(--accent-dark); }
+
+  .state {
+    padding: 48px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    color: var(--muted);
+  }
+  .state svg { width: 62px; height: 62px; fill: #b6c3bd; }
+  .state p { margin: 0; font-size: 14px; line-height: 1.45; max-width: 300px; }
+  .state .hint { font-size: 12px; color: #93a19b; }
+  .spinner {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid #d5e2dd;
+    border-top-color: var(--accent-dark);
+    animation: turn .8s linear infinite;
+  }
+  @keyframes turn { to { transform: rotate(360deg); } }
+  .retry {
+    margin-top: 4px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--green);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 9px 20px;
+    cursor: pointer;
+  }
+  [hidden] { display: none !important; }
+
+  .foot {
+    max-width: 960px;
+    margin: 18px auto 0;
+    padding: 0 16px;
+    text-align: center;
+    font-size: 11px;
+    color: #8b9a94;
+    line-height: 1.5;
+  }
+  .foot strong { color: var(--green); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M18,6h-2c0,-2.21 -1.79,-4 -4,-4S8,3.79 8,6H6C4.9,6 4,6.9 4,8v12c0,1.1 0.9,2 2,2h12c1.1,0 2,-0.9 2,-2V8c0,-1.1 -0.9,-2 -2,-2zM12,4c1.1,0 2,0.9 2,2h-4c0,-1.1 0.9,-2 2,-2zM12,12c-2.21,0 -4,-1.79 -4,-4h2c0,1.1 0.9,2 2,2s2,-0.9 2,-2h2c0,2.21 -1.79,4 -4,4z"/></svg>
+      </div>
+      <div>
+        <h1>TM247 Shop</h1>
+        <p>Products added by admin — tap to buy</p>
+      </div>
+    </div>
+    <div class="tools">
+      <div class="searchWrap">
+        <svg viewBox="0 0 24 24"><path d="M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z"/></svg>
+        <input id="search" type="search" placeholder="Search products…" autocomplete="off" />
+      </div>
+      <button class="refresh" id="refresh" type="button" aria-label="Refresh products">
+        <svg viewBox="0 0 24 24"><path d="M17.65,6.35C16.2,4.9 14.21,4 12,4c-4.42,0 -7.99,3.58 -8,8s3.58,8 8,8c3.73,0 6.84,-2.55 7.73,-6h-2.08c-0.82,2.33 -3.04,4 -5.65,4 -3.31,0 -6,-2.69 -6,-6s2.69,-6 6,-6c1.66,0 3.14,0.69 4.22,1.78L13,11h7V4l-2.35,2.35z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="meta">
+    <span class="label">All products</span>
+    <span class="count" id="count">0 items</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="state" id="loading">
+    <div class="spinner"></div>
+    <p>Loading products…</p>
+  </div>
+
+  <div class="state" id="empty" hidden>
+    <svg viewBox="0 0 24 24"><path d="M18,6h-2c0,-2.21 -1.79,-4 -4,-4S8,3.79 8,6H6C4.9,6 4,6.9 4,8v12c0,1.1 0.9,2 2,2h12c1.1,0 2,-0.9 2,-2V8c0,-1.1 -0.9,-2 -2,-2zM12,4c1.1,0 2,0.9 2,2h-4c0,-1.1 0.9,-2 2,-2z"/></svg>
+    <p id="emptyTitle">No products yet.</p>
+    <p class="hint">Admin Control → Shop tab theke product add korun.</p>
+  </div>
+
+  <div class="state" id="error" hidden>
+    <svg viewBox="0 0 24 24"><path d="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM13,17h-2v-2h2v2zM13,13h-2V7h2v6z"/></svg>
+    <p>Could not load products.</p>
+    <p class="hint">Check your internet connection and try again.</p>
+    <button class="retry" id="retry" type="button">Try again</button>
+  </div>
+</main>
+
+<div class="foot">
+  Products are managed from <strong>TM247 Control Panel → Shop</strong>.<br />
+  Thumbnails are generated automatically from each product link.
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DB = "https://easylife-e96f6-default-rtdb.firebaseio.com";
+  var REFRESH_MS = 60000;
+  var palette = ["#00897B", "#3949AB", "#D81B60", "#F4511E", "#6D4C41", "#546E7A"];
+
+  var grid = document.getElementById("grid");
+  var search = document.getElementById("search");
+  var countEl = document.getElementById("count");
+  var loadingEl = document.getElementById("loading");
+  var emptyEl = document.getElementById("empty");
+  var errorEl = document.getElementById("error");
+  var refreshBtn = document.getElementById("refresh");
+  var retryBtn = document.getElementById("retry");
+
+  var allItems = [];
+  var firstLoad = true;
+  var timer = null;
+
+  function normalizeLink(raw) {
+    var text = String(raw || "").trim();
+    if (!text) return "";
+    if (/^https?:\/\//i.test(text)) return text;
+    if (/^\/\//.test(text)) return "https:" + text;
+    return "https://" + text.replace(/^\/+/, "");
+  }
+
+  function safeLink(raw) {
+    var link = normalizeLink(raw);
+    return /^https?:\/\/[^\s]+$/i.test(link) ? link : "";
+  }
+
+  function hostOf(raw) {
+    var link = safeLink(raw);
+    if (!link) return "";
+    try {
+      return new URL(link).hostname;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function formatRate(raw) {
+    var rate = String(raw || "").trim();
+    var prefixes = ["৳", "BDT", "Tk", "TK", "tk"];
+    for (var i = 0; i < prefixes.length; i++) {
+      if (rate.indexOf(prefixes[i]) === 0) {
+        rate = rate.slice(prefixes[i].length).trim();
+      }
+    }
+    return rate ? "৳ " + rate : "";
+  }
+
+  function uidParam() {
+    var hash = String(window.location.hash || "").replace(/^#/, "");
+    var searchPart = String(window.location.search || "").replace(/^\?/, "");
+    var combined = searchPart + "&" + hash;
+    var match = /(?:^|[&?])uid=([^&]+)/.exec(combined);
+    return match ? decodeURIComponent(match[1]) : "";
+  }
+
+  function thumbFor(item) {
+    var wrap = document.createElement("div");
+    wrap.className = "thumb";
+    var name = String(item.name || "S").trim();
+    var letter = document.createElement("span");
+    letter.className = "letter";
+    letter.textContent = (name.charAt(0) || "S").toUpperCase();
+    var hash = 0;
+    for (var i = 0; i < name.length; i++) hash = ((hash * 31) + name.charCodeAt(i)) | 0;
+    wrap.style.background = palette[Math.abs(hash) % palette.length];
+    wrap.appendChild(letter);
+
+    var host = hostOf(item.link);
+    if (host) {
+      var img = new Image();
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.alt = "";
+      img.onload = function () {
+        if (img.naturalWidth >= 16) wrap.classList.add("has-img");
+      };
+      img.onerror = function () {
+        if (img.parentNode) img.parentNode.removeChild(img);
+      };
+      img.src = "https://www.google.com/s2/favicons?sz=128&domain=" + encodeURIComponent(host);
+      wrap.appendChild(img);
+    }
+    return wrap;
+  }
+
+  function openItem(item) {
+    var link = safeLink(item.link);
+    if (!link) {
+      alert("This product has no valid link yet.");
+      return;
+    }
+    window.location.href = link;
+  }
+
+  function makeCard(item) {
+    var card = document.createElement("article");
+    card.className = "card";
+
+    var thumb = thumbFor(item);
+    card.appendChild(thumb);
+
+    var body = document.createElement("div");
+    body.className = "body";
+
+    var name = document.createElement("h3");
+    name.className = "name";
+    name.textContent = item.name || "Shop item";
+    body.appendChild(name);
+
+    var rate = document.createElement("div");
+    rate.className = "rate";
+    var rateText = formatRate(item.rate);
+    if (item.product) {
+      rate.textContent = rateText || "৳ —";
+    } else {
+      rate.textContent = "SHOP LINK";
+      rate.className += " link-only";
+    }
+    body.appendChild(rate);
+
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "buy";
+    button.textContent = item.product ? "Buy now" : "Open";
+    body.appendChild(button);
+
+    card.appendChild(body);
+    card.addEventListener("click", function () { openItem(item); });
+    return card;
+  }
+
+  function render() {
+    var query = String(search.value || "").trim().toLowerCase();
+    var visible = allItems.filter(function (item) {
+      return !query || String(item.name || "").toLowerCase().indexOf(query) !== -1;
+    });
+
+    grid.innerHTML = "";
+    var fragment = document.createDocumentFragment();
+    visible.forEach(function (item) {
+      fragment.appendChild(makeCard(item));
+    });
+    grid.appendChild(fragment);
+
+    countEl.textContent = visible.length + (visible.length === 1 ? " item" : " items");
+
+    if (firstLoad) {
+      loadingEl.hidden = false;
+      emptyEl.hidden = true;
+      errorEl.hidden = true;
+      return;
+    }
+    if (visible.length === 0) {
+      emptyEl.hidden = false;
+      loadingEl.hidden = true;
+      errorEl.hidden = true;
+      var titleEl = document.getElementById("emptyTitle");
+      if (titleEl) {
+        titleEl.textContent = allItems.length > 0
+          ? "No products match your search."
+          : "No products yet.";
+      }
+      var hint = emptyEl.querySelector(".hint");
+      if (hint) hint.hidden = allItems.length > 0 || query.length > 0;
+    } else {
+      emptyEl.hidden = true;
+      loadingEl.hidden = true;
+      errorEl.hidden = true;
+    }
+  }
+
+  function toArray(data) {
+    if (!data || typeof data !== "object") return [];
+    return Object.keys(data).map(function (key) {
+      var value = data[key] || {};
+      return {
+        id: key,
+        name: String(value.name || ""),
+        rate: String(value.rate || ""),
+        link: String(value.link || value.fileLink || value.githubLink || ""),
+        createdAt: Number(value.createdAt || 0),
+        product: value.product !== false
+      };
+    });
+  }
+
+  function fetchJson(path) {
+    return fetch(DB + path + ".json?ts=" + Date.now(), { cache: "no-store" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return response.json();
+      });
+  }
+
+  function load(showSpinner) {
+    if (showSpinner) {
+      firstLoad = true;
+      render();
+      refreshBtn.classList.add("spin");
+    }
+    var uid = uidParam();
+    var permsPromise = uid
+      ? fetchJson("/buttonPermissions/" + encodeURIComponent(uid)).catch(function () { return {}; })
+      : Promise.resolve({});
+
+    Promise.all([
+      fetchJson("/shopProducts"),
+      fetchJson("/serviceButtons/shop").catch(function () { return {}; }),
+      permsPromise
+    ]).then(function (results) {
+      var products = toArray(results[0]).map(function (item) {
+        item.product = true;
+        return item;
+      });
+      var links = toArray(results[1]).map(function (item) {
+        item.product = false;
+        return item;
+      });
+      var perms = results[2] || {};
+      links = links.filter(function (item) {
+        return perms["shop/" + item.id] !== false;
+      });
+
+      allItems = products.concat(links).sort(function (a, b) {
+        if (a.product !== b.product) return a.product ? -1 : 1;
+        return b.createdAt - a.createdAt;
+      });
+      firstLoad = false;
+      render();
+    }).catch(function () {
+      firstLoad = false;
+      loadingEl.hidden = true;
+      emptyEl.hidden = true;
+      errorEl.hidden = false;
+      refreshBtn.classList.remove("spin");
+    }).then(function () {
+      window.setTimeout(function () {
+        refreshBtn.classList.remove("spin");
+      }, 400);
+    });
+  }
+
+  search.addEventListener("input", render);
+  refreshBtn.addEventListener("click", function () { load(true); });
+  retryBtn.addEventListener("click", function () { load(true); });
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) load(false);
+  });
+
+  load(true);
+  timer = window.setInterval(function () {
+    if (!document.hidden) load(false);
+  }, REFRESH_MS);
+  window.addEventListener("pagehide", function () {
+    if (timer) window.clearInterval(timer);
+  });
+})();
+</script>
+</body>
+</html>
