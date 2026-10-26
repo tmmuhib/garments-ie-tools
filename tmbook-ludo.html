@@ -357,6 +357,23 @@
   }
   .camTile.offline .waitChip { display: inline-block; }
   .camTile.offline { border-style: dashed; }
+  .voiceMeter {
+    position: absolute;
+    left: 5px; right: 5px;
+    bottom: clamp(17px, 4.8vw, 21px);
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, .16);
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 4;
+  }
+  .camTile.empty .voiceMeter { display: none; }
+  .voiceMeter i {
+    display: block; height: 100%; width: 0;
+    background: linear-gradient(90deg, #35d07f, #b8ff5c);
+    transition: width .12s linear;
+  }
   .camBar {
     position: absolute;
     left: 0; right: 0; bottom: 0;
@@ -1313,7 +1330,13 @@
   var camTiles = {};
   var camVideos = {};
   var camOffs = {};
+  var camMeters = {};
   var liveSeats = {};
+  var remoteVideoStreams = {};
+  var voiceSinks = {};
+  var localVoice = null;
+  var voiceLoopTimer = null;
+  var audioUnlocked = false;
   var giftCounts = {};
 
   var isAdminUser = false;
@@ -2316,6 +2339,9 @@
       ensureAudio();
       replayVideos();
     }, { passive: true });
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) unlockRemoteAudio();
+    });
     window.addEventListener("resize", fitBoard);
     window.addEventListener("orientationchange", function () {
       setTimeout(fitBoard, 260);
@@ -4033,6 +4059,13 @@
         tag.appendChild(waitChip);
         view.appendChild(tag);
 
+        var meter = document.createElement("div");
+        meter.className = "voiceMeter";
+        var meterFill = document.createElement("i");
+        meter.appendChild(meterFill);
+        view.appendChild(meter);
+        camMeters[s] = meterFill;
+
         var emptyHit = document.createElement("button");
         emptyHit.type = "button";
         emptyHit.className = "tileEmpty";
@@ -4518,6 +4551,8 @@
 
   function afterMedia() {
     ensureAudio();
+    attachLocalVoice();
+    startVoiceLoop();
     syncMediaFlags();
     attachLocalVideo();
     renderStatus();
@@ -4563,10 +4598,15 @@
       }
       var stream = (p.uid === uid) ? localStream : remoteStreams[p.uid];
       if (stream) {
-        if (v.srcObject !== stream) v.srcObject = stream;
-        v.muted = true;
-        playVideo(v);
-        liveSeats[s] = stream.getVideoTracks().length > 0 &&
+        var vstream = (p.uid === uid) ? stream : videoStream(p.uid, stream);
+        if (vstream) {
+          if (v.srcObject !== vstream) v.srcObject = vstream;
+          v.muted = true;
+          playVideo(v);
+        } else if (v.srcObject) {
+          v.srcObject = null;
+        }
+        liveSeats[s] = !!vstream && vstream.getVideoTracks().length > 0 &&
           (p.uid === uid ? camOn : p.camOn !== false);
       } else {
         if (v.srcObject) v.srcObject = null;
@@ -4617,8 +4657,48 @@
     a._retryTimer = setTimeout(step, delays[0]);
   }
 
+  // Chromium only pulls a remote RTC audio track when that track is also attached to
+  // a playing media element; the WebAudio graph is what actually reaches the speaker.
+  function buildVoiceGraph(sink) {
+    if (!sink || !sink.stream) return;
+    var ctx = audioCtx;
+    if (!ctx || !ctx.createMediaStreamSource) return;
+    try { if (sink.gain) sink.gain.disconnect(); } catch (e) {}
+    try { if (sink.src) sink.src.disconnect(); } catch (e) {}
+    sink.src = null; sink.gain = null;
+    try {
+      var src = ctx.createMediaStreamSource(sink.stream);
+      var gain = ctx.createGain();
+      gain.gain.value = 1.4;
+      var analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.55;
+      src.connect(gain);
+      gain.connect(analyser);
+      analyser.connect(ctx.destination);
+      sink.src = src; sink.gain = gain; sink.analyser = analyser;
+    } catch (e) {
+      sink.src = null; sink.gain = null;
+    }
+  }
+
+  function applySinkMode(sink) {
+    if (!sink || !sink.el) return;
+    var a = sink.el;
+    var graphOn = !!(sink.src && audioCtx && audioCtx.state === "running");
+    a._want = true;
+    try { a.muted = graphOn; a.volume = 1; } catch (e) {}
+    if (a.paused) {
+      try {
+        var p = a.play();
+        if (p && p.catch) p.catch(function () { scheduleAudioRetry(a); });
+      } catch (e) { scheduleAudioRetry(a); }
+    }
+  }
+
   function tryPlayRemote(a) {
     if (!a || !a.srcObject) return;
+    if (a._sink) { applySinkMode(a._sink); return; }
     a._want = true;
     a.muted = false;
     a.volume = 1;
@@ -4630,16 +4710,19 @@
   }
 
   function keepRemoteAudio() {
-    Object.keys(remoteAudios).forEach(function (pu) {
-      var a = remoteAudios[pu];
-      if (!a || !a.srcObject) return;
-      if (a.paused) tryPlayRemote(a);
-      else if (a.muted) a.muted = false;
+    Object.keys(voiceSinks).forEach(function (pu) {
+      var sink = voiceSinks[pu];
+      if (!sink || !sink.el || !sink.el.srcObject) return;
+      applySinkMode(sink);
     });
   }
 
   function unlockRemoteAudio() {
     ensureAudio();
+    audioUnlocked = true;
+    if (audioCtx && audioCtx.state === "suspended") {
+      try { audioCtx.resume().catch(function () {}); } catch (e) {}
+    }
     keepRemoteAudio();
   }
 
@@ -4648,38 +4731,163 @@
     var keep = {};
     ["0", "1", "2", "3"].forEach(function (s) {
       var p = room.seats && room.seats[s];
-      if (!p || p.uid === uid) return;
+      if (!p || p.uid === uid || p.bot) return;
       var stream = remoteStreams[p.uid];
       if (!stream) return;
       var astream = remoteAudioStream(p.uid, stream);
       if (!astream) return;
       keep[p.uid] = true;
-      var a = remoteAudios[p.uid];
-      if (!a) {
-        a = document.createElement("audio");
-        a.autoplay = true;
-        a.playsInline = true;
-        a.setAttribute("autoplay", "");
-        a.setAttribute("playsinline", "");
-        a.setAttribute("webkit-playsinline", "");
-        a.style.cssText = "position:fixed;left:-4px;bottom:-4px;width:2px;height:2px;opacity:.01;pointer-events:none;";
-        document.body.appendChild(a);
-        remoteAudios[p.uid] = a;
-      }
-      if (a.srcObject !== astream) a.srcObject = astream;
-      tryPlayRemote(a);
+      voiceSinkFor(p.uid, astream);
     });
-    Object.keys(remoteAudios).forEach(function (pu) {
-      if (keep[pu]) return;
-      var a = remoteAudios[pu];
+    Object.keys(voiceSinks).forEach(function (pu) {
+      if (!keep[pu]) dropVoiceSink(pu);
+    });
+  }
+
+  function voiceSinkFor(pu, astream) {
+    ensureAudio();
+    var sink = voiceSinks[pu];
+    if (!sink) {
+      var a = document.createElement("audio");
+      a.autoplay = true;
+      a.playsInline = true;
+      a.muted = true;
+      a.setAttribute("autoplay", "");
+      a.setAttribute("playsinline", "");
+      a.setAttribute("webkit-playsinline", "");
+      a.style.cssText = "position:fixed;left:-8px;bottom:-8px;width:2px;height:2px;opacity:.01;pointer-events:none;";
+      document.body.appendChild(a);
+      sink = { el: a, stream: null, src: null, gain: null, analyser: null };
+      a._sink = sink;
+      voiceSinks[pu] = sink;
+      remoteAudios[pu] = a;
+    }
+    if (sink.stream !== astream) {
+      sink.stream = astream;
+      try { sink.el.srcObject = astream; } catch (e) {}
+      buildVoiceGraph(sink);
+    }
+    applySinkMode(sink);
+    return sink;
+  }
+
+  function dropVoiceSink(pu) {
+    var sink = voiceSinks[pu];
+    if (!sink) return;
+    try { if (sink.gain) sink.gain.disconnect(); } catch (e) {}
+    try { if (sink.src) sink.src.disconnect(); } catch (e) {}
+    sink.src = null; sink.gain = null; sink.analyser = null;
+    var a = sink.el;
+    if (a) {
       a._want = false;
+      a._sink = null;
       if (a._retryTimer) { clearTimeout(a._retryTimer); a._retryTimer = null; }
       try { a.pause(); } catch (e) {}
       try { a.srcObject = null; } catch (e) {}
       if (a.parentNode) a.parentNode.removeChild(a);
-      delete remoteAudios[pu];
-      delete remoteAudioStreams[pu];
+    }
+    delete voiceSinks[pu];
+    delete remoteAudios[pu];
+    delete remoteAudioStreams[pu];
+    delete remoteVideoStreams[pu];
+  }
+
+  function videoStream(pu, stream) {
+    var tracks = [];
+    try { tracks = stream.getVideoTracks(); } catch (e) { tracks = []; }
+    if (!tracks.length) return null;
+    var cur = remoteVideoStreams[pu];
+    if (!cur) {
+      try { cur = new MediaStream(tracks); } catch (e) { return null; }
+      remoteVideoStreams[pu] = cur;
+      return cur;
+    }
+    var have = [];
+    try { have = cur.getVideoTracks(); } catch (e) { have = []; }
+    var same = have.length === tracks.length;
+    if (same) {
+      for (var i = 0; i < tracks.length; i++) {
+        if (have[i] !== tracks[i]) { same = false; break; }
+      }
+    }
+    if (same) return cur;
+    have.forEach(function (t) { try { cur.removeTrack(t); } catch (e) {} });
+    tracks.forEach(function (t) { try { cur.addTrack(t); } catch (e) {} });
+    return cur;
+  }
+
+  function analyserLevel(an) {
+    if (!an) return 0;
+    if (!an._buf) an._buf = new Uint8Array(an.fftSize);
+    an.getByteTimeDomainData(an._buf);
+    var peak = 0;
+    for (var i = 0; i < an._buf.length; i += 2) {
+      var v = an._buf[i] - 128;
+      if (v < 0) v = -v;
+      if (v > peak) peak = v;
+    }
+    return Math.min(1, peak / 70);
+  }
+
+  function attachLocalVoice() {
+    if (!localStream) return;
+    try { if (localVoice && localVoice.src) localVoice.src.disconnect(); } catch (e) {}
+    localVoice = null;
+    if (!audioCtx || !audioCtx.createMediaStreamSource) return;
+    try {
+      var src = audioCtx.createMediaStreamSource(localStream);
+      var analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.5;
+      var mute = audioCtx.createGain();
+      mute.gain.value = 0;
+      src.connect(analyser);
+      analyser.connect(mute);
+      mute.connect(audioCtx.destination);
+      localVoice = { src: src, analyser: analyser };
+    } catch (e) {
+      localVoice = null;
+    }
+  }
+
+  window.__tmVoice = function () {
+    var out = {
+      ctx: audioCtx ? audioCtx.state : "none",
+      mic: micOn,
+      local: localVoice && localVoice.analyser ? analyserLevel(localVoice.analyser) : -1,
+      peers: {}
+    };
+    Object.keys(voiceSinks).forEach(function (pu) {
+      var s = voiceSinks[pu];
+      out.peers[pu] = {
+        paused: s.el ? s.el.paused : null,
+        muted: s.el ? s.el.muted : null,
+        graph: !!s.src,
+        level: s.analyser ? analyserLevel(s.analyser) : -1
+      };
     });
+    return out;
+  };
+
+  function startVoiceLoop() {
+    if (voiceLoopTimer) return;
+    voiceLoopTimer = setInterval(function () {
+      if (!room || !camMeters) return;
+      ["0", "1", "2", "3"].forEach(function (s) {
+        var fill = camMeters[s];
+        if (!fill) return;
+        var p = room.seats && room.seats[s];
+        if (!p || p.bot) { fill.style.width = "0%"; return; }
+        var lvl = 0;
+        if (p.uid === uid) {
+          lvl = (micOn && localVoice && localVoice.analyser) ? analyserLevel(localVoice.analyser) : 0;
+        } else {
+          var sink = voiceSinks[p.uid];
+          lvl = (sink && sink.analyser) ? analyserLevel(sink.analyser) : 0;
+        }
+        fill.style.width = Math.round(lvl * 100) + "%";
+      });
+    }, 180);
   }
 
   function stopMedia() {
@@ -4689,16 +4897,12 @@
     }
     localStream = null;
     remoteStreams = {};
-    Object.keys(remoteAudios).forEach(function (pu) {
-      var a = remoteAudios[pu];
-      a._want = false;
-      if (a._retryTimer) { clearTimeout(a._retryTimer); a._retryTimer = null; }
-      try { a.pause(); } catch (e) {}
-      try { a.srcObject = null; } catch (e) {}
-      if (a.parentNode) a.parentNode.removeChild(a);
-      delete remoteAudios[pu];
-    });
+    Object.keys(voiceSinks).forEach(function (pu) { dropVoiceSink(pu); });
+    remoteAudios = {};
     remoteAudioStreams = {};
+    remoteVideoStreams = {};
+    try { if (localVoice && localVoice.src) localVoice.src.disconnect(); } catch (e) {}
+    localVoice = null;
     rtcStarted = false;
     mediaReady = false;
     micOn = false;
@@ -4981,6 +5185,7 @@
     var p = room.seats && room.seats[seat];
     if (!p) { toast("No player in this seat"); return; }
     var stream = (p.uid === uid) ? localStream : remoteStreams[p.uid];
+    if (stream && p.uid !== uid) stream = videoStream(p.uid, stream);
     if (!stream) { toast("No video yet"); return; }
     var wrap = document.createElement("div");
     wrap.className = "fullWrap";
