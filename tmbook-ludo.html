@@ -117,6 +117,8 @@
   .tbIcon svg { width: 13px; height: 13px; display: block; }
   .tbIcon.danger { color: #ff8a80; background: rgba(255, 82, 82, .15); }
   .tbIcon.musicOn { color: #8be9ff; background: rgba(0, 188, 212, .22); }
+  .tbIcon.spkOn { color: #b8ff5c; background: rgba(53, 208, 127, .2); }
+  .tbIcon.spkOff { color: #ff8a80; background: rgba(255, 82, 82, .15); }
 
   /* ---------------- lobby ---------------- */
   #lobbyView {
@@ -1016,6 +1018,7 @@
   <div class="tbRight">
     <button class="roomPill hidden" id="roomPill" type="button"><span class="rpName" id="roomPillName"></span><b id="roomPillCode">------</b></button>
     <button class="tbIcon hidden" id="btnMusic" type="button" title="Room music"></button>
+    <button class="tbIcon hidden" id="btnSpk" type="button" title="Sound on/off"></button>
     <button class="tbIcon danger hidden" id="btnDeleteRoom" type="button" title="Delete room"></button>
     <div class="balChip" id="balChip">৳ 0</div>
     <div class="meChip" id="meChip">Player</div>
@@ -1246,6 +1249,8 @@
     exit: '<svg viewBox="0 0 24 24"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5zm5.6 4.6L14.2 9l2 2H8v2h8.2l-2 2 1.4 1.4L20.4 12z" fill="currentColor"/></svg>',
     kick: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor" opacity=".3"/><path d="M8.4 7 12 10.6 15.6 7 17 8.4 13.4 12 17 15.6 15.6 17 12 13.4 8.4 17 7 15.6 10.6 12 7 8.4z" fill="currentColor"/></svg>',
     music: '<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="6.4" cy="18" r="2.6" fill="currentColor"/><circle cx="16.4" cy="16" r="2.6" fill="currentColor"/></svg>',
+    volOn: '<svg viewBox="0 0 24 24"><path d="M4 9h3l5-4v14l-5-4H4z" fill="currentColor"/><path d="M15.4 8.6a5 5 0 0 1 0 6.8M18.2 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    volOff: '<svg viewBox="0 0 24 24"><path d="M4 9h3l5-4v14l-5-4H4z" fill="currentColor"/><path d="M15.6 9.4 20.6 14.4M20.6 9.4 15.6 14.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     trash: '<svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7zM9.5 7V4h5v3M4 7h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>'
   };
   var GIFT_ICON = '<svg viewBox="0 0 24 24"><path d="M20 8h-2.2a3 3 0 0 0-4.6-3.7L12 5.6l-1.2-1.3A3 3 0 0 0 6.2 8H4v4h1v9h14v-9h1zM8 8a1 1 0 1 1 1-1c0 .6-.3 1.1-.8 1.5L8 8zm8 0-1.2-.5A1.8 1.8 0 1 1 16 8zM9 12h2v7H9zm4 0h2v7h-2z" fill="currentColor"/></svg>';
@@ -1337,6 +1342,14 @@
   var localVoice = null;
   var voiceLoopTimer = null;
   var audioUnlocked = false;
+  var masterBus = null;
+  var masterGain = null;
+  var audioLimiter = null;
+  var spkOn = (localStorage.getItem("tm247_ludo_spk") || "1") === "1";
+  var voiceFallbackTimer = null;
+  var mediaKeeperTimer = null;
+  var camRecoverBusy = false;
+  var camRecoverAt = 0;
   var giftCounts = {};
 
   var isAdminUser = false;
@@ -1776,6 +1789,8 @@
     if (cb) cb();
   }
 
+  var MASTER_LEVEL = 2.2;
+
   function ensureAudio() {
     try {
       if (!audioCtx) {
@@ -1783,7 +1798,34 @@
         if (AC) audioCtx = new AC();
       }
       if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(function () {});
+      buildMasterBus();
     } catch (e) {}
+  }
+
+  // Every remote voice is mixed here and pushed through a limiter, so three or
+  // four people talking at once stay loud without clipping into distortion.
+  function buildMasterBus() {
+    if (masterBus) return true;
+    if (!audioCtx) return false;
+    try {
+      var limiter = audioCtx.createDynamicsCompressor();
+      limiter.threshold.value = -6;
+      limiter.knee.value = 6;
+      limiter.ratio.value = 14;
+      limiter.attack.value = 0.003;
+      limiter.release.value = 0.22;
+      var gain = audioCtx.createGain();
+      gain.gain.value = spkOn ? MASTER_LEVEL : 0;
+      gain.connect(limiter);
+      limiter.connect(audioCtx.destination);
+      audioLimiter = limiter;
+      masterGain = gain;
+      masterBus = gain;
+      return true;
+    } catch (e) {
+      masterBus = null; masterGain = null; audioLimiter = null;
+      return false;
+    }
   }
 
   function beep(freq, dur, delay) {
@@ -2258,6 +2300,7 @@
   function bindUi() {
     $("btnMusic").innerHTML = ICON.music;
     $("btnDeleteRoom").innerHTML = ICON.trash;
+    renderSpkBtn();
     var modeRow = $("modeRow");
     modeRow.addEventListener("click", function (e) {
       var btn = e.target.closest(".modeBtn");
@@ -2318,6 +2361,7 @@
     });
     setInterval(keepRemoteAudio, 4000);
     $("btnMusic").addEventListener("click", openMusicModal);
+    $("btnSpk").addEventListener("click", toggleSpeaker);
     $("btnDeleteRoom").addEventListener("click", deleteRoom);
     $("btnAddPlayer").addEventListener("click", openAddPlayer);
     $("btnAddBot").addEventListener("click", addComputer);
@@ -2326,6 +2370,10 @@
       replayVideos();
       syncPeers();
       publishEpoch();
+      if (roomId) {
+        var v = localStream ? localStream.getVideoTracks()[0] : null;
+        if (camOn && (!v || v.readyState === "ended")) setTimeout(recoverCamera, 1200);
+      }
     });
     $("musicBadge").addEventListener("click", function () {
       if (musicBlocked) {
@@ -3151,6 +3199,7 @@
     $("lobbyView").classList.remove("hidden");
     $("roomPill").classList.add("hidden");
     $("btnMusic").classList.add("hidden");
+    $("btnSpk").classList.add("hidden");
     $("btnDeleteRoom").classList.add("hidden");
     var addPlayerBtn = $("btnAddPlayer");
     if (addPlayerBtn) addPlayerBtn.classList.add("hidden");
@@ -3260,6 +3309,7 @@
   function renderRoomActions() {
     var inRoom = !!roomId;
     $("btnMusic").classList.toggle("hidden", !inRoom);
+    $("btnSpk").classList.toggle("hidden", !inRoom);
     $("btnDeleteRoom").classList.toggle("hidden", !(inRoom && canDeleteRoom()));
     var botBtn = $("btnAddBot");
     if (botBtn) {
@@ -4499,6 +4549,18 @@
     } catch (e) {}
   }
 
+  function mediaConstraints(withVideo) {
+    return {
+      audio: {
+        echoCancellation: true, noiseSuppression: true, autoGainControl: true,
+        channelCount: 1, sampleRate: 48000, sampleSize: 16, latency: 0.01
+      },
+      video: withVideo
+        ? { facingMode: "user", width: { ideal: 360 }, height: { ideal: 480 }, frameRate: { ideal: 15, max: 15 } }
+        : false
+    };
+  }
+
   function startMedia() {
     if (rtcStarted) return;
     rtcStarted = true;
@@ -4506,13 +4568,7 @@
     closePeers();
     remoteStreams = {};
     renderStatus();
-    var constraints = {
-      audio: {
-        echoCancellation: true, noiseSuppression: true, autoGainControl: true,
-        channelCount: 1, sampleRate: 48000, sampleSize: 16, latency: 0.01
-      },
-      video: { facingMode: "user", width: { ideal: 360 }, height: { ideal: 480 }, frameRate: { ideal: 15, max: 15 } }
-    };
+    var constraints = mediaConstraints(true);
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       mediaReady = true;
       micOn = false;
@@ -4553,6 +4609,7 @@
     ensureAudio();
     attachLocalVoice();
     startVoiceLoop();
+    startMediaKeeper();
     syncMediaFlags();
     attachLocalVideo();
     renderStatus();
@@ -4658,36 +4715,48 @@
   }
 
   // Chromium only pulls a remote RTC audio track when that track is also attached to
-  // a playing media element; the WebAudio graph is what actually reaches the speaker.
+  // a playing media element. The element is muted while this graph plays, and the
+  // graph is what reaches the speaker (master gain + limiter for many voices).
   function buildVoiceGraph(sink) {
     if (!sink || !sink.stream) return;
     var ctx = audioCtx;
     if (!ctx || !ctx.createMediaStreamSource) return;
     try { if (sink.gain) sink.gain.disconnect(); } catch (e) {}
     try { if (sink.src) sink.src.disconnect(); } catch (e) {}
-    sink.src = null; sink.gain = null;
+    sink.src = null; sink.gain = null; sink.analyser = null;
     try {
+      ensureAudio();
+      if (!buildMasterBus()) return;
       var src = ctx.createMediaStreamSource(sink.stream);
-      var gain = ctx.createGain();
-      gain.gain.value = 1.4;
+      // analyser first: it still sees the signal when the gain is turned down
+      // for the element fallback path.
       var analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
       analyser.smoothingTimeConstant = 0.55;
-      src.connect(gain);
-      gain.connect(analyser);
-      analyser.connect(ctx.destination);
+      var gain = ctx.createGain();
+      gain.gain.value = 1;
+      src.connect(analyser);
+      analyser.connect(gain);
+      gain.connect(masterBus);
       sink.src = src; sink.gain = gain; sink.analyser = analyser;
+      sink.startedAt = sink.startedAt || Date.now();
     } catch (e) {
-      sink.src = null; sink.gain = null;
+      sink.src = null; sink.gain = null; sink.analyser = null;
     }
   }
 
   function applySinkMode(sink) {
     if (!sink || !sink.el) return;
     var a = sink.el;
-    var graphOn = !!(sink.src && audioCtx && audioCtx.state === "running");
+    var graphOn = sink.mode !== "element" && !!(sink.src && sink.gain &&
+      audioCtx && audioCtx.state === "running" && masterBus && spkOn);
+    try {
+      if (sink.gain) sink.gain.gain.value = graphOn ? 1 : 0;
+    } catch (e) {}
     a._want = true;
-    try { a.muted = graphOn; a.volume = 1; } catch (e) {}
+    // Graph on  -> element muted, voice comes from the WebAudio limiter bus.
+    // Graph off -> element itself plays the remote track (WebView fallback).
+    try { a.muted = !spkOn || graphOn; a.volume = 1; } catch (e) {}
     if (a.paused) {
       try {
         var p = a.play();
@@ -4717,11 +4786,40 @@
     });
   }
 
+  function renderSpkBtn() {
+    var b = $("btnSpk");
+    if (!b) return;
+    b.innerHTML = spkOn ? ICON.volOn : ICON.volOff;
+    b.classList.toggle("spkOn", spkOn);
+    b.classList.toggle("spkOff", !spkOn);
+    b.title = spkOn ? "Sound on — tap to mute" : "Sound off — tap to unmute";
+  }
+
+  function setSpeaker(on, announce) {
+    spkOn = !!on;
+    try { localStorage.setItem("tm247_ludo_spk", spkOn ? "1" : "0"); } catch (e) {}
+    if (masterGain) {
+      try { masterGain.gain.value = spkOn ? MASTER_LEVEL : 0; } catch (e) {}
+    }
+    keepRemoteAudio();
+    renderSpkBtn();
+    if (announce) toast(spkOn ? "Sound on" : "Sound off");
+  }
+
+  function toggleSpeaker() {
+    setSpeaker(!spkOn, true);
+    if (spkOn) unlockRemoteAudio();
+  }
+
   function unlockRemoteAudio() {
     ensureAudio();
     audioUnlocked = true;
     if (audioCtx && audioCtx.state === "suspended") {
       try { audioCtx.resume().catch(function () {}); } catch (e) {}
+    }
+    buildMasterBus();
+    if (masterGain && spkOn) {
+      try { masterGain.gain.value = MASTER_LEVEL; } catch (e) {}
     }
     keepRemoteAudio();
   }
@@ -4757,7 +4855,7 @@
       a.setAttribute("webkit-playsinline", "");
       a.style.cssText = "position:fixed;left:-8px;bottom:-8px;width:2px;height:2px;opacity:.01;pointer-events:none;";
       document.body.appendChild(a);
-      sink = { el: a, stream: null, src: null, gain: null, analyser: null };
+      sink = { el: a, stream: null, src: null, gain: null, analyser: null, mode: "graph", heardAt: 0, startedAt: 0 };
       a._sink = sink;
       voiceSinks[pu] = sink;
       remoteAudios[pu] = a;
@@ -4853,17 +4951,27 @@
   window.__tmVoice = function () {
     var out = {
       ctx: audioCtx ? audioCtx.state : "none",
+      spk: spkOn,
+      master: masterGain ? masterGain.gain.value : null,
       mic: micOn,
+      cam: camOn,
       local: localVoice && localVoice.analyser ? analyserLevel(localVoice.analyser) : -1,
+      camTrack: localStream && localStream.getVideoTracks()[0]
+        ? localStream.getVideoTracks()[0].readyState : "none",
+      micTrack: localStream && localStream.getAudioTracks()[0]
+        ? localStream.getAudioTracks()[0].readyState : "none",
       peers: {}
     };
     Object.keys(voiceSinks).forEach(function (pu) {
       var s = voiceSinks[pu];
+      var rv = remoteStreams[pu] && remoteStreams[pu].getVideoTracks()[0];
       out.peers[pu] = {
         paused: s.el ? s.el.paused : null,
         muted: s.el ? s.el.muted : null,
         graph: !!s.src,
-        level: s.analyser ? analyserLevel(s.analyser) : -1
+        mode: s.mode,
+        level: s.analyser ? analyserLevel(s.analyser) : -1,
+        video: rv ? rv.readyState : "none"
       };
     });
     return out;
@@ -4884,10 +4992,36 @@
         } else {
           var sink = voiceSinks[p.uid];
           lvl = (sink && sink.analyser) ? analyserLevel(sink.analyser) : 0;
+          if (sink && lvl > 0.02) sink.heardAt = Date.now();
         }
         fill.style.width = Math.round(lvl * 100) + "%";
       });
     }, 180);
+    if (!voiceFallbackTimer) voiceFallbackTimer = setInterval(voiceFallbackScan, 1500);
+  }
+
+  // Some Android WebViews keep the WebAudio branch of a remote stream silently
+  // dead while others work. If a peer's mic is on but its graph stays silent,
+  // let that peer's <audio> element play the track directly instead, so every
+  // player is still heard.
+  function voiceFallbackScan() {
+    if (!room) return;
+    var now = Date.now();
+    ["0", "1", "2", "3"].forEach(function (s) {
+      var p = room.seats && room.seats[s];
+      if (!p || p.bot || p.uid === uid) return;
+      if (p.micOn === false) return;
+      var sink = voiceSinks[p.uid];
+      if (!sink || sink.mode === "element") return;
+      if (!sink.startedAt) sink.startedAt = now;
+      var lvl = sink.analyser ? analyserLevel(sink.analyser) : 0;
+      if (lvl > 0.02) { sink.heardAt = now; return; }
+      if (now - sink.startedAt < 7000) return;
+      if (now - sink.heardAt < 7000) return;
+      sink.mode = "element";
+      applySinkMode(sink);
+    });
+    keepRemoteAudio();
   }
 
   function stopMedia() {
@@ -4938,6 +5072,100 @@
     syncMediaFlags();
     renderCamTiles();
     toast(camOn ? "Camera on" : "Camera off");
+  }
+
+  // Android can end the capture session mid-game (screen lock, another app taking
+  // the camera, WebView throttling). Detect the dead track and swap in a fresh one
+  // on every peer connection without renegotiating.
+  function startMediaKeeper() {
+    if (mediaKeeperTimer) return;
+    mediaKeeperTimer = setInterval(function () {
+      if (!roomId || !mediaReady) return;
+      var v = localStream ? localStream.getVideoTracks()[0] : null;
+      if (camOn && (!v || v.readyState === "ended")) { recoverCamera(); return; }
+      var a = localStream ? localStream.getAudioTracks()[0] : null;
+      if (micOn && (!a || a.readyState === "ended")) recoverMic();
+      var own = camVideos[mySeatString()];
+      if (own && localStream && own.srcObject !== localStream) {
+        try { own.srcObject = localStream; } catch (e) {}
+        playVideo(own);
+      }
+    }, 4000);
+  }
+
+  function swapSenderTracks(kind, track) {
+    peers.forEach(function (entry) {
+      try {
+        entry.pc.getSenders().forEach(function (s) {
+          if (!s.track || s.track.kind !== kind) return;
+          s.replaceTrack(track).catch(function () {});
+        });
+      } catch (e) {}
+    });
+  }
+
+  function recoverCamera() {
+    if (camRecoverBusy || !roomId) return;
+    var now = Date.now();
+    if (now - camRecoverAt < 8000) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    camRecoverBusy = true;
+    camRecoverAt = now;
+    var c = mediaConstraints(true).video;
+    var attempt = function (video, second) {
+      navigator.mediaDevices.getUserMedia({ video: video, audio: false }).then(function (s) {
+        var track = s.getVideoTracks()[0];
+        if (!track) throw new Error("no camera");
+        if (!localStream) localStream = new MediaStream();
+        var old = localStream.getVideoTracks()[0];
+        try { localStream.addTrack(track); } catch (e) {}
+        if (old && old !== track) {
+          try { localStream.removeTrack(old); } catch (e) {}
+          try { old.stop(); } catch (e) {}
+        }
+        try { track.enabled = camOn; } catch (e) {}
+        swapSenderTracks("video", track);
+        camOn = true;
+        attachLocalVideo();
+        syncMediaFlags();
+        renderCamTiles();
+        camRecoverBusy = false;
+      }).catch(function () {
+        if (!second) {
+          attempt({ facingMode: "user", width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15 } }, true);
+        } else {
+          camRecoverBusy = false;
+        }
+      });
+    };
+    attempt(c, false);
+  }
+
+  function recoverMic() {
+    if (camRecoverBusy || !roomId) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    var now = Date.now();
+    if (now - camRecoverAt < 8000) return;
+    camRecoverBusy = true;
+    camRecoverAt = now;
+    navigator.mediaDevices.getUserMedia({ audio: mediaConstraints(false).audio, video: false })
+      .then(function (s) {
+        var track = s.getAudioTracks()[0];
+        if (!track) throw new Error("no mic");
+        if (!localStream) localStream = new MediaStream();
+        var old = localStream.getAudioTracks()[0];
+        try { localStream.addTrack(track); } catch (e) {}
+        if (old && old !== track) {
+          try { localStream.removeTrack(old); } catch (e) {}
+          try { old.stop(); } catch (e) {}
+        }
+        try { track.enabled = micOn; } catch (e) {}
+        swapSenderTracks("audio", track);
+        attachLocalVoice();
+        syncMediaFlags();
+        renderCamTiles();
+        camRecoverBusy = false;
+      }).catch(function () { camRecoverBusy = false; });
   }
 
   function syncPeers() {
