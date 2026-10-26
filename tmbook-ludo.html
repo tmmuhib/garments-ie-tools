@@ -85,7 +85,7 @@
     white-space: nowrap;
   }
   .meChip {
-    max-width: 19vw;
+    max-width: 17vw;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -97,6 +97,18 @@
     font-weight: 700;
     color: #e5fff2;
   }
+  .tbIcon {
+    width: 26px; height: 26px;
+    flex: 0 0 auto;
+    border: 0; border-radius: 7px;
+    background: rgba(255, 255, 255, .07);
+    color: #d9f7e8;
+    display: grid; place-items: center;
+    padding: 0;
+  }
+  .tbIcon svg { width: 15px; height: 15px; display: block; }
+  .tbIcon.danger { color: #ff8a80; background: rgba(255, 82, 82, .15); }
+  .tbIcon.musicOn { color: #8be9ff; background: rgba(0, 188, 212, .22); }
 
   /* ---------------- lobby ---------------- */
   #lobbyView {
@@ -220,6 +232,7 @@
     border-radius: 14px;
     padding: 10px 11px;
   }
+  .rcActions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
   .rcDot { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 12px; font-weight: 900; color: #042014; flex: 0 0 auto; }
   .rcInfo { flex: 1; min-width: 0; }
   .rcInfo strong { display: block; font-size: 12.5px; color: #f0fff8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -241,13 +254,140 @@
   .footNote { margin: 22px 4px 0; color: #648a79; font-size: 10px; line-height: 1.6; text-align: center; }
 
   /* ---------------- game ---------------- */
-  #gameView { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0 8px 4px; }
-  #boardWrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  #gameView { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0 4px 4px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+  #boardWrap { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; padding: 0; overflow: visible; }
   #boardStage {
     position: relative;
-    width: min(100%, calc(100vh - 214px), 560px);
+    width: min(100%, 560px);
     aspect-ratio: 1 / 1;
+    flex: 0 0 auto;
+    margin: 0 auto;
   }
+  .camStrip {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 5px;
+    height: clamp(50px, 14.5vw, 64px);
+    padding: 2px 0;
+  }
+  .camTile {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 10px;
+    border: 2px solid var(--pc, #2c5a44);
+    background: #0b1d15;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+  }
+  .camTile.empty { border-style: dashed; border-color: rgba(255, 255, 255, .3); }
+  .camTile.activeTurn { box-shadow: 0 0 0 2px #fff, 0 0 14px var(--pc), 0 4px 12px rgba(0, 0, 0, .3); }
+  .camView { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(150deg, var(--pc, #1b5e43), #081a12); }
+  .camVideo {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    visibility: hidden;
+  }
+  .camVideo.live { visibility: visible; }
+  .camTile.self .camVideo { transform: scaleX(-1); }
+  .camOff {
+    position: absolute; inset: 0;
+    display: none;
+    align-items: center; justify-content: center;
+    font-size: clamp(12px, 3.6vw, 17px);
+    font-weight: 900;
+    color: rgba(255, 255, 255, .85);
+    background: linear-gradient(150deg, var(--pc, #1b5e43), #08180f);
+    z-index: 2;
+  }
+  .camOff.show { display: flex; }
+  .nameTag {
+    position: absolute; left: 2px; top: 2px;
+    max-width: calc(100% - 40px);
+    display: flex; align-items: center; gap: 3px;
+    background: rgba(0, 0, 0, .52);
+    border-radius: 5px;
+    padding: 1px 4px;
+    font-size: clamp(7px, 1.8vw, 9px);
+    font-weight: 700;
+    color: #fff;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .nameTag .sdot { width: 4px; height: 4px; border-radius: 50%; background: var(--pc); flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(255, 255, 255, .5); }
+  .nameTag .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .turnChip {
+    display: none;
+    font-style: normal;
+    font-size: 6px;
+    font-weight: 900;
+    letter-spacing: .04em;
+    color: #062015;
+    background: #fff;
+    border-radius: 3px;
+    padding: 0 2px;
+    flex: 0 0 auto;
+  }
+  .camTile.activeTurn .turnChip { display: inline-block; }
+  .camBar {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: clamp(15px, 4.4vw, 18px);
+    display: flex; align-items: center; justify-content: space-around;
+    background: rgba(3, 14, 9, .7);
+    border-top: 1px solid rgba(255, 255, 255, .08);
+    z-index: 5;
+  }
+  .camTile.empty .camBar { visibility: hidden; }
+  .ctrl {
+    width: clamp(14px, 4vw, 17px);
+    height: clamp(14px, 4vw, 17px);
+    border: 0; border-radius: 4px;
+    background: transparent;
+    color: #e8fff4;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+  }
+  .ctrl svg { width: 72%; height: 72%; display: block; }
+  .ctrl.off { color: #ff5252; }
+  .ctrl[disabled] { opacity: .35; }
+  .ctrl.exit { visibility: hidden; color: #ff8a80; }
+  .camTile.self .ctrl.exit { visibility: visible; }
+  .diceBox {
+    position: absolute;
+    top: 2px; right: 2px;
+    width: clamp(28px, 8vw, 34px);
+    aspect-ratio: 1 / 1;
+    border: 1.5px dashed rgba(255, 255, 255, .4);
+    border-radius: 7px;
+    background: rgba(0, 0, 0, .35);
+    z-index: 6;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: auto;
+  }
+  .camTile.empty .diceBox { opacity: .5; }
+  .diceBox.on {
+    border-style: solid;
+    border-color: #fff;
+    background: rgba(0, 0, 0, .58);
+    box-shadow: 0 0 9px rgba(255, 255, 255, .5);
+  }
+  .diceBox.myRoll { cursor: pointer; animation: dicePulse 1.3s ease-in-out infinite; }
+  .tileEmpty {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px;
+    border: 0;
+    background: rgba(2, 12, 8, .42);
+    color: #fff;
+    z-index: 3;
+  }
+  .camTile.empty .tileEmpty { display: flex; }
+  .tileEmpty b { font-size: clamp(7px, 2vw, 10px); letter-spacing: .03em; }
+  .tileEmpty span { font-size: clamp(6px, 1.5vw, 8px); color: #bfe3d1; }
   #board {
     position: absolute;
     inset: 0;
@@ -343,6 +483,14 @@
     padding: 2px 7px;
   }
   .waitHint { font-size: clamp(6px, 1.4vw, 8px); color: #fff; font-weight: 800; letter-spacing: .06em; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+  .playHint {
+    font-size: clamp(5px, 1.35vw, 8px);
+    font-weight: 900;
+    letter-spacing: .03em;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
+    white-space: nowrap;
+  }
   .overMark { font-size: clamp(8px, 1.8vw, 12px); font-weight: 900; color: #fff; letter-spacing: .08em; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
 
   .home { position: absolute; width: 37%; height: 37%; padding: 1.2%; z-index: 5; display: none; }
@@ -356,7 +504,7 @@
     width: 100%; height: 100%;
     border-radius: 12px;
     border: 2px solid var(--pc);
-    background: #0a1c15;
+    background: #0d2419;
     box-shadow: 0 6px 16px rgba(0, 0, 0, .28);
     display: flex; flex-direction: column;
     overflow: hidden;
@@ -367,80 +515,56 @@
   }
   .home.empty .homeInner { border-style: dashed; border-color: rgba(255, 255, 255, .35); }
   .home.giftPulse .homeInner { animation: giftPulse .9s ease; }
-  .videoBox { position: relative; flex: 1 1 auto; min-height: 0; background: linear-gradient(150deg, var(--pc), #081a12); }
-  .homeVideo {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    z-index: 1;
-    visibility: hidden;
-  }
-  .homeVideo.live { visibility: visible; }
-  .home.self .homeVideo { transform: scaleX(-1); }
-  .camOff {
-    position: absolute; inset: 0;
-    display: none;
-    align-items: center; justify-content: center;
-    font-size: clamp(17px, 5vw, 26px);
-    font-weight: 900;
-    color: rgba(255, 255, 255, .85);
-    background: linear-gradient(150deg, var(--pc), #08180f);
-    z-index: 2;
-  }
-  .camOff.show { display: flex; }
-  .nameTag {
-    position: absolute; left: 4px; top: 4px;
-    max-width: 88%;
-    display: flex; align-items: center; gap: 3px;
-    background: rgba(0, 0, 0, .52);
-    border-radius: 6px;
-    padding: 2px 5px;
-    font-size: clamp(7px, 2vw, 10px);
-    font-weight: 700;
-    color: #fff;
-    z-index: 4;
-    pointer-events: none;
-  }
-  .nameTag .sdot { width: 5px; height: 5px; border-radius: 50%; background: var(--pc); flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(255, 255, 255, .5); }
-  .nameTag .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .turnChip {
-    display: none;
-    font-style: normal;
-    font-size: 6.5px;
-    font-weight: 900;
-    letter-spacing: .04em;
-    color: #062015;
-    background: #fff;
-    border-radius: 4px;
-    padding: 1px 3px;
+  .homeHead {
     flex: 0 0 auto;
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 6px;
+    background: rgba(0, 0, 0, .34);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    z-index: 4;
   }
-  .home.activeTurn .turnChip { display: inline-block; }
+  .homeHead .sdot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--pc); flex: 0 0 auto;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .55);
+  }
+  .homeHead .pname {
+    font-size: clamp(7px, 1.9vw, 10px);
+    font-weight: 800;
+    color: #fff;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .homeTokens {
-    position: absolute;
-    left: 10%; right: 10%; top: 27%; bottom: 7%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    place-items: center;
-    gap: 1px;
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
     z-index: 3;
     pointer-events: none;
   }
   .hslot {
-    position: relative;
+    position: absolute;
     display: flex; align-items: center; justify-content: center;
-    width: 100%; height: 100%;
+    width: 42%; height: 42%;
     padding: 0; border: 0; background: transparent;
     pointer-events: none;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45));
     animation: tokenFloat 3.2s ease-in-out infinite;
   }
-  .hslot:nth-child(2) { animation-delay: -.8s; }
-  .hslot:nth-child(3) { animation-delay: -1.6s; }
-  .hslot:nth-child(4) { animation-delay: -2.4s; }
-  .hslot svg { height: 74%; width: auto; max-width: 100%; display: block; }
+  .hslot:nth-child(1) { left: 4%; top: 3%; }
+  .hslot:nth-child(2) { right: 4%; top: 3%; animation-delay: -.8s; }
+  .hslot:nth-child(3) { left: 4%; bottom: 3%; animation-delay: -1.6s; }
+  .hslot:nth-child(4) { right: 4%; bottom: 3%; animation-delay: -2.4s; }
+  .hslot svg { height: 100%; width: auto; max-width: 100%; max-height: 100%; display: block; }
   .hslot.movable { pointer-events: auto; cursor: pointer; animation: tokenPulse 1s ease-in-out infinite; z-index: 6; }
+  .hslot.away svg { visibility: hidden; }
+  .hslot.away::before {
+    content: "";
+    position: absolute;
+    width: 46%; aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, .34);
+    background: rgba(0, 0, 0, .12);
+  }
   .hslot.done::after {
     content: "✓";
     position: absolute;
@@ -480,48 +604,23 @@
   .home.empty .emptyHit { display: flex; }
   .emptyHit b { font-size: clamp(8px, 2.2vw, 11px); letter-spacing: .04em; }
   .emptyHit span { font-size: clamp(6px, 1.6vw, 8.5px); color: #bfe3d1; }
-  .ctrlBar {
-    order: -1;
-    flex: 0 0 auto;
-    height: clamp(19px, 5.6vw, 25px);
-    display: flex; align-items: center; justify-content: space-around;
-    background: rgba(3, 14, 9, .96);
-    border-top: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, .12);
-    z-index: 5;
-  }
-  .home.empty .ctrlBar { visibility: hidden; }
-  .ctrl {
-    width: clamp(16px, 4.8vw, 21px);
-    height: clamp(16px, 4.8vw, 21px);
-    border: 0; border-radius: 5px;
-    background: transparent;
-    color: #e8fff4;
-    display: flex; align-items: center; justify-content: center;
-    padding: 0;
-  }
-  .ctrl svg { width: 68%; height: 68%; display: block; }
-  .ctrl.off { color: #ff5252; }
-  .ctrl[disabled] { opacity: .35; }
-  .ctrl.exit { color: #ff8a80; }
-  .home:not(.self) .ctrl.exit { visibility: hidden; }
 
   #dice {
     position: absolute;
-    width: clamp(38px, 12vw, 54px);
+    left: 50%; top: 50%;
+    width: 76%;
     aspect-ratio: 1 / 1;
     transform: translate(-50%, -50%);
-    border-radius: 22%;
+    border-radius: 20%;
     background: linear-gradient(145deg, #ffffff, #e6dfd0);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, .45), inset 0 -3px 0 rgba(0, 0, 0, .12);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .5), inset 0 -2px 0 rgba(0, 0, 0, .12);
     z-index: 10;
     display: grid; place-items: center;
-    transition: left .36s cubic-bezier(.2, .9, .2, 1), top .36s cubic-bezier(.2, .9, .2, 1);
     pointer-events: none;
   }
   #dice.myturn { pointer-events: auto; cursor: pointer; animation: dicePulse 1.3s ease-in-out infinite; }
-  #dice.rolling { animation: diceRoll 1.15s cubic-bezier(.15, .7, .25, 1); }
-  #dice .pipGrid { width: 70%; height: 70%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 12%; }
+  #dice.rolling { animation: diceRoll 1.9s cubic-bezier(.15, .7, .25, 1); }
+  #dice .pipGrid { width: 72%; height: 72%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 11%; }
   .pip { border-radius: 50%; background: transparent; }
   .pip.on { background: #1c1c1c; box-shadow: inset 0 1px 1px rgba(255, 255, 255, .5); }
 
@@ -555,6 +654,20 @@
     padding: 4px 9px;
     font-size: 10px;
     font-weight: 800;
+    white-space: nowrap;
+  }
+  #musicBadge {
+    border: 0;
+    border-radius: 6px;
+    background: rgba(0, 188, 212, .16);
+    color: #9beaff;
+    padding: 3px 7px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    max-width: 56vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
@@ -742,12 +855,13 @@
   }
   @keyframes diceRoll {
     0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
-    14% { transform: translate(-50%, -50%) rotate(250deg) scale(1.18); }
-    32% { transform: translate(-50%, -50%) rotate(520deg) scale(.9); }
-    50% { transform: translate(-50%, -50%) rotate(740deg) scale(1.14); }
-    68% { transform: translate(-50%, -50%) rotate(910deg) scale(.94); }
-    84% { transform: translate(-50%, -50%) rotate(1030deg) scale(1.08); }
-    100% { transform: translate(-50%, -50%) rotate(1120deg) scale(1); }
+    10% { transform: translate(-50%, -50%) rotate(340deg) scale(1.18); }
+    24% { transform: translate(-50%, -50%) rotate(700deg) scale(.9); }
+    40% { transform: translate(-50%, -50%) rotate(1080deg) scale(1.15); }
+    56% { transform: translate(-50%, -50%) rotate(1440deg) scale(.93); }
+    72% { transform: translate(-50%, -50%) rotate(1760deg) scale(1.1); }
+    86% { transform: translate(-50%, -50%) rotate(1980deg) scale(.97); }
+    100% { transform: translate(-50%, -50%) rotate(2160deg) scale(1); }
   }
   @keyframes playPulse {
     0%, 100% { transform: scale(1); }
@@ -777,6 +891,8 @@
   </div>
   <div class="tbRight">
     <button class="roomPill hidden" id="roomPill" type="button"><b id="roomPillCode">------</b></button>
+    <button class="tbIcon hidden" id="btnMusic" type="button" title="Room music"></button>
+    <button class="tbIcon danger hidden" id="btnDeleteRoom" type="button" title="Delete room"></button>
     <div class="balChip" id="balChip">৳ 0</div>
     <div class="meChip" id="meChip">Player</div>
   </div>
@@ -841,6 +957,7 @@
 </main>
 
 <section id="gameView" class="hidden">
+  <div class="camStrip" id="camStripTop"></div>
   <div id="boardWrap">
     <div id="boardStage">
       <div id="board">
@@ -852,14 +969,17 @@
           <div id="centerSlot"></div>
         </div>
       </div>
-      <div id="dice"><div class="pipGrid" id="dicePips"></div></div>
+      <div id="dice" class="hidden"><div class="pipGrid" id="dicePips"></div></div>
     </div>
   </div>
+  <div class="camStrip" id="camStripBottom"></div>
   <div id="statusBar">
     <span id="potBadge" class="hidden">POT ৳0</span>
+    <button id="musicBadge" class="hidden" type="button"></button>
     <span id="statusText"></span>
     <button id="btnEnableMedia" class="hidden" type="button">Enable camera &amp; mic</button>
   </div>
+  <audio id="roomMusic" loop playsinline></audio>
 </section>
 
 <div id="fatal" class="hidden">
@@ -934,12 +1054,6 @@
     }
   };
   var MODES = { "2": ["0","2"], "3": ["0","1","2"], "4": ["0","1","2","3"] };
-  var DICE_POS = {
-    "0": { left: "13%", top: "-13%" },
-    "1": { left: "87%", top: "-13%" },
-    "2": { left: "87%", top: "113%" },
-    "3": { left: "13%", top: "113%" }
-  };
   var PIPS = {
     1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8]
   };
@@ -970,7 +1084,9 @@
     mic: '<svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11z" fill="currentColor"/></svg>',
     gift: '<svg viewBox="0 0 24 24"><path d="M20 8h-2.2a3 3 0 0 0-4.6-3.7L12 5.6l-1.2-1.3A3 3 0 0 0 6.2 8H4v4h1v9h14v-9h1zM8 8a1 1 0 1 1 1-1c0 .6-.3 1.1-.8 1.5L8 8zm8 0-1.2-.5A1.8 1.8 0 1 1 16 8zM9 12h2v7H9zm4 0h2v7h-2z" fill="currentColor"/></svg>',
     full: '<svg viewBox="0 0 24 24"><path d="M3 3h8v2H5v6H3zm18 0v8h-2V5h-6V3zM3 13h2v6h6v2H3zm16 0h2v8h-8v-2h6z" fill="currentColor"/></svg>',
-    exit: '<svg viewBox="0 0 24 24"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5zm5.6 4.6L14.2 9l2 2H8v2h8.2l-2 2 1.4 1.4L20.4 12z" fill="currentColor"/></svg>'
+    exit: '<svg viewBox="0 0 24 24"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5zm5.6 4.6L14.2 9l2 2H8v2h8.2l-2 2 1.4 1.4L20.4 12z" fill="currentColor"/></svg>',
+    music: '<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="6.4" cy="18" r="2.6" fill="currentColor"/><circle cx="16.4" cy="16" r="2.6" fill="currentColor"/></svg>',
+    trash: '<svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7zM9.5 7V4h5v3M4 7h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>'
   };
   var GIFT_ICON = '<svg viewBox="0 0 24 24"><path d="M20 8h-2.2a3 3 0 0 0-4.6-3.7L12 5.6l-1.2-1.3A3 3 0 0 0 6.2 8H4v4h1v9h14v-9h1zM8 8a1 1 0 1 1 1-1c0 .6-.3 1.1-.8 1.5L8 8zm8 0-1.2-.5A1.8 1.8 0 1 1 16 8zM9 12h2v7H9zm4 0h2v7h-2z" fill="currentColor"/></svg>';
 
@@ -1027,19 +1143,32 @@
   var camOn = false;
   var peers = new Map();
   var remoteStreams = {};
+  var remoteAudios = {};
   var myRtcStart = Date.now();
   var rtcEpochRef = null;
   var rtcEpochCb = null;
 
   var boardBuilt = false;
   var homesBuilt = false;
+  var camsBuilt = false;
   var tokenEls = [];
   var homeEls = {};
-  var homeVideos = {};
   var homeSlots = {};
   var homeBadges = {};
+  var camTiles = {};
+  var camVideos = {};
+  var camOffs = {};
+  var diceBoxes = {};
   var liveSeats = {};
   var giftCounts = {};
+
+  var isAdminUser = false;
+  var centerSig = "";
+  var musicKey = "";
+  var musicWanted = false;
+  var musicBlocked = false;
+  var musicVolume = 0.9;
+  var musicToastAt = 0;
 
   function $(id) { return document.getElementById(id); }
   function seatList(mode) { return MODES[String(mode)] || MODES["4"]; }
@@ -1527,6 +1656,182 @@
     });
   }
 
+  /* ---------------- room music ---------------- */
+
+  function musicTitle(url) {
+    try {
+      var u = new URL(url);
+      var name = decodeURIComponent((u.pathname || "").split("/").pop() || "")
+        .replace(/\.[a-z0-9]{2,5}$/i, "")
+        .replace(/[_-]+/g, " ")
+        .trim();
+      return name || u.hostname || "Room song";
+    } catch (e) {
+      return "Room song";
+    }
+  }
+
+  function openMusicModal() {
+    if (!roomId || !room) { toast("Join a room first"); return; }
+    var body = document.createElement("div");
+    var now = document.createElement("p");
+    var m = room.music;
+    var playing = !!(m && m.url && m.playing !== false);
+    now.textContent = playing
+      ? ("Now playing: " + (m.title || musicTitle(m.url)) + (m.byName ? (" · " + m.byName) : ""))
+      : "No song playing. Paste a direct audio link and everyone in this room will hear it.";
+    body.appendChild(now);
+    var input = document.createElement("input");
+    input.className = "modalInput";
+    input.type = "url";
+    input.inputMode = "url";
+    input.placeholder = "https://…/song.mp3";
+    input.value = playing ? m.url : "";
+    body.appendChild(input);
+    var hint = document.createElement("p");
+    hint.textContent = "Direct audio link only (mp3, m4a, ogg, aac). Any player in the room can change or stop it.";
+    body.appendChild(hint);
+    var volWrap = document.createElement("div");
+    volWrap.style.cssText = "display:flex;align-items:center;gap:8px;color:#c6e3d5;font-size:11px;font-weight:700;";
+    var volLabel = document.createElement("span");
+    volLabel.textContent = "Volume";
+    var vol = document.createElement("input");
+    vol.type = "range";
+    vol.min = "0";
+    vol.max = "100";
+    vol.value = String(Math.round(musicVolume * 100));
+    vol.style.flex = "1";
+    vol.addEventListener("input", function () {
+      musicVolume = Math.max(0, Math.min(1, Number(vol.value) / 100));
+      var el = $("roomMusic");
+      if (el) el.volume = musicVolume;
+    });
+    volWrap.appendChild(volLabel);
+    volWrap.appendChild(vol);
+    body.appendChild(volWrap);
+    openModal("Room music", body, [
+      {
+        label: "Play for all", cls: "primary", keepOpen: true, onClick: function () {
+          sendRoomMusic(input.value);
+        }
+      },
+      { label: "Stop", cls: "danger", onClick: stopRoomMusic },
+      { label: "Close", cls: "ghost" }
+    ]);
+  }
+
+  function sendRoomMusic(url) {
+    if (!roomId) return;
+    var clean = String(url || "").trim();
+    if (!/^(https?:\/\/|data:audio\/)/i.test(clean)) {
+      toast("Paste a direct audio link (https://…mp3)");
+      return;
+    }
+    db.ref("ludoRooms/" + roomId + "/music").set({
+      url: clean,
+      title: musicTitle(clean),
+      by: uid,
+      byName: myName,
+      at: Date.now(),
+      playing: true
+    }).then(function () {
+      closeModal();
+      toast("Music playing for everyone");
+    }).catch(function () { toast("Could not start the music"); });
+  }
+
+  function stopRoomMusic() {
+    if (!roomId) return;
+    db.ref("ludoRooms/" + roomId + "/music").remove().then(function () {
+      closeModal();
+      toast("Music stopped");
+    }).catch(function () { toast("Could not stop the music"); });
+  }
+
+  function applyRoomMusic() {
+    if (!db) return;
+    var m = room && room.music;
+    var wanted = !!(m && m.url && m.playing !== false);
+    var key = wanted ? (String(m.url) + "|" + String(m.at || 0)) : "";
+    var el = $("roomMusic");
+    if (!el) return;
+    if (key !== musicKey) {
+      musicKey = key;
+      musicWanted = wanted;
+      musicBlocked = false;
+      if (!wanted) {
+        try { el.pause(); } catch (e) {}
+        el.removeAttribute("src");
+        try { el.load(); } catch (e) {}
+      } else {
+        el.src = m.url;
+        el.loop = true;
+        el.volume = musicVolume;
+        playRoomMusicLocal();
+        if (m.by !== uid) toast("♪ " + (m.title || "Room music"));
+      }
+    } else {
+      musicWanted = wanted;
+    }
+    renderMusic();
+  }
+
+  function playRoomMusicLocal() {
+    var el = $("roomMusic");
+    if (!el || !musicWanted || !musicKey) return;
+    el.volume = musicVolume;
+    var p = el.play();
+    if (p && p.catch) {
+      p.catch(function () {
+        musicBlocked = true;
+        renderMusic();
+      });
+    }
+  }
+
+  function resumeRoomMusic() {
+    var el = $("roomMusic");
+    if (!el || !musicWanted) return;
+    if (!el.paused) return;
+    el.volume = musicVolume;
+    var p = el.play();
+    if (p && p.then) {
+      p.then(function () {
+        musicBlocked = false;
+        renderMusic();
+      }).catch(function () {});
+    }
+  }
+
+  function stopLocalMusic(clearKey) {
+    var el = $("roomMusic");
+    if (el) {
+      try { el.pause(); } catch (e) {}
+      el.removeAttribute("src");
+      try { el.load(); } catch (e) {}
+    }
+    musicWanted = false;
+    musicBlocked = false;
+    if (clearKey) musicKey = "";
+    renderMusic();
+  }
+
+  function renderMusic() {
+    var m = room && room.music;
+    var on = !!(m && m.url && m.playing !== false);
+    var badge = $("musicBadge");
+    var btn = $("btnMusic");
+    if (badge) {
+      badge.classList.toggle("hidden", !on);
+      if (on) {
+        badge.textContent = (musicBlocked ? "⚠ ♪ " : "♪ ") +
+          (m.title || musicTitle(m.url)) + (m.byName ? (" · " + m.byName) : "");
+        badge.title = musicBlocked ? "Tap to play the song on this phone" : "Room music";
+      }
+    }
+    if (btn) btn.classList.toggle("musicOn", on);
+  }
+
   /* ---------------- boot ---------------- */
 
   function boot() {
@@ -1548,12 +1853,25 @@
       return;
     }
     fetchMe();
+    attachRole();
     attachBalance();
     attachInvites();
     attachRooms();
     sweepRooms();
     sweepTimer = setInterval(sweepRooms, 25000);
     maybeRejoin();
+    var musicEl = $("roomMusic");
+    if (musicEl) {
+      musicEl.addEventListener("error", function () {
+        if (!musicKey) return;
+        musicBlocked = true;
+        renderMusic();
+        if (Date.now() - musicToastAt > 5000) {
+          musicToastAt = Date.now();
+          toast("Song could not play — check the audio link");
+        }
+      });
+    }
   }
 
   function fetchMe() {
@@ -1561,13 +1879,33 @@
       var v = snap.val() || {};
       myName = (v.name || v.fullName || usernameParam || v.username || "Player").toString().trim() || "Player";
       $("meChip").textContent = myName;
+      if (v.isAdmin === true || String(v.role || "").toLowerCase() === "admin") {
+        isAdminUser = true;
+        refreshAdminUi();
+      }
       if (roomId && mySeat) {
         db.ref("ludoRooms/" + roomId + "/seats/" + mySeat + "/name").set(myName).catch(function () {});
       }
     }).catch(function () {});
   }
 
+  function attachRole() {
+    db.ref("admins/" + uid).once("value").then(function (snap) {
+      if (snap.exists()) {
+        isAdminUser = true;
+        refreshAdminUi();
+      }
+    }).catch(function () {});
+  }
+
+  function refreshAdminUi() {
+    if (lastRooms) renderRooms(lastRooms);
+    renderRoomActions();
+  }
+
   function bindUi() {
+    $("btnMusic").innerHTML = ICON.music;
+    $("btnDeleteRoom").innerHTML = ICON.trash;
     var modeRow = $("modeRow");
     modeRow.addEventListener("click", function (e) {
       var btn = e.target.closest(".modeBtn");
@@ -1623,10 +1961,17 @@
       if (currentInvite) declineInvite(currentInvite);
     });
     $("btnEnableMedia").addEventListener("click", retryMedia);
+    $("btnMusic").addEventListener("click", openMusicModal);
+    $("btnDeleteRoom").addEventListener("click", deleteRoom);
+    $("musicBadge").addEventListener("click", openMusicModal);
     document.addEventListener("pointerdown", function () {
       ensureAudio();
       replayVideos();
     }, { passive: true });
+    window.addEventListener("resize", fitBoard);
+    window.addEventListener("orientationchange", function () {
+      setTimeout(fitBoard, 260);
+    });
     window.addEventListener("pagehide", function () {
       if (roomId && mySeat && db) {
         try {
@@ -1636,6 +1981,7 @@
       }
       closePeers();
       stopRing();
+      stopLocalMusic(true);
       if (sweepTimer) { clearInterval(sweepTimer); sweepTimer = null; }
     });
     setInterval(tickRoom, 1000);
@@ -1651,9 +1997,25 @@
 
   function replayVideos() {
     ["0","1","2","3"].forEach(function (s) {
-      var v = homeVideos[s];
+      var v = camVideos[s];
       if (v && v.srcObject) playVideo(v);
     });
+    Object.keys(remoteAudios).forEach(function (u) {
+      var a = remoteAudios[u];
+      if (a && a.srcObject) playVideo(a);
+    });
+    resumeRoomMusic();
+  }
+
+  function fitBoard() {
+    var wrap = $("boardWrap");
+    var stage = $("boardStage");
+    if (!wrap || !stage || $("gameView").classList.contains("hidden")) return;
+    var w = wrap.clientWidth;
+    if (w <= 0) return;
+    var size = Math.max(160, Math.min(w, 560));
+    stage.style.width = size + "px";
+    stage.style.height = size + "px";
   }
 
   function setBet(v, fromInput) {
@@ -1746,9 +2108,21 @@
         btn.textContent = "Join";
       }
       btn.addEventListener("click", function () { joinRoom(x.id); });
+      var actions = document.createElement("div");
+      actions.className = "rcActions";
+      actions.appendChild(btn);
+      if (isAdminUser) {
+        var del = document.createElement("button");
+        del.type = "button";
+        del.className = "btn small danger";
+        del.textContent = "Del";
+        del.title = "Delete room";
+        del.addEventListener("click", function () { confirmDeleteRoomById(x.id); });
+        actions.appendChild(del);
+      }
       card.appendChild(dot);
       card.appendChild(info);
-      card.appendChild(btn);
+      card.appendChild(actions);
       wrap.appendChild(card);
     });
   }
@@ -1943,6 +2317,7 @@
     list.forEach(function (s) { tokens[s] = [-1, -1, -1, -1]; home[s] = 0; });
     var data = {
       hostUid: uid,
+      createdBy: uid,
       mode: Number(mode),
       status: "waiting",
       bet: Math.max(0, Math.floor(Number(selectedBet) || 0)),
@@ -2017,6 +2392,11 @@
     $("roomPillCode").textContent = String(id).slice(-6).toUpperCase();
     buildBoardOnce();
     buildHomesOnce();
+    buildCamTilesOnce();
+    centerSig = "";
+    musicKey = "";
+    musicWanted = false;
+    musicBlocked = false;
     armPresence();
     attachRoom();
     attachGifts();
@@ -2025,6 +2405,10 @@
     seatRef.update({ name: myName, online: true, lastSeenAt: Date.now() }).catch(function () {});
     db.ref("ludoRooms/" + id + "/rtcEpoch/" + uid).set(Date.now()).catch(function () {});
     startMedia();
+    requestAnimationFrame(function () {
+      fitBoard();
+      requestAnimationFrame(fitBoard);
+    });
     if (!silent) toast("Joined room");
   }
 
@@ -2058,6 +2442,8 @@
       renderRoom();
       refreshVideos();
       renderHomes();
+      renderCamTiles();
+      applyRoomMusic();
       syncPeers();
       maybeAutoPass();
       cleanupOffline();
@@ -2153,6 +2539,7 @@
       db.ref("ludoRooms/" + roomId + "/rtcEpoch/" + uid).remove().catch(function () {});
     }
     stopMedia();
+    stopLocalMusic(true);
     stopRing();
     clearTimeout(autoPassTimer);
     autoPassTimer = null;
@@ -2167,10 +2554,14 @@
     leaving = false;
     presenceArmed = false;
     endModalKey = "";
+    centerSig = "";
     giftCounts = {};
     $("gameView").classList.add("hidden");
     $("lobbyView").classList.remove("hidden");
     $("roomPill").classList.add("hidden");
+    $("btnMusic").classList.add("hidden");
+    $("btnDeleteRoom").classList.add("hidden");
+    $("musicBadge").classList.add("hidden");
     if (db) {
       db.ref("ludoRooms").orderByKey().limitToLast(80).once("value").then(function (s) {
         lastRooms = s.val() || {};
@@ -2236,6 +2627,64 @@
     return online[0] === uid;
   }
 
+  function canDeleteRoom() {
+    return !!(room && (room.hostUid === uid || room.createdBy === uid || isAdminUser));
+  }
+
+  function renderRoomActions() {
+    var inRoom = !!roomId;
+    $("btnMusic").classList.toggle("hidden", !inRoom);
+    $("btnDeleteRoom").classList.toggle("hidden", !(inRoom && canDeleteRoom()));
+  }
+
+  function deleteRoom() {
+    if (!room || !roomId) return;
+    if (!canDeleteRoom()) { toast("Only the host or an admin can delete this room"); return; }
+    openModal("Delete room?", bodyText(
+      "This closes the room for everyone. Any unpaid bets in the current round are refunded."
+    ), [
+      { label: "Delete", cls: "danger", onClick: performRoomDelete },
+      { label: "Cancel", cls: "ghost" }
+    ]);
+  }
+
+  function performRoomDelete() {
+    if (!room || !roomId) return;
+    var id = roomId;
+    var r = room;
+    selfLeaving = true;
+    disbandRoom(id, r).then(function () {
+      leaveLocalRoom(true);
+      selfLeaving = false;
+      toast("Room deleted");
+    }).catch(function () {
+      selfLeaving = false;
+      toast("Could not delete the room");
+    });
+  }
+
+  function confirmDeleteRoomById(id) {
+    if (!isAdminUser) return;
+    db.ref("ludoRooms/" + id).once("value").then(function (snap) {
+      var r = snap.val();
+      if (!r) { toast("Room already closed"); return; }
+      openModal("Delete room?", bodyText(
+        "Room " + shortId(id) + " will be closed and every player will leave. Any unpaid bets are refunded."
+      ), [
+        {
+          label: "Delete", cls: "danger", onClick: function () {
+            disbandRoom(id, r).then(function () {
+              toast("Room deleted");
+            }).catch(function () {
+              toast("Could not delete the room");
+            });
+          }
+        },
+        { label: "Cancel", cls: "ghost" }
+      ]);
+    }).catch(function () { toast("Could not load the room"); });
+  }
+
   function cleanupOffline() {
     if (!room || !roomId || !isLeader()) return;
     var now = Date.now();
@@ -2284,22 +2733,14 @@
   }
 
   function startGame() {
-    if (!roomRef || !room || !isHost() || startBusy) return;
+    if (!roomRef || !room || startBusy) return;
     if (room.status !== "waiting") return;
+    if (!mySeat || !room.seats || !room.seats[mySeat]) return;
     var bet = Math.max(0, Math.floor(Number(room.bet) || 0));
     var filled = roomSeats(room).filter(function (s) { return room.seats[s]; });
     if (filled.length < 2) { toast("Need at least 2 players to start"); return; }
-    if (bet > 0) {
-      openModal("Start paid game?", bodyText(
-        "Bet " + fmtMoney(bet) + " per player. Winner takes " + fmtMoney(bet * filled.length) +
-        ". The bet is taken from every player's account at start."
-      ), [
-        { label: "Start", cls: "primary", onClick: function () { beginPaidGame(bet); } },
-        { label: "Cancel", cls: "ghost" }
-      ]);
-      return;
-    }
-    beginFreeGame();
+    if (bet > 0) beginPaidGame(bet);
+    else beginFreeGame();
   }
 
   function beginFreeGame() {
@@ -2338,7 +2779,8 @@
   }
 
   function beginPaidGame(bet) {
-    if (!roomRef || !room || !isHost() || startBusy) return;
+    if (!roomRef || !room || startBusy) return;
+    if (!mySeat || !room.seats || !room.seats[mySeat]) return;
     startBusy = true;
     var id = roomId;
     var roundId = id + "-g" + Date.now().toString(36);
@@ -2363,7 +2805,7 @@
       r.starting = { by: uid, at: Date.now(), bet: bet, roundId: roundId, gameNo: no };
       return r;
     }).then(function (res) {
-      if (!res.committed) { fail("Could not start — try again"); return; }
+      if (!res.committed) { startBusy = false; return; }
       var r = res.snapshot.val();
       var queue = seatList(r.mode).filter(function (s) { return r.seats && r.seats[s]; }).map(function (s) {
         return { seat: String(s), uid: String(r.seats[s].uid), name: r.seats[s].name || "Player" };
@@ -2720,36 +3162,16 @@
       var inner = document.createElement("div");
       inner.className = "homeInner";
 
-      var videoBox = document.createElement("div");
-      videoBox.className = "videoBox";
-      var video = document.createElement("video");
-      video.className = "homeVideo";
-      video.autoplay = true;
-      video.playsInline = true;
-      video.setAttribute("playsinline", "");
-      video.setAttribute("webkit-playsinline", "");
-      video.muted = true;
-      videoBox.appendChild(video);
-
-      var camOff = document.createElement("div");
-      camOff.className = "camOff";
-      camOff.textContent = "P";
-      videoBox.appendChild(camOff);
-
-      var tag = document.createElement("div");
-      tag.className = "nameTag";
+      var head = document.createElement("div");
+      head.className = "homeHead";
       var dot = document.createElement("span");
       dot.className = "sdot";
       var nm = document.createElement("span");
       nm.className = "pname";
       nm.textContent = "Empty";
-      var turnChip = document.createElement("em");
-      turnChip.className = "turnChip";
-      turnChip.textContent = "TURN";
-      tag.appendChild(dot);
-      tag.appendChild(nm);
-      tag.appendChild(turnChip);
-      videoBox.appendChild(tag);
+      head.appendChild(dot);
+      head.appendChild(nm);
+      inner.appendChild(head);
 
       var tokWrap = document.createElement("div");
       tokWrap.className = "homeTokens";
@@ -2766,53 +3188,129 @@
           slots.push(slot);
         })(s, i);
       }
-      videoBox.appendChild(tokWrap);
+      inner.appendChild(tokWrap);
 
       var badge = document.createElement("div");
       badge.className = "giftBadge hidden";
       badge.innerHTML = GIFT_ICON + '<b>0</b>';
-      videoBox.appendChild(badge);
+      inner.appendChild(badge);
 
       var emptyHit = document.createElement("button");
       emptyHit.type = "button";
       emptyHit.className = "emptyHit";
       emptyHit.innerHTML = "<b>Empty</b><span>Tap to invite</span>";
       emptyHit.addEventListener("click", function () { onEmptySeat(s); });
-      videoBox.appendChild(emptyHit);
+      inner.appendChild(emptyHit);
 
-      inner.appendChild(videoBox);
-
-      var bar = document.createElement("div");
-      bar.className = "ctrlBar";
-      [["cam", ICON.cam], ["mic", ICON.mic], ["gift", ICON.gift], ["full", ICON.full], ["exit", ICON.exit]].forEach(function (pair) {
-        var b = document.createElement("button");
-        b.type = "button";
-        b.className = "ctrl" + (pair[0] === "exit" ? " exit" : "");
-        b.setAttribute("data-act", pair[0]);
-        b.title = pair[0].charAt(0).toUpperCase() + pair[0].slice(1);
-        b.innerHTML = pair[1];
-        bar.appendChild(b);
-      });
-      bar.addEventListener("click", function (e) {
-        var btn = e.target.closest("[data-act]");
-        if (!btn) return;
-        var act = btn.getAttribute("data-act");
-        var mine = s === mySeatString();
-        if (act === "cam") { if (mine) toggleCam(); }
-        else if (act === "mic") { if (mine) toggleMic(); }
-        else if (act === "gift") { openGiftFlow(s); }
-        else if (act === "full") { openFull(s); }
-        else if (act === "exit") { if (mine) leaveRoom(); }
-      });
-      inner.appendChild(bar);
       home.appendChild(inner);
       $("board").appendChild(home);
 
       homeEls[s] = home;
-      homeVideos[s] = video;
       homeSlots[s] = slots;
       homeBadges[s] = badge;
       liveSeats[s] = false;
+    });
+  }
+
+  function buildCamTilesOnce() {
+    if (camsBuilt) return;
+    camsBuilt = true;
+    var order = { top: ["0", "1"], bottom: ["3", "2"] };
+    Object.keys(order).forEach(function (where) {
+      var strip = $(where === "top" ? "camStripTop" : "camStripBottom");
+      if (!strip) return;
+      order[where].forEach(function (s) {
+        var tile = document.createElement("div");
+        tile.className = "camTile";
+        tile.setAttribute("data-seat", s);
+        tile.style.setProperty("--pc", SEATS[s].color);
+
+        var view = document.createElement("div");
+        view.className = "camView";
+
+        var video = document.createElement("video");
+        video.className = "camVideo";
+        video.autoplay = true;
+        video.playsInline = true;
+        video.muted = true;
+        video.setAttribute("playsinline", "");
+        video.setAttribute("webkit-playsinline", "");
+        view.appendChild(video);
+
+        var off = document.createElement("div");
+        off.className = "camOff";
+        off.textContent = "P";
+        view.appendChild(off);
+
+        var tag = document.createElement("div");
+        tag.className = "nameTag";
+        var dot = document.createElement("span");
+        dot.className = "sdot";
+        var nm = document.createElement("span");
+        nm.className = "pname";
+        nm.textContent = "Empty";
+        var turnChip = document.createElement("em");
+        turnChip.className = "turnChip";
+        turnChip.textContent = "TURN";
+        tag.appendChild(dot);
+        tag.appendChild(nm);
+        tag.appendChild(turnChip);
+        view.appendChild(tag);
+
+        var emptyHit = document.createElement("button");
+        emptyHit.type = "button";
+        emptyHit.className = "tileEmpty";
+        emptyHit.innerHTML = "<b>Empty</b><span>Tap to invite</span>";
+        emptyHit.addEventListener("click", function (e) {
+          e.stopPropagation();
+          onEmptySeat(s);
+        });
+        view.appendChild(emptyHit);
+
+        tile.appendChild(view);
+
+        var dbox = document.createElement("div");
+        dbox.className = "diceBox";
+        dbox.setAttribute("data-seat", s);
+        dbox.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (!room || room.status !== "playing" || !room.state) return;
+          if (String(room.state.turn) !== String(s)) return;
+          if (s !== mySeatString() || room.state.rolled) return;
+          rollDice();
+        });
+        tile.appendChild(dbox);
+
+        var bar = document.createElement("div");
+        bar.className = "camBar";
+        [["cam", ICON.cam], ["mic", ICON.mic], ["gift", ICON.gift], ["full", ICON.full], ["exit", ICON.exit]].forEach(function (pair) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "ctrl" + (pair[0] === "exit" ? " exit" : "");
+          b.setAttribute("data-act", pair[0]);
+          b.title = pair[0].charAt(0).toUpperCase() + pair[0].slice(1);
+          b.innerHTML = pair[1];
+          bar.appendChild(b);
+        });
+        bar.addEventListener("click", function (e) {
+          var btn = e.target.closest("[data-act]");
+          if (!btn) return;
+          var act = btn.getAttribute("data-act");
+          var mine = s === mySeatString();
+          if (act === "cam") { if (mine) toggleCam(); }
+          else if (act === "mic") { if (mine) toggleMic(); }
+          else if (act === "gift") { openGiftFlow(s); }
+          else if (act === "full") { openFull(s); }
+          else if (act === "exit") { if (mine) leaveRoom(); }
+        });
+        tile.appendChild(bar);
+        strip.appendChild(tile);
+
+        camTiles[s] = tile;
+        camVideos[s] = video;
+        camOffs[s] = off;
+        diceBoxes[s] = dbox;
+      });
     });
   }
 
@@ -2842,7 +3340,7 @@
       var p = room.seats && room.seats[s];
       homeSlots[s].forEach(function (slot) {
         slot.style.display = "none";
-        slot.classList.remove("movable", "done");
+        slot.classList.remove("movable", "done", "away");
       });
       if (!active || !p) return;
       var toks = (room.state.tokens && room.state.tokens[s]) || [-1, -1, -1, -1];
@@ -2850,11 +3348,12 @@
         var prog = Number(toks[i]);
         var slot = homeSlots[s][i];
         var canMove = (s === my && moves.indexOf(i) >= 0);
+        slot.style.display = "flex";
         if (prog < 0 || prog >= 56) {
-          slot.style.display = "flex";
           slot.classList.toggle("movable", canMove);
           slot.classList.toggle("done", prog >= 56);
         } else {
+          slot.classList.add("away");
           var pos = centerFor(s, prog, i);
           if (!pos) continue;
           items.push({ seat: s, idx: i, pos: pos });
@@ -2906,41 +3405,71 @@
       home.classList.toggle("self", mine);
       home.classList.toggle("activeTurn", !!(room.status === "playing" && room.state && String(room.state.turn) === s));
       var name = home.querySelector(".pname");
-      name.textContent = p ? (p.name || "Player") : "Empty";
-      var camOff = home.querySelector(".camOff");
-      camOff.textContent = p ? String(p.name || "P").trim().charAt(0).toUpperCase() || "P" : "";
-      var showOff = !!p && ((mine ? (!localStream || !camOn) : (p.camOn === false)) || !liveSeats[s]);
-      camOff.classList.toggle("show", showOff);
-      var video = homeVideos[s];
-      if (video) video.classList.toggle("live", !!p && !showOff);
+      if (name) name.textContent = p ? (p.name || "Player") : "Empty";
       var hit = home.querySelector(".emptyHit");
       if (hit) {
-        var b = hit.querySelector("b");
         var span = hit.querySelector("span");
-        if (b) b.textContent = "Empty";
         if (span) {
           span.textContent = (room.status === "waiting" && isHost()) ? "Tap to invite" :
             (room.status === "waiting" ? "Waiting for host" : "Empty seat");
         }
       }
-      var camBtn = home.querySelector('[data-act="cam"]');
-      var micBtn = home.querySelector('[data-act="mic"]');
-      var giftBtn = home.querySelector('[data-act="gift"]');
-      var fullBtn = home.querySelector('[data-act="full"]');
-      var exitBtn = home.querySelector('[data-act="exit"]');
-      var camState = p ? (mine ? (camOn && !!localStream) : p.camOn !== false) : false;
-      var micState = p ? (mine ? (micOn && !!localStream) : p.micOn !== false) : false;
-      camBtn.classList.toggle("off", !!p && !camState);
-      micBtn.classList.toggle("off", !!p && !micState);
-      camBtn.disabled = !mine;
-      micBtn.disabled = !mine;
-      giftBtn.disabled = !p || !roomSeats(room).some(function (x) { return room.seats[x].uid !== uid; });
-      fullBtn.disabled = !p;
-      exitBtn.disabled = !mine;
       var badge = homeBadges[s];
       var count = giftCounts[s] || 0;
       badge.classList.toggle("hidden", !count);
       badge.querySelector("b").textContent = String(count);
+    });
+  }
+
+  function renderCamTiles() {
+    if (!room) return;
+    ["0", "1", "2", "3"].forEach(function (s) {
+      var tile = camTiles[s];
+      if (!tile) return;
+      var active = seatList(room.mode).indexOf(s) >= 0;
+      tile.classList.toggle("hidden", !active);
+      if (!active) return;
+      var p = room.seats && room.seats[s];
+      var mine = s === mySeatString();
+      tile.classList.toggle("empty", !p);
+      tile.classList.toggle("self", mine);
+      tile.classList.toggle("activeTurn", !!(room.status === "playing" && room.state && String(room.state.turn) === s));
+      var name = tile.querySelector(".pname");
+      if (name) name.textContent = p ? (p.name || "Player") : "Empty";
+      var off = camOffs[s];
+      if (off) off.textContent = p ? (String(p.name || "P").trim().charAt(0).toUpperCase() || "P") : "";
+      var camState = p ? (mine ? (camOn && !!localStream) : p.camOn !== false) : false;
+      var micState = p ? (mine ? (micOn && !!localStream) : p.micOn !== false) : false;
+      var showOff = !!p && (!camState || !liveSeats[s]);
+      if (off) off.classList.toggle("show", showOff);
+      var video = camVideos[s];
+      if (video) video.classList.toggle("live", !!p && !showOff);
+      var hit = tile.querySelector(".tileEmpty");
+      if (hit) {
+        var span = hit.querySelector("span");
+        if (span) {
+          span.textContent = (room.status === "waiting" && isHost()) ? "Tap to invite" :
+            (room.status === "waiting" ? "Waiting for host" : "Empty seat");
+        }
+      }
+      var camBtn = tile.querySelector('[data-act="cam"]');
+      var micBtn = tile.querySelector('[data-act="mic"]');
+      var giftBtn = tile.querySelector('[data-act="gift"]');
+      var fullBtn = tile.querySelector('[data-act="full"]');
+      var exitBtn = tile.querySelector('[data-act="exit"]');
+      if (camBtn) {
+        camBtn.classList.toggle("off", !!p && !camState);
+        camBtn.disabled = !mine;
+      }
+      if (micBtn) {
+        micBtn.classList.toggle("off", !!p && !micState);
+        micBtn.disabled = !mine;
+      }
+      if (giftBtn) {
+        giftBtn.disabled = !p || !roomSeats(room).some(function (x) { return room.seats[x].uid !== uid; });
+      }
+      if (fullBtn) fullBtn.disabled = !p;
+      if (exitBtn) exitBtn.disabled = !mine;
     });
   }
 
@@ -2954,7 +3483,7 @@
   }
 
   function startDiceSpin() {
-    spinUntil = Date.now() + 1150;
+    spinUntil = Date.now() + 1900;
     var el = $("dice");
     if (el) {
       el.classList.remove("rolling");
@@ -2984,18 +3513,27 @@
 
   function renderDice() {
     var el = $("dice");
+    Object.keys(diceBoxes).forEach(function (s) {
+      diceBoxes[s].classList.remove("on", "myRoll");
+    });
     if (!room || room.status !== "playing" || !room.state) {
       el.classList.add("hidden");
       stopDiceSpin();
       return;
     }
-    el.classList.remove("hidden");
     var seat = String(room.state.turn);
-    var pos = DICE_POS[seat] || DICE_POS["0"];
-    el.style.left = pos.left;
-    el.style.top = pos.top;
+    var box = diceBoxes[seat];
+    if (!box) {
+      el.classList.add("hidden");
+      return;
+    }
+    if (el.parentNode !== box) box.appendChild(el);
+    el.classList.remove("hidden");
+    box.classList.add("on");
     var mine = seat === mySeatString();
-    el.classList.toggle("myturn", mine && !room.state.rolled);
+    var canRoll = mine && !room.state.rolled;
+    el.classList.toggle("myturn", canRoll);
+    box.classList.toggle("myRoll", canRoll);
     var spinning = Date.now() < spinUntil;
     var face = spinning
       ? (1 + Math.floor(Math.random() * 6))
@@ -3007,27 +3545,43 @@
 
   function renderCenter() {
     var slot = $("centerSlot");
-    if (!room) { slot.textContent = ""; return; }
+    if (!room) { slot.textContent = ""; centerSig = ""; return; }
     if (room.status === "waiting") {
       var filled = roomSeats(room).length;
       var total = seatList(room.mode).length;
-      if (isHost() && filled >= 2) {
-        if (!slot.querySelector(".playBtn")) {
-          slot.textContent = "";
-          var b = document.createElement("button");
-          b.type = "button";
-          b.className = "playBtn";
-          b.textContent = "PLAY";
-          b.addEventListener("click", startGame);
-          slot.appendChild(b);
-        }
+      var bet = Math.max(0, Math.floor(Number(room.bet) || 0));
+      var sig = "w|" + filled + "|" + total + "|" + bet;
+      if (sig === centerSig) return;
+      centerSig = sig;
+      slot.textContent = "";
+      if (filled >= 2) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "playBtn";
+        b.textContent = "PLAY";
+        b.addEventListener("click", startGame);
+        slot.appendChild(b);
+        var hint = document.createElement("div");
+        hint.className = "playHint";
+        hint.textContent = bet > 0 ? ("BET " + fmtMoney(bet)) : "FREE";
+        slot.appendChild(hint);
       } else {
-        slot.innerHTML = '<div class="waitCount">' + filled + "/" + total + "</div>" +
-          (isHost() ? '<div class="waitHint">INVITE</div>' : "");
+        var count = document.createElement("div");
+        count.className = "waitCount";
+        count.textContent = filled + "/" + total;
+        slot.appendChild(count);
+        var wait = document.createElement("div");
+        wait.className = "waitHint";
+        wait.textContent = "WAITING";
+        slot.appendChild(wait);
       }
     } else if (room.status === "ended") {
-      slot.innerHTML = '<div class="overMark">OVER</div>';
-    } else {
+      if (centerSig !== "over") {
+        centerSig = "over";
+        slot.innerHTML = '<div class="overMark">OVER</div>';
+      }
+    } else if (centerSig !== "playing") {
+      centerSig = "playing";
       slot.textContent = "";
     }
   }
@@ -3038,9 +3592,14 @@
     else if (room.status === "waiting") {
       var filled = roomSeats(room).length;
       var total = seatList(room.mode).length;
-      txt = isHost()
-        ? (filled + "/" + total + " players — tap an empty seat to call a friend")
-        : ("Waiting for host · " + filled + "/" + total);
+      var bet = Math.max(0, Math.floor(Number(room.bet) || 0));
+      if (filled >= 2) {
+        txt = filled + "/" + total + " players — tap PLAY to start" +
+          (bet > 0 ? " · bet " + fmtMoney(bet) : "");
+      } else {
+        txt = filled + "/" + total + " players — need " + (2 - filled) + " more" +
+          (isHost() ? " · tap an empty seat to call a friend" : "");
+      }
     } else if (room.status === "playing") {
       var t = String(room.state.turn);
       if (t === mySeatString()) {
@@ -3075,10 +3634,14 @@
     }
     renderTokens();
     renderHomes();
+    renderCamTiles();
     renderDice();
     renderCenter();
     renderStatus();
     renderPot();
+    renderRoomActions();
+    applyRoomMusic();
+    fitBoard();
     if (room.status === "ended") settleRoom();
     if (room.status === "ended") {
       var key = String(roomId) + ":" + String(room.roundId || (room.state && room.state.startedAt) || room.createdAt || "");
@@ -3155,6 +3718,7 @@
         camOn = false;
         renderStatus();
         renderHomes();
+        renderCamTiles();
         syncPeers();
         publishEpoch();
       });
@@ -3166,6 +3730,7 @@
     attachLocalVideo();
     renderStatus();
     renderHomes();
+    renderCamTiles();
     syncPeers();
     publishEpoch();
   }
@@ -3178,12 +3743,13 @@
   function attachLocalVideo() {
     var s = mySeatString();
     if (!s || !localStream) return;
-    var v = homeVideos[s];
+    var v = camVideos[s];
     if (!v) return;
     v.muted = true;
     if (v.srcObject !== localStream) v.srcObject = localStream;
     playVideo(v);
     liveSeats[s] = localStream.getVideoTracks().length > 0 && camOn;
+    renderCamTiles();
   }
 
   function publishEpoch() {
@@ -3196,23 +3762,59 @@
     if (!room) return;
     ["0", "1", "2", "3"].forEach(function (s) {
       var p = room.seats && room.seats[s];
-      var v = homeVideos[s];
+      var v = camVideos[s];
       if (!v) return;
       if (!p) {
-        v.srcObject = null;
+        if (v.srcObject) v.srcObject = null;
         liveSeats[s] = false;
         return;
       }
       var stream = (p.uid === uid) ? localStream : remoteStreams[p.uid];
       if (stream) {
         if (v.srcObject !== stream) v.srcObject = stream;
-        v.muted = (p.uid === uid);
+        v.muted = true;
         playVideo(v);
-        liveSeats[s] = stream.getVideoTracks().length > 0;
+        liveSeats[s] = stream.getVideoTracks().length > 0 &&
+          (p.uid === uid ? camOn : p.camOn !== false);
       } else {
-        v.srcObject = null;
+        if (v.srcObject) v.srcObject = null;
         liveSeats[s] = false;
       }
+    });
+    syncRemoteAudio();
+    renderCamTiles();
+  }
+
+  function syncRemoteAudio() {
+    if (!room) return;
+    var keep = {};
+    ["0", "1", "2", "3"].forEach(function (s) {
+      var p = room.seats && room.seats[s];
+      if (!p || p.uid === uid) return;
+      var stream = remoteStreams[p.uid];
+      if (!stream) return;
+      keep[p.uid] = true;
+      var a = remoteAudios[p.uid];
+      if (!a) {
+        a = document.createElement("audio");
+        a.autoplay = true;
+        a.playsInline = true;
+        a.setAttribute("playsinline", "");
+        document.body.appendChild(a);
+        remoteAudios[p.uid] = a;
+      }
+      if (a.srcObject !== stream) a.srcObject = stream;
+      a.muted = false;
+      a.volume = 1;
+      playVideo(a);
+    });
+    Object.keys(remoteAudios).forEach(function (pu) {
+      if (keep[pu]) return;
+      var a = remoteAudios[pu];
+      try { a.pause(); } catch (e) {}
+      try { a.srcObject = null; } catch (e) {}
+      if (a.parentNode) a.parentNode.removeChild(a);
+      delete remoteAudios[pu];
     });
   }
 
@@ -3223,13 +3825,20 @@
     }
     localStream = null;
     remoteStreams = {};
+    Object.keys(remoteAudios).forEach(function (pu) {
+      var a = remoteAudios[pu];
+      try { a.pause(); } catch (e) {}
+      try { a.srcObject = null; } catch (e) {}
+      if (a.parentNode) a.parentNode.removeChild(a);
+      delete remoteAudios[pu];
+    });
     rtcStarted = false;
     mediaReady = false;
     micOn = false;
     camOn = false;
     ["0", "1", "2", "3"].forEach(function (s) {
       liveSeats[s] = false;
-      var v = homeVideos[s];
+      var v = camVideos[s];
       if (v) v.srcObject = null;
     });
     renderStatus();
@@ -3245,7 +3854,7 @@
     micOn = !micOn;
     localStream.getAudioTracks().forEach(function (t) { t.enabled = micOn; });
     syncMediaFlags();
-    renderHomes();
+    renderCamTiles();
     toast(micOn ? "Mic on" : "Mic off");
   }
 
@@ -3256,7 +3865,7 @@
     localStream.getVideoTracks().forEach(function (t) { t.enabled = camOn; });
     liveSeats[mySeatString()] = camOn;
     syncMediaFlags();
-    renderHomes();
+    renderCamTiles();
     toast(camOn ? "Camera on" : "Camera off");
   }
 
@@ -3270,7 +3879,7 @@
       if (others.indexOf(p) < 0) closePeer(p);
     });
     refreshVideos();
-    renderHomes();
+    renderCamTiles();
   }
 
   function ensurePeer(peerUid) {
@@ -3376,7 +3985,7 @@
     if (!room) return;
     remoteStreams[peerUid] = stream;
     refreshVideos();
-    renderHomes();
+    renderCamTiles();
   }
 
   function closePeer(peerUid) {
@@ -3389,7 +3998,7 @@
     peers.delete(peerUid);
     delete remoteStreams[peerUid];
     refreshVideos();
-    renderHomes();
+    renderCamTiles();
   }
 
   function closePeers() {
@@ -3407,7 +4016,7 @@
     var v = document.createElement("video");
     v.autoplay = true;
     v.playsInline = true;
-    v.muted = (p.uid === uid);
+    v.muted = true;
     v.srcObject = stream;
     var name = document.createElement("div");
     name.className = "fullName";
