@@ -74,6 +74,14 @@
     white-space: nowrap;
   }
   .roomPill b { color: #fff; }
+  .roomPill .rpName {
+    display: inline-block; vertical-align: bottom;
+    max-width: 15vw;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #eafff4;
+  }
+  .roomPill .rpName:empty { display: none; }
+  .roomPill .rpName:not(:empty) + b { margin-left: 5px; }
   .balChip {
     border: 0;
     background: rgba(0, 200, 83, .15);
@@ -196,6 +204,7 @@
     outline: none;
   }
   .betHint { margin: 7px 2px 0; font-size: 10px; color: #7fae97; line-height: 1.45; }
+  .roomName { margin-top: 10px; margin-bottom: 10px; text-align: center; font-weight: 700; }
   .lobbyBal { margin-top: 10px; font-size: 11px; font-weight: 700; color: #a4ecc8; }
   .rcBet { color: #ffe08a; font-weight: 800; }
   .btn {
@@ -282,11 +291,10 @@
     background: #0b1d15;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
-    --diceW: clamp(46px, 14vw, 58px);
   }
   .camTile.empty { border-style: dashed; border-color: rgba(255, 255, 255, .3); }
   .camTile.activeTurn { box-shadow: 0 0 0 2px #fff, 0 0 14px var(--pc), 0 4px 12px rgba(0, 0, 0, .3); }
-  .camView { position: absolute; left: 0; top: 0; bottom: 0; right: calc(var(--diceW, 44px) + 6px); overflow: hidden; background: linear-gradient(150deg, var(--pc, #1b5e43), #081a12); }
+  .camView { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(150deg, var(--pc, #1b5e43), #081a12); }
   .camVideo {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
@@ -337,8 +345,7 @@
   .camTile.activeTurn .turnChip { display: inline-block; }
   .camBar {
     position: absolute;
-    left: 0; bottom: 0;
-    right: calc(var(--diceW, 44px) + 6px);
+    left: 0; right: 0; bottom: 0;
     height: clamp(16px, 4.6vw, 20px);
     display: flex; align-items: center; justify-content: space-around;
     background: rgba(3, 14, 9, .7);
@@ -360,27 +367,21 @@
   .ctrl[disabled] { opacity: .35; }
   .ctrl.exit { visibility: hidden; color: #ff8a80; }
   .camTile.self .ctrl.exit { visibility: visible; }
-  .diceBox {
-    position: absolute;
-    top: 50%; right: 3px;
-    transform: translateY(-50%);
-    width: var(--diceW, 44px);
-    aspect-ratio: 1 / 1;
-    border: 1.5px dashed rgba(255, 255, 255, .4);
-    border-radius: 9px;
-    background: rgba(0, 0, 0, .35);
-    z-index: 6;
+  #diceDock {
+    flex: 0 0 auto;
     display: flex; align-items: center; justify-content: center;
-    pointer-events: auto;
+    gap: 10px;
+    padding: 3px 8px 2px;
+    min-height: 0;
   }
-  .camTile.empty .diceBox { opacity: .5; }
-  .diceBox.on {
-    border-style: solid;
-    border-color: #fff;
-    background: rgba(0, 0, 0, .58);
-    box-shadow: 0 0 9px rgba(255, 255, 255, .5);
+  .dockLabel {
+    font-size: clamp(9px, 2.7vw, 11.5px);
+    font-weight: 800;
+    letter-spacing: .03em;
+    color: var(--dc, #cfe9dc);
+    max-width: 62vw;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .diceBox.myRoll { cursor: pointer; animation: dicePulse 1.3s ease-in-out infinite; }
   .tileEmpty {
     position: absolute; inset: 0;
     display: none;
@@ -448,7 +449,7 @@
   #center { position: absolute; left: 40%; top: 40%; width: 20%; height: 20%; z-index: 4; }
   #centerArt {
     position: absolute; inset: 0;
-    background: conic-gradient(from 45deg, #e53935 0 25%, #fbc02d 0 50%, #1e88e5 0 75%, #43a047 0 100%);
+    background: conic-gradient(from 45deg, #fbc02d 0 25%, #1e88e5 0 50%, #e53935 0 75%, #43a047 0 100%);
     border-radius: 8%;
   }
   #centerLabel {
@@ -612,12 +613,12 @@
   .emptyHit span { font-size: clamp(6px, 1.6vw, 8.5px); color: #bfe3d1; }
 
   #dice {
-    position: absolute;
-    left: 50%; top: 50%;
-    width: 76%;
+    position: relative;
+    flex: 0 0 auto;
+    width: clamp(44px, 13vw, 56px);
     aspect-ratio: 1 / 1;
-    transform: translate(-50%, -50%);
-    border-radius: 20%;
+    border: 3px solid var(--dc, #e6dfd0);
+    border-radius: 22%;
     background: linear-gradient(145deg, #ffffff, #e6dfd0);
     box-shadow: 0 3px 8px rgba(0, 0, 0, .5), inset 0 -2px 0 rgba(0, 0, 0, .12);
     z-index: 10;
@@ -711,17 +712,25 @@
     outline: none;
     margin-bottom: 10px;
   }
-  .giftGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .giftGrid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px;
+    max-height: 50vh; overflow-y: auto; padding-right: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
   .giftPick {
     border: 0;
-    border-radius: 12px;
-    padding: 10px 6px 8px;
+    border-radius: 11px;
+    padding: 8px 3px 6px;
     color: #fff;
-    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
     background: linear-gradient(150deg, var(--gc, #0b3b31), #062118);
   }
-  .giftPick svg { width: 26px; height: 26px; }
-  .giftPick span { font-size: 10px; font-weight: 700; }
+  .giftPick svg { width: 25px; height: 25px; }
+  .giftEmo { font-size: 25px; line-height: 1.12; }
+  .giftPick span { font-size: 9.5px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .musicPickRow { display: flex; gap: 8px; margin-bottom: 10px; }
+  .musicPickRow .btn { flex: 1; }
+  .giftFlyEmo { font-size: 25px; line-height: 1; }
   .pickRow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
   .pickChip {
     border: 1px solid var(--line);
@@ -860,14 +869,14 @@
     50% { box-shadow: 0 8px 18px rgba(0, 0, 0, .5), 0 0 0 4px rgba(255, 255, 255, .75), 0 0 22px rgba(0, 200, 83, .8); }
   }
   @keyframes diceRoll {
-    0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
-    10% { transform: translate(-50%, -50%) rotate(340deg) scale(1.18); }
-    24% { transform: translate(-50%, -50%) rotate(700deg) scale(.9); }
-    40% { transform: translate(-50%, -50%) rotate(1080deg) scale(1.15); }
-    56% { transform: translate(-50%, -50%) rotate(1440deg) scale(.93); }
-    72% { transform: translate(-50%, -50%) rotate(1760deg) scale(1.1); }
-    86% { transform: translate(-50%, -50%) rotate(1980deg) scale(.97); }
-    100% { transform: translate(-50%, -50%) rotate(2160deg) scale(1); }
+    0% { transform: rotate(0deg) scale(1); }
+    10% { transform: rotate(340deg) scale(1.18); }
+    24% { transform: rotate(700deg) scale(.9); }
+    40% { transform: rotate(1080deg) scale(1.15); }
+    56% { transform: rotate(1440deg) scale(.93); }
+    72% { transform: rotate(1760deg) scale(1.1); }
+    86% { transform: rotate(1980deg) scale(.97); }
+    100% { transform: rotate(2160deg) scale(1); }
   }
   @keyframes playPulse {
     0%, 100% { transform: scale(1); }
@@ -896,7 +905,7 @@
     <div class="brandText"><span class="brandMark">TM247</span><span class="brandLudo">LUDO</span></div>
   </div>
   <div class="tbRight">
-    <button class="roomPill hidden" id="roomPill" type="button"><b id="roomPillCode">------</b></button>
+    <button class="roomPill hidden" id="roomPill" type="button"><span class="rpName" id="roomPillName"></span><b id="roomPillCode">------</b></button>
     <button class="tbIcon hidden" id="btnMusic" type="button" title="Room music"></button>
     <button class="tbIcon danger hidden" id="btnDeleteRoom" type="button" title="Delete room"></button>
     <div class="balChip" id="balChip">৳ 0</div>
@@ -941,6 +950,7 @@
         <input class="betCustom" id="betCustom" type="number" inputmode="numeric" min="0" max="9999" placeholder="Custom amount (0 = free)" />
         <div class="betHint" id="betHint">Free game — no money</div>
       </div>
+      <input class="betCustom roomName" id="roomNameInput" type="text" maxlength="24" placeholder="Room name (optional)" autocomplete="off" />
       <button class="btn primary big" id="btnCreate" type="button">Create Room</button>
       <div class="lobbyBal" id="lobbyBal">Balance: ৳0</div>
     </section>
@@ -975,10 +985,13 @@
           <div id="centerSlot"></div>
         </div>
       </div>
-      <div id="dice" class="hidden"><div class="pipGrid" id="dicePips"></div></div>
     </div>
   </div>
   <div class="camStrip" id="camStripBottom"></div>
+  <div id="diceDock" class="hidden">
+    <div id="dice"><div class="pipGrid" id="dicePips"></div></div>
+    <span class="dockLabel" id="diceHint"></span>
+  </div>
   <div id="statusBar">
     <span id="potBadge" class="hidden">POT ৳0</span>
     <button id="musicBadge" class="hidden" type="button"></button>
@@ -1083,7 +1096,34 @@
     { id: "teddy", label: "Teddy", color: "#b45309", svg: '<path d="M7 6a2.5 2.5 0 1 1 2.4-3.2h5.2A2.5 2.5 0 1 1 17 6h.5A3.5 3.5 0 0 1 21 9.5v3a3.5 3.5 0 0 1-3.5 3.5H6.5A3.5 3.5 0 0 1 3 12.5v-3A3.5 3.5 0 0 1 6.5 6H7zm2 7.5a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8zm6 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z"/>' },
     { id: "diamond", label: "Diamond", color: "#00acc1", svg: '<path d="M12 2l8 7-8 13L4 9z"/>' },
     { id: "crown", label: "Crown", color: "#a16207", svg: '<path d="M3 7l4.5 3.5L12 4l4.5 6.5L21 7l-2 12H5z"/>' },
-    { id: "star", label: "Star", color: "#ca8a04", svg: '<path d="M12 2l2.9 6.2 6.8.8-5 4.7 1.4 6.7L12 17.8 5.9 20.4l1.4-6.7-5-4.7 6.8-.8z"/>' }
+    { id: "star", label: "Star", color: "#ca8a04", svg: '<path d="M12 2l2.9 6.2 6.8.8-5 4.7 1.4 6.7L12 17.8 5.9 20.4l1.4-6.7-5-4.7 6.8-.8z"/>' },
+    { id: "cow", emoji: "🐄", label: "Cow", color: "#8d6e63" },
+    { id: "goat", emoji: "🐐", label: "Goat", color: "#9e9d24" },
+    { id: "fish", emoji: "🐟", label: "Fish", color: "#00897b" },
+    { id: "love", emoji: "❤️", label: "Love", color: "#e53935" },
+    { id: "kiss", emoji: "💋", label: "Kiss", color: "#d81b60" },
+    { id: "crush", emoji: "😍", label: "Crush", color: "#f06292" },
+    { id: "hot", emoji: "🔥", label: "Hot", color: "#f4511e" },
+    { id: "stylish", emoji: "😎", label: "Stylish", color: "#3949ab" },
+    { id: "party", emoji: "🥳", label: "Party", color: "#8e24aa" },
+    { id: "bouquet", emoji: "💐", label: "Bouquet", color: "#ab47bc" },
+    { id: "giftbox", emoji: "🎁", label: "Gift box", color: "#00acc1" },
+    { id: "cake", emoji: "🎂", label: "Cake", color: "#ec407a" },
+    { id: "icecream", emoji: "🍦", label: "Ice cream", color: "#26c6da" },
+    { id: "burger", emoji: "🍔", label: "Burger", color: "#f9a825" },
+    { id: "coffee", emoji: "☕", label: "Coffee", color: "#6d4c41" },
+    { id: "cat", emoji: "🐱", label: "Cat", color: "#ffb300" },
+    { id: "dog", emoji: "🐶", label: "Dog", color: "#795548" },
+    { id: "horse", emoji: "🐎", label: "Horse", color: "#6d4c41" },
+    { id: "elephant", emoji: "🐘", label: "Elephant", color: "#78909c" },
+    { id: "dove", emoji: "🕊️", label: "Dove", color: "#90a4ae" },
+    { id: "rainbow", emoji: "🌈", label: "Rainbow", color: "#26a69a" },
+    { id: "fireworks", emoji: "🎆", label: "Fireworks", color: "#5e35b1" },
+    { id: "trophy", emoji: "🏆", label: "Trophy", color: "#f9a825" },
+    { id: "car", emoji: "🚗", label: "Car", color: "#e53935" },
+    { id: "plane", emoji: "✈️", label: "Plane", color: "#1e88e5" },
+    { id: "money", emoji: "💸", label: "Money", color: "#43a047" },
+    { id: "song", emoji: "🎵", label: "Song", color: "#7e57c2" }
   ];
   var ICON = {
     cam: '<svg viewBox="0 0 24 24"><path d="M4 7h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm13 3 5-3v10l-5-3z" fill="currentColor"/></svg>',
@@ -1164,7 +1204,6 @@
   var camTiles = {};
   var camVideos = {};
   var camOffs = {};
-  var diceBoxes = {};
   var liveSeats = {};
   var giftCounts = {};
 
@@ -1443,7 +1482,10 @@
 
   function disbandRoom(id, r) {
     var ref = db.ref("ludoRooms/" + id);
-    var finish = function () { return ref.remove(); };
+    var finish = function () {
+      db.ref("ludoMusic/" + id).remove().catch(function () {});
+      return ref.remove();
+    };
     if (!r) return finish();
     var roundId = r.roundId || id;
     var rows = escrowRows(r);
@@ -1483,7 +1525,10 @@
         if (!id) return;
         if (!r || !r.seats || !Object.keys(r.seats).length) {
           if (r) disbandRoom(id, r).catch(function () {});
-          else db.ref("ludoRooms/" + id).remove().catch(function () {});
+          else {
+            db.ref("ludoRooms/" + id).remove().catch(function () {});
+            db.ref("ludoMusic/" + id).remove().catch(function () {});
+          }
           return;
         }
         var seats = roomSeats(r);
@@ -1677,26 +1722,59 @@
     }
   }
 
+  var GALLERY_MUSIC_MAX = 4.5 * 1024 * 1024;
+
   function openMusicModal() {
     if (!roomId || !room) { toast("Join a room first"); return; }
     var body = document.createElement("div");
     var now = document.createElement("p");
     var m = room.music;
-    var playing = !!(m && m.url && m.playing !== false);
+    var playing = !!(m && (m.url || m.file) && m.playing !== false);
     now.textContent = playing
-      ? ("Now playing: " + (m.title || musicTitle(m.url)) + (m.byName ? (" · " + m.byName) : ""))
-      : "No song playing. Paste a direct audio link and everyone in this room will hear it.";
+      ? ("Now playing: " + (m.title || (m.url ? musicTitle(m.url) : "Room song")) + (m.byName ? (" · " + m.byName) : ""))
+      : "No song playing. Pick a song from your gallery or paste a direct audio link — everyone in this room will hear it.";
     body.appendChild(now);
+
+    var pickRow = document.createElement("div");
+    pickRow.className = "musicPickRow";
+    var pickBtn = document.createElement("button");
+    pickBtn.type = "button";
+    pickBtn.className = "btn primary";
+    pickBtn.textContent = "Choose song from gallery";
+    var fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "audio/*";
+    fileInput.style.display = "none";
+    pickBtn.addEventListener("click", function () { fileInput.click(); });
+    fileInput.addEventListener("change", function () {
+      var f = fileInput.files && fileInput.files[0];
+      if (!f) return;
+      if (f.size > GALLERY_MUSIC_MAX) {
+        toast("Song too big — max 4.5 MB. Pick a shorter song.");
+        fileInput.value = "";
+        return;
+      }
+      if (!/^audio\//i.test(f.type || "") && !/\.(mp3|m4a|aac|ogg|oga|wav|opus|weba|flac)$/i.test(f.name || "")) {
+        toast("Pick an audio file (mp3, m4a, aac…)");
+        return;
+      }
+      readSongFile(f);
+    });
+    pickRow.appendChild(pickBtn);
+    pickRow.appendChild(fileInput);
+    body.appendChild(pickRow);
+
+    var hint = document.createElement("p");
+    hint.textContent = "Gallery song: max 4.5 MB, sent to the room so every player hears it. Or paste a direct audio link below.";
+    body.appendChild(hint);
+
     var input = document.createElement("input");
     input.className = "modalInput";
     input.type = "url";
     input.inputMode = "url";
     input.placeholder = "https://…/song.mp3";
-    input.value = playing ? m.url : "";
+    input.value = playing && m.url ? m.url : "";
     body.appendChild(input);
-    var hint = document.createElement("p");
-    hint.textContent = "Direct audio link only (mp3, m4a, ogg, aac). Any player in the room can change or stop it.";
-    body.appendChild(hint);
     var volWrap = document.createElement("div");
     volWrap.style.cssText = "display:flex;align-items:center;gap:8px;color:#c6e3d5;font-size:11px;font-weight:700;";
     var volLabel = document.createElement("span");
@@ -1733,7 +1811,8 @@
       toast("Paste a direct audio link (https://…mp3)");
       return;
     }
-    db.ref("ludoRooms/" + roomId + "/music").set({
+    var id = roomId;
+    db.ref("ludoRooms/" + id + "/music").set({
       url: clean,
       title: musicTitle(clean),
       by: uid,
@@ -1741,14 +1820,65 @@
       at: Date.now(),
       playing: true
     }).then(function () {
+      db.ref("ludoMusic/" + id).remove().catch(function () {});
       closeModal();
       toast("Music playing for everyone");
     }).catch(function () { toast("Could not start the music"); });
   }
 
+  function readSongFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var dataUrl = String(reader.result || "");
+      if (!/^data:audio\//i.test(dataUrl)) {
+        toast("Could not read this audio file");
+        return;
+      }
+      sendGalleryMusic(file, dataUrl);
+    };
+    reader.onerror = function () { toast("Could not read this audio file"); };
+    reader.readAsDataURL(file);
+  }
+
+  function sendGalleryMusic(file, dataUrl) {
+    if (!roomId) return;
+    var id = roomId;
+    var at = Date.now();
+    var title = String(file.name || "Room song")
+      .replace(/\.[a-z0-9]{2,5}$/i, "").replace(/[_-]+/g, " ").trim().slice(0, 60) || "Room song";
+    toast("Sending song to the room…");
+    db.ref("ludoMusic/" + id).set({
+      data: dataUrl,
+      title: title,
+      by: uid,
+      byName: myName,
+      at: at,
+      size: file.size || 0
+    }).then(function () {
+      if (roomId !== id || !room) {
+        db.ref("ludoMusic/" + id).remove().catch(function () {});
+        throw new Error("room changed");
+      }
+      return db.ref("ludoRooms/" + id + "/music").set({
+        file: true,
+        title: title,
+        by: uid,
+        byName: myName,
+        at: at,
+        playing: true
+      });
+    }).then(function () {
+      closeModal();
+      toast("Song playing for everyone");
+    }).catch(function () { toast("Could not send the song — try a shorter one"); });
+  }
+
   function stopRoomMusic() {
     if (!roomId) return;
-    db.ref("ludoRooms/" + roomId + "/music").remove().then(function () {
+    var id = roomId;
+    db.ref("ludoRooms/" + id + "/music").remove().then(function () {
+      return db.ref("ludoMusic/" + id).remove().catch(function () {});
+    }).then(function () {
       closeModal();
       toast("Music stopped");
     }).catch(function () { toast("Could not stop the music"); });
@@ -1757,8 +1887,9 @@
   function applyRoomMusic() {
     if (!db) return;
     var m = room && room.music;
-    var wanted = !!(m && m.url && m.playing !== false);
-    var key = wanted ? (String(m.url) + "|" + String(m.at || 0)) : "";
+    var wanted = !!(m && (m.file || m.url) && m.playing !== false);
+    var key = !wanted ? ""
+      : (m.file ? ("file:" + String(m.at || 0)) : ("url:" + String(m.url) + "|" + String(m.at || 0)));
     var el = $("roomMusic");
     if (!el) return;
     if (key !== musicKey) {
@@ -1769,6 +1900,11 @@
         try { el.pause(); } catch (e) {}
         el.removeAttribute("src");
         try { el.load(); } catch (e) {}
+      } else if (m.file) {
+        try { el.pause(); } catch (e) {}
+        el.removeAttribute("src");
+        try { el.load(); } catch (e) {}
+        loadRoomMusicFile(m);
       } else {
         el.src = m.url;
         el.loop = true;
@@ -1780,6 +1916,26 @@
       musicWanted = wanted;
     }
     renderMusic();
+  }
+
+  function loadRoomMusicFile(m) {
+    if (!db || !roomId || !m) return;
+    var id = roomId;
+    var at = String(m.at || 0);
+    db.ref("ludoMusic/" + id).once("value").then(function (snap) {
+      var v = snap.val();
+      if (!v || !v.data) { toast("Song is still loading — try again in a moment"); return; }
+      if (roomId !== id || !room || !room.music || !room.music.file) return;
+      if (String(room.music.at || 0) !== at) return;
+      if (musicKey !== "file:" + at) return;
+      var el = $("roomMusic");
+      if (!el) return;
+      el.src = v.data;
+      el.loop = true;
+      el.volume = musicVolume;
+      playRoomMusicLocal();
+      if (v.by !== uid) toast("♪ " + (v.title || "Room song"));
+    }).catch(function () { toast("Could not load the room song"); });
   }
 
   function playRoomMusicLocal() {
@@ -1824,14 +1980,14 @@
 
   function renderMusic() {
     var m = room && room.music;
-    var on = !!(m && m.url && m.playing !== false);
+    var on = !!(m && (m.url || m.file) && m.playing !== false);
     var badge = $("musicBadge");
     var btn = $("btnMusic");
     if (badge) {
       badge.classList.toggle("hidden", !on);
       if (on) {
         badge.textContent = (musicBlocked ? "⚠ ♪ " : "♪ ") +
-          (m.title || musicTitle(m.url)) + (m.byName ? (" · " + m.byName) : "");
+          (m.title || (m.url ? musicTitle(m.url) : "Room song")) + (m.byName ? (" · " + m.byName) : "");
         badge.title = musicBlocked ? "Tap to play the song on this phone" : "Room music";
       }
     }
@@ -2092,7 +2248,9 @@
       var info = document.createElement("div");
       info.className = "rcInfo";
       var strong = document.createElement("strong");
-      strong.textContent = "Room " + x.id.slice(-6).toUpperCase() + " · " + filled + "/" + total;
+      var rName = r.name ? String(r.name).trim() : "";
+      strong.textContent = (rName ? (rName + " · ") : "Room ") +
+        x.id.slice(-6).toUpperCase() + " · " + filled + "/" + total;
       var sub = document.createElement("span");
       var host = "";
       roomSeats(r).forEach(function (s) {
@@ -2320,10 +2478,13 @@
     var now = Date.now();
     var tokens = {};
     var home = {};
+    var nameInput = $("roomNameInput");
+    var roomName = nameInput ? String(nameInput.value || "").trim().slice(0, 24) : "";
     list.forEach(function (s) { tokens[s] = [-1, -1, -1, -1]; home[s] = 0; });
     var data = {
       hostUid: uid,
       createdBy: uid,
+      name: roomName,
       mode: Number(mode),
       status: "waiting",
       bet: Math.max(0, Math.floor(Number(selectedBet) || 0)),
@@ -2343,6 +2504,7 @@
       joinedAt: now, lastSeenAt: now, camOn: false, micOn: false
     };
     ref.set(data).then(function () {
+      if (nameInput) nameInput.value = "";
       enterRoom(ref.key, seat);
     }).catch(function (e) {
       toast("Could not create room: " + (e && e.message ? e.message : e));
@@ -2395,7 +2557,7 @@
     $("lobbyView").classList.add("hidden");
     $("gameView").classList.remove("hidden");
     $("roomPill").classList.remove("hidden");
-    $("roomPillCode").textContent = String(id).slice(-6).toUpperCase();
+    renderRoomPill();
     buildBoardOnce();
     buildHomesOnce();
     buildCamTilesOnce();
@@ -2744,7 +2906,11 @@
     if (!mySeat || !room.seats || !room.seats[mySeat]) return;
     var bet = Math.max(0, Math.floor(Number(room.bet) || 0));
     var filled = roomSeats(room).filter(function (s) { return room.seats[s]; });
-    if (filled.length < 2) { toast("Need at least 2 players to start"); return; }
+    if (filled.length < 2) {
+      if (bet > 0) { toast("Need at least 2 players for a bet game — practice is free"); return; }
+      beginFreeGame();
+      return;
+    }
     if (bet > 0) beginPaidGame(bet);
     else beginFreeGame();
   }
@@ -2755,7 +2921,7 @@
       if (!r || r.status !== "waiting" || r.starting) return;
       var all = seatList(r.mode);
       var filled = all.filter(function (s) { return r.seats && r.seats[s]; });
-      if (filled.length < 2) return;
+      if (filled.length < 1) return;
       var tokens = {};
       var home = {};
       filled.forEach(function (s) { tokens[s] = [-1, -1, -1, -1]; home[s] = 0; });
@@ -2778,7 +2944,7 @@
       };
       return r;
     }).then(function (res) {
-      if (!res.committed) toast("Need at least 2 players to start");
+      if (!res.committed) toast("Could not start — try again");
     }).catch(function () {
       toast("Could not start — try again");
     }).then(function () { startBusy = false; });
@@ -3275,18 +3441,6 @@
 
         tile.appendChild(view);
 
-        var dbox = document.createElement("div");
-        dbox.className = "diceBox";
-        dbox.setAttribute("data-seat", s);
-        dbox.addEventListener("click", function (e) {
-          e.stopPropagation();
-          if (!room || room.status !== "playing" || !room.state) return;
-          if (String(room.state.turn) !== String(s)) return;
-          if (s !== mySeatString() || room.state.rolled) return;
-          rollDice();
-        });
-        tile.appendChild(dbox);
-
         var bar = document.createElement("div");
         bar.className = "camBar";
         [["cam", ICON.cam], ["mic", ICON.mic], ["gift", ICON.gift], ["full", ICON.full], ["exit", ICON.exit]].forEach(function (pair) {
@@ -3315,7 +3469,6 @@
         camTiles[s] = tile;
         camVideos[s] = video;
         camOffs[s] = off;
-        diceBoxes[s] = dbox;
       });
     });
   }
@@ -3518,28 +3671,21 @@
   }
 
   function renderDice() {
+    var dock = $("diceDock");
     var el = $("dice");
-    Object.keys(diceBoxes).forEach(function (s) {
-      diceBoxes[s].classList.remove("on", "myRoll");
-    });
-    if (!room || room.status !== "playing" || !room.state) {
-      el.classList.add("hidden");
+    var hint = $("diceHint");
+    if (!dock || !el) return;
+    if (!room || room.status !== "playing" || !room.state || !SEATS[String(room.state.turn)]) {
+      dock.classList.add("hidden");
       stopDiceSpin();
       return;
     }
+    dock.classList.remove("hidden");
     var seat = String(room.state.turn);
-    var box = diceBoxes[seat];
-    if (!box) {
-      el.classList.add("hidden");
-      return;
-    }
-    if (el.parentNode !== box) box.appendChild(el);
-    el.classList.remove("hidden");
-    box.classList.add("on");
+    dock.style.setProperty("--dc", SEATS[seat].color);
     var mine = seat === mySeatString();
     var canRoll = mine && !room.state.rolled;
     el.classList.toggle("myturn", canRoll);
-    box.classList.toggle("myRoll", canRoll);
     var spinning = Date.now() < spinUntil;
     var face = spinning
       ? (1 + Math.floor(Math.random() * 6))
@@ -3547,6 +3693,14 @@
     paintDiceFace(face);
     if (spinning) el.classList.add("rolling");
     else el.classList.remove("rolling");
+    if (hint) {
+      if (mine) {
+        if (!room.state.rolled) hint.textContent = "YOUR TURN — TAP DICE";
+        else hint.textContent = legalMoves(room, seat).length ? "YOUR MOVE" : "NO MOVE — PASSING…";
+      } else {
+        hint.textContent = seatName(room, seat) + (room.state.rolled ? " moving" : " rolling");
+      }
+    }
   }
 
   function renderCenter() {
@@ -3560,7 +3714,7 @@
       if (sig === centerSig) return;
       centerSig = sig;
       slot.textContent = "";
-      if (filled >= 2) {
+      if (filled >= 1) {
         var b = document.createElement("button");
         b.type = "button";
         b.className = "playBtn";
@@ -3569,7 +3723,7 @@
         slot.appendChild(b);
         var hint = document.createElement("div");
         hint.className = "playHint";
-        hint.textContent = bet > 0 ? ("BET " + fmtMoney(bet)) : "FREE";
+        hint.textContent = filled >= 2 ? (bet > 0 ? ("BET " + fmtMoney(bet)) : "FREE") : (bet > 0 ? "2P FOR BET" : "PRACTICE");
         slot.appendChild(hint);
       } else {
         var count = document.createElement("div");
@@ -3602,6 +3756,10 @@
       if (filled >= 2) {
         txt = filled + "/" + total + " players — tap PLAY to start" +
           (bet > 0 ? " · bet " + fmtMoney(bet) : "");
+      } else if (filled === 1) {
+        txt = bet > 0
+          ? "1/" + total + " players — need 1 more for the bet game" + (isHost() ? " · tap an empty seat to call a friend" : "")
+          : "1/" + total + " players — tap PLAY for solo practice" + (isHost() ? " · tap an empty seat to call a friend" : "");
       } else {
         txt = filled + "/" + total + " players — need " + (2 - filled) + " more" +
           (isHost() ? " · tap an empty seat to call a friend" : "");
@@ -3624,9 +3782,19 @@
     retry.classList.toggle("hidden", !(mediaReady && !localStream && roomId));
   }
 
+  function renderRoomPill() {
+    var nameEl = $("roomPillName");
+    var codeEl = $("roomPillCode");
+    var name = room && room.name ? String(room.name).trim() : "";
+    if (codeEl) codeEl.textContent = String(roomId || "").slice(-6).toUpperCase();
+    if (nameEl) nameEl.textContent = name;
+    var pill = $("roomPill");
+    if (pill) pill.title = (name ? name + " · " : "") + "Room ID " + (roomId || "");
+  }
+
   function renderRoom() {
     if (!room) return;
-    $("roomPillCode").textContent = String(roomId).slice(-6).toUpperCase();
+    renderRoomPill();
     $("meChip").textContent = myName;
     var rolledNow = !!(room.status === "playing" && room.state && room.state.rolled);
     var rollKey = rolledNow
@@ -4199,7 +4367,9 @@
       b.type = "button";
       b.className = "giftPick";
       b.style.setProperty("--gc", g.color);
-      b.innerHTML = '<svg viewBox="0 0 24 24" style="color:#fff">' + g.svg + "</svg>";
+      b.innerHTML = g.emoji
+        ? '<span class="giftEmo">' + g.emoji + "</span>"
+        : '<svg viewBox="0 0 24 24" style="color:#fff">' + g.svg + "</svg>";
       var span = document.createElement("span");
       span.textContent = g.label;
       b.appendChild(span);
@@ -4248,7 +4418,9 @@
     var el = document.createElement("div");
     el.className = "giftFly";
     el.style.background = "linear-gradient(150deg, " + gift.color + ", #10251c)";
-    el.innerHTML = '<svg viewBox="0 0 24 24">' + gift.svg + "</svg>";
+    el.innerHTML = gift.emoji
+      ? '<span class="giftFlyEmo">' + gift.emoji + "</span>"
+      : '<svg viewBox="0 0 24 24">' + gift.svg + "</svg>";
     document.body.appendChild(el);
     el.style.left = (from.x - 23) + "px";
     el.style.top = (from.y - 23) + "px";
