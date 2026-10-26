@@ -254,7 +254,7 @@
   .footNote { margin: 22px 4px 0; color: #648a79; font-size: 10px; line-height: 1.6; text-align: center; }
 
   /* ---------------- game ---------------- */
-  #gameView { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0 4px 4px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+  #gameView { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: safe center; padding: 0 4px 4px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
   #boardWrap { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; padding: 0; overflow: visible; }
   #boardStage {
     position: relative;
@@ -264,25 +264,29 @@
     margin: 0 auto;
   }
   .camStrip {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     display: flex;
+    justify-content: center;
     gap: 5px;
-    height: clamp(50px, 14.5vw, 64px);
+    height: clamp(74px, 24vw, 96px);
+    min-height: clamp(74px, 24vw, 96px);
+    max-height: 190px;
     padding: 2px 0;
   }
   .camTile {
     position: relative;
-    flex: 1 1 0;
+    flex: 0 0 calc(50% - 2.5px);
     min-width: 0;
     border-radius: 10px;
     border: 2px solid var(--pc, #2c5a44);
     background: #0b1d15;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+    --diceW: clamp(46px, 14vw, 58px);
   }
   .camTile.empty { border-style: dashed; border-color: rgba(255, 255, 255, .3); }
   .camTile.activeTurn { box-shadow: 0 0 0 2px #fff, 0 0 14px var(--pc), 0 4px 12px rgba(0, 0, 0, .3); }
-  .camView { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(150deg, var(--pc, #1b5e43), #081a12); }
+  .camView { position: absolute; left: 0; top: 0; bottom: 0; right: calc(var(--diceW, 44px) + 6px); overflow: hidden; background: linear-gradient(150deg, var(--pc, #1b5e43), #081a12); }
   .camVideo {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
@@ -305,7 +309,7 @@
   .camOff.show { display: flex; }
   .nameTag {
     position: absolute; left: 2px; top: 2px;
-    max-width: calc(100% - 40px);
+    max-width: calc(100% - 8px);
     display: flex; align-items: center; gap: 3px;
     background: rgba(0, 0, 0, .52);
     border-radius: 5px;
@@ -333,8 +337,9 @@
   .camTile.activeTurn .turnChip { display: inline-block; }
   .camBar {
     position: absolute;
-    left: 0; right: 0; bottom: 0;
-    height: clamp(15px, 4.4vw, 18px);
+    left: 0; bottom: 0;
+    right: calc(var(--diceW, 44px) + 6px);
+    height: clamp(16px, 4.6vw, 20px);
     display: flex; align-items: center; justify-content: space-around;
     background: rgba(3, 14, 9, .7);
     border-top: 1px solid rgba(255, 255, 255, .08);
@@ -357,11 +362,12 @@
   .camTile.self .ctrl.exit { visibility: visible; }
   .diceBox {
     position: absolute;
-    top: 2px; right: 2px;
-    width: clamp(28px, 8vw, 34px);
+    top: 50%; right: 3px;
+    transform: translateY(-50%);
+    width: var(--diceW, 44px);
     aspect-ratio: 1 / 1;
     border: 1.5px dashed rgba(255, 255, 255, .4);
-    border-radius: 7px;
+    border-radius: 9px;
     background: rgba(0, 0, 0, .35);
     z-index: 6;
     display: flex; align-items: center; justify-content: center;
