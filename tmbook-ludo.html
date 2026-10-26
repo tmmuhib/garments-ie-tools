@@ -367,6 +367,14 @@
   .ctrl[disabled] { opacity: .35; }
   .ctrl.exit { visibility: hidden; color: #ff8a80; }
   .camTile.self .ctrl.exit { visibility: visible; }
+  .camTile.canRemoveBot .ctrl.exit { visibility: visible; }
+  .camTile.bot .pname { color: #ffe08a; }
+  .camTile.bot [data-act="cam"],
+  .camTile.bot [data-act="mic"],
+  .camTile.bot [data-act="gift"],
+  .camTile.bot [data-act="full"] { display: none; }
+  .camTile.bot:not(.canRemoveBot) .camBar { display: none; }
+  .camTile.bot .camOff { color: #ffe08a; }
   #diceDock {
     flex: 0 0 auto;
     display: flex; align-items: center; justify-content: center;
@@ -657,6 +665,16 @@
     border: 1px solid rgba(0, 200, 83, .4);
     background: rgba(0, 200, 83, .14);
     color: #a9ffd0;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  #btnAddBot {
+    border: 1px solid rgba(255, 193, 7, .45);
+    background: rgba(255, 193, 7, .14);
+    color: #ffe08a;
     border-radius: 999px;
     padding: 4px 9px;
     font-size: 10px;
@@ -996,6 +1014,7 @@
     <span id="potBadge" class="hidden">POT ৳0</span>
     <button id="musicBadge" class="hidden" type="button"></button>
     <span id="statusText"></span>
+    <button id="btnAddBot" class="hidden" type="button">+ COMPUTER</button>
     <button id="btnEnableMedia" class="hidden" type="button">Enable camera &amp; mic</button>
   </div>
   <audio id="roomMusic" loop playsinline></audio>
@@ -1073,6 +1092,8 @@
     }
   };
   var MODES = { "2": ["0","2"], "3": ["0","1","2"], "4": ["0","1","2","3"] };
+  var TURN_ROLL_MS = 15000;
+  var TURN_MOVE_MS = 30000;
   var PIPS = {
     1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8]
   };
@@ -1181,6 +1202,10 @@
   var endModalKey = "";
   var lastDiceKey = "";
   var lastForceAt = 0;
+  var lastSkipTry = 0;
+  var serverOffset = 0;
+  var botTimer = null;
+  var botPlan = "";
 
   var rtcStarted = false;
   var mediaReady = false;
@@ -1190,9 +1215,10 @@
   var peers = new Map();
   var remoteStreams = {};
   var remoteAudios = {};
-  var myRtcStart = Date.now();
   var rtcEpochRef = null;
   var rtcEpochCb = null;
+  var peerRestarts = {};
+  var videoStats = {};
 
   var boardBuilt = false;
   var homesBuilt = false;
@@ -1216,6 +1242,8 @@
   var musicToastAt = 0;
 
   function $(id) { return document.getElementById(id); }
+  function fbNow() { return Date.now() + serverOffset; }
+  function isBotEntry(p) { return !!(p && p.bot); }
   function seatList(mode) { return MODES[String(mode)] || MODES["4"]; }
   function roomSeats(r) {
     return seatList(r.mode).filter(function (s) { return r.seats && r.seats[s]; });
@@ -1534,7 +1562,7 @@
         var seats = roomSeats(r);
         var stale = !seats.length || seats.every(function (s) {
           var p = r.seats[s];
-          return p && p.online === false && now - (p.lastSeenAt || 0) > 120000;
+          return p && (p.bot || (p.online === false && now - (p.lastSeenAt || 0) > 120000));
         });
         var tooOld = now - (r.createdAt || 0) > 6 * 3600 * 1000 && r.status !== "playing";
         var stuckStart = r.status === "waiting" && r.starting && now - (r.starting.at || 0) > 120000;
@@ -2014,6 +2042,9 @@
       showFatal("Firebase failed to start: " + (e && e.message ? e.message : e));
       return;
     }
+    db.ref(".info/serverTimeOffset").on("value", function (s) {
+      serverOffset = Number(s.val()) || 0;
+    });
     fetchMe();
     attachRole();
     attachBalance();
@@ -2125,6 +2156,13 @@
     $("btnEnableMedia").addEventListener("click", retryMedia);
     $("btnMusic").addEventListener("click", openMusicModal);
     $("btnDeleteRoom").addEventListener("click", deleteRoom);
+    $("btnAddBot").addEventListener("click", addComputer);
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) return;
+      replayVideos();
+      syncPeers();
+      publishEpoch();
+    });
     $("musicBadge").addEventListener("click", openMusicModal);
     document.addEventListener("pointerdown", function () {
       ensureAudio();
@@ -2150,6 +2188,9 @@
     setInterval(function () {
       if (roomId && mySeat && mediaReady) syncPeers();
     }, 9000);
+    setInterval(function () {
+      if (roomId && mySeat && mediaReady) watchdogVideos();
+    }, 5000);
     setInterval(function () {
       if (roomId && mySeat) {
         db.ref("ludoRooms/" + roomId + "/seats/" + mySeat + "/lastSeenAt").set(Date.now()).catch(function () {});
@@ -2237,7 +2278,7 @@
     list.slice(0, 30).forEach(function (x) {
       var r = x.r;
       var total = seatList(r.mode).length;
-      var filled = roomSeats(r).length;
+      var filled = roomSeats(r).filter(function (s) { return !isBotEntry(r.seats[s]); }).length;
       var mine = x.mine;
       var card = document.createElement("div");
       card.className = "roomCard";
@@ -2430,12 +2471,23 @@
 
   /* ---------------- room lifecycle ---------------- */
 
-  function claimSeat(id, preferSeat) {
+  function claimSeat(id, preferSeat, attempt) {
+    var tryNo = attempt || 0;
     var assigned = null;
     return new Promise(function (resolve, reject) {
       txRetry(db.ref("ludoRooms/" + id), function (r) {
         assigned = null;
         if (!r || r.status !== "waiting" || r.starting || !r.seats) return;
+        // A real player is joining: every computer seat leaves first.
+        Object.keys(r.seats).forEach(function (k) {
+          if (!isBotEntry(r.seats[k])) return;
+          delete r.seats[k];
+          if (r.state) {
+            if (r.state.tokens) delete r.state.tokens[k];
+            if (r.state.homeCount) delete r.state.homeCount[k];
+            if (r.state.removed) delete r.state.removed[k];
+          }
+        });
         var seats = seatList(r.mode);
         var free = null;
         if (preferSeat !== undefined && preferSeat !== null && seats.indexOf(String(preferSeat)) >= 0 && !r.seats[String(preferSeat)]) {
@@ -2462,8 +2514,27 @@
         }
         assigned = free;
         return r;
-      }).then(function () {
-        resolve(assigned);
+      }).then(function (res) {
+        // The transaction callback can run several times, so only trust a seat
+        // that is actually present in the committed snapshot.
+        var committedSeat = null;
+        if (res && res.committed && res.snapshot) {
+          var snapRoom = res.snapshot.val() || {};
+          var snapSeats = snapRoom.seats || {};
+          Object.keys(snapSeats).forEach(function (k) {
+            var p = snapSeats[k];
+            if (p && !p.bot && String(p.uid) === String(uid)) committedSeat = k;
+          });
+        }
+        if (committedSeat !== null) { resolve(committedSeat); return; }
+        if (assigned === null) { resolve(null); return; }
+        if (tryNo < 2) {
+          setTimeout(function () {
+            claimSeat(id, preferSeat, tryNo + 1).then(resolve).catch(reject);
+          }, 320);
+          return;
+        }
+        resolve(null);
       }).catch(reject);
     });
   }
@@ -2706,11 +2777,24 @@
     if (roomId && db) {
       db.ref("ludoRooms/" + roomId + "/rtcEpoch/" + uid).remove().catch(function () {});
     }
+    if (roomId && mySeat !== null && db) {
+      // Drop the disconnect hooks too, otherwise they recreate a ghost room
+      // after the room itself has been deleted.
+      var seatPath = "ludoRooms/" + roomId + "/seats/" + mySeat;
+      try {
+        db.ref(seatPath + "/online").onDisconnect().cancel().catch(function () {});
+        db.ref(seatPath + "/lastSeenAt").onDisconnect().cancel().catch(function () {});
+      } catch (e) {}
+    }
     stopMedia();
     stopLocalMusic(true);
     stopRing();
     clearTimeout(autoPassTimer);
     autoPassTimer = null;
+    if (botTimer) { clearTimeout(botTimer); botTimer = null; }
+    botPlan = "";
+    videoStats = {};
+    peerRestarts = {};
     if (clearSession) {
       sessionStorage.removeItem("tm247_ludo_room");
       sessionStorage.removeItem("tm247_ludo_seat");
@@ -2752,7 +2836,8 @@
       var goneName = p.name || "Player";
       var list = seatList(r.mode);
       var rest = list.filter(function (s) { return r.seats[s] && String(s) !== String(seat); });
-      if (!rest.length) {
+      var humans = rest.filter(function (s) { return !isBotEntry(r.seats[s]); });
+      if (!humans.length) {
         return disbandRoom(id, r).then(function () { return true; });
       }
       var next = null;
@@ -2772,10 +2857,10 @@
           updates["state/turn"] = next;
           updates["state/dice"] = 0;
           updates["state/rolled"] = false;
-          updates["state/turnEndsAt"] = Date.now() + 45000;
+          updates["state/turnEndsAt"] = fbNow() + TURN_ROLL_MS;
         }
       }
-      if (r.hostUid === p.uid) updates["hostUid"] = r.seats[rest[0]].uid;
+      if (r.hostUid === p.uid) updates["hostUid"] = r.seats[humans[0]].uid;
       return ref.update(updates).then(function () { return true; });
     });
   }
@@ -2803,6 +2888,13 @@
     var inRoom = !!roomId;
     $("btnMusic").classList.toggle("hidden", !inRoom);
     $("btnDeleteRoom").classList.toggle("hidden", !(inRoom && canDeleteRoom()));
+    var botBtn = $("btnAddBot");
+    if (botBtn) {
+      var waiting = !!(room && room.status === "waiting");
+      var freeSeat = !!(room && room.seats && seatList(room.mode).some(function (s) { return !room.seats[s]; }));
+      var freeGame = !!(room && !(Number(room.bet) > 0));
+      botBtn.classList.toggle("hidden", !(inRoom && waiting && freeSeat && freeGame && isHost()));
+    }
   }
 
   function deleteRoom() {
@@ -2859,7 +2951,7 @@
     var limit = room.status === "playing" ? 8000 : 20000;
     roomSeats(room).forEach(function (s) {
       var p = room.seats[s];
-      if (!p || p.uid === uid) return;
+      if (!p || p.uid === uid || p.bot) return;
       if (p.online === false && now - (p.lastSeenAt || 0) > limit) {
         removeSeat(roomId, s, p.uid, true).catch(function () {});
       }
@@ -2939,7 +3031,7 @@
       r.state = {
         turn: filled[0], dice: 0, lastDice: 0, rolled: false,
         tokens: tokens, homeCount: home,
-        startedAt: Date.now(), turnEndsAt: Date.now() + 45000,
+        startedAt: Date.now(), turnEndsAt: fbNow() + TURN_ROLL_MS,
         removed: {}, lastEvent: "Game started"
       };
       return r;
@@ -3050,7 +3142,7 @@
             roomNow.state = {
               turn: playersNow[0], dice: 0, lastDice: 0, rolled: false,
               tokens: toks, homeCount: hc,
-              startedAt: Date.now(), turnEndsAt: Date.now() + 45000,
+              startedAt: Date.now(), turnEndsAt: fbNow() + TURN_ROLL_MS,
               removed: {}, lastEvent: "Paid game · pot " + fmtMoney(total)
             };
             return roomNow;
@@ -3094,7 +3186,7 @@
       r.state = {
         turn: seats[0], dice: 0, lastDice: 0, rolled: false,
         tokens: tokens, homeCount: home,
-        startedAt: Date.now(), turnEndsAt: Date.now() + 45000,
+        startedAt: Date.now(), turnEndsAt: fbNow() + TURN_ROLL_MS,
         removed: {}, lastEvent: "New game"
       };
       return r;
@@ -3105,28 +3197,40 @@
     if (!roomRef || !room || !canAct() || room.state.rolled) return;
     beep(340, 0.06, 0);
     beep(520, 0.06, 0.07);
+    runRoll(mySeatString());
+  }
+
+  function runRoll(seat) {
+    if (!roomRef || !seat) return;
     txRetry(roomRef, function (r) {
-      if (!r || r.status !== "playing") return;
-      if (String(r.state.turn) !== mySeatString()) return;
+      if (!r || r.status !== "playing" || !r.state) return;
+      if (String(r.state.turn) !== String(seat)) return;
       if (r.state.rolled) return;
       var d = 1 + Math.floor(Math.random() * 6);
       r.state.dice = d;
       r.state.lastDice = d;
       r.state.rolled = true;
-      r.state.turnEndsAt = Date.now() + 30000;
-      r.state.lastEvent = seatName(r, mySeatString()) + " rolled " + d;
+      r.state.turnEndsAt = fbNow() + TURN_MOVE_MS;
+      r.state.lastEvent = seatName(r, seat) + " rolled " + d;
       return r;
     }).catch(function () {});
   }
 
   function moveToken(idx) {
-    if (!roomRef || !room || !canAct() || !room.state.rolled) return;
-    if (legalMoves(room, mySeatString()).indexOf(idx) < 0) return;
+    if (!roomRef || !room || !room.state || !canAct() || !room.state.rolled) return;
     var seat = mySeatString();
+    if (legalMoves(room, seat).indexOf(idx) < 0) return;
+    runMove(seat, idx);
+  }
+
+  function runMove(seat, idx) {
+    if (!roomRef || !seat) return;
     var cfg = SEATS[seat];
+    if (!cfg) return;
     txRetry(roomRef, function (r) {
-      if (!r || r.status !== "playing") return;
-      if (String(r.state.turn) !== seat || !r.state.rolled) return;
+      if (!r || r.status !== "playing" || !r.state) return;
+      if (String(r.state.turn) !== String(seat) || !r.state.rolled) return;
+      if (legalMoves(r, seat).indexOf(idx) < 0) return;
       var d = Number(r.state.dice) || 0;
       var toks = ((r.state.tokens && r.state.tokens[seat]) || [-1, -1, -1, -1]).slice();
       var p = Number(toks[idx]);
@@ -3166,14 +3270,14 @@
       r.state.rolled = false;
       if (np === 56 && (r.state.homeCount[seat] || 0) >= 4) {
         r.status = "ended";
-        r.winnerUid = uid;
+        r.winnerUid = r.seats && r.seats[seat] ? String(r.seats[seat].uid) : uid;
         r.winnerSeat = seat;
         r.state.turnEndsAt = 0;
         r.state.lastEvent = seatName(r, seat) + " wins!";
         return r;
       }
       if (!extra) r.state.turn = nextSeat(r, seat);
-      r.state.turnEndsAt = Date.now() + 45000;
+      r.state.turnEndsAt = fbNow() + TURN_ROLL_MS;
       r.state.lastEvent = seatName(r, seat) + " moved" +
         (captured ? " · captured " + captured : "") +
         (extra ? " · extra turn" : "");
@@ -3182,36 +3286,202 @@
   }
 
   function passTurn() {
-    if (!roomRef || !room) return;
-    if (!canAct() || !room.state.rolled) return;
-    var seat = mySeatString();
+    if (!roomRef || !room || !canAct() || !room.state.rolled) return;
+    runPass(mySeatString());
+  }
+
+  function runPass(seat) {
+    if (!roomRef || !seat) return;
     txRetry(roomRef, function (r) {
-      if (!r || r.status !== "playing") return;
-      if (String(r.state.turn) !== seat || !r.state.rolled) return;
+      if (!r || r.status !== "playing" || !r.state) return;
+      if (String(r.state.turn) !== String(seat) || !r.state.rolled) return;
       if (legalMoves(r, seat).length > 0) return;
       r.state.dice = 0;
       r.state.rolled = false;
       r.state.turn = nextSeat(r, seat);
-      r.state.turnEndsAt = Date.now() + 45000;
+      r.state.turnEndsAt = fbNow() + TURN_ROLL_MS;
       r.state.lastEvent = seatName(r, seat) + " had no move";
       return r;
     }).catch(function () {});
   }
 
   function forceSkip() {
-    if (!roomRef || !room) return;
+    if (!roomRef || !room || !room.state) return;
     if (Date.now() - lastForceAt < 3000) return;
     lastForceAt = Date.now();
+    var old = String(room.state.turn);
     txRetry(roomRef, function (r) {
-      if (!r || r.status !== "playing") return;
-      if (!r.state.turnEndsAt || Date.now() < r.state.turnEndsAt) return;
-      var old = String(r.state.turn);
+      if (!r || r.status !== "playing" || !r.state) return;
+      if (String(r.state.turn) !== old) return;
+      if (!r.state.turnEndsAt || fbNow() < r.state.turnEndsAt) return;
       r.state.dice = 0;
       r.state.rolled = false;
       r.state.turn = nextSeat(r, old);
-      r.state.turnEndsAt = Date.now() + 45000;
+      r.state.turnEndsAt = fbNow() + TURN_ROLL_MS;
       r.state.lastEvent = "Time out — next player";
       return r;
+    }).catch(function () {});
+  }
+
+  function skipNoRoll() {
+    if (!roomRef || !room || room.status !== "playing" || !room.state) return;
+    if (room.state.rolled) return;
+    if (Date.now() - lastSkipTry < 2500) return;
+    lastSkipTry = Date.now();
+    var old = String(room.state.turn);
+    txRetry(roomRef, function (r) {
+      if (!r || r.status !== "playing" || !r.state || r.state.rolled) return;
+      if (String(r.state.turn) !== old) return;
+      if (!r.state.turnEndsAt || fbNow() < r.state.turnEndsAt) return;
+      r.state.dice = 0;
+      r.state.rolled = false;
+      r.state.turn = nextSeat(r, old);
+      r.state.turnEndsAt = fbNow() + TURN_ROLL_MS;
+      r.state.lastEvent = seatName(r, old) + " did not roll — turn skipped";
+      return r;
+    }).catch(function () {});
+  }
+
+  /* ---------------- computer players ---------------- */
+
+  function botDriverSeat() {
+    if (!room) return null;
+    var list = roomSeats(room).filter(function (s) {
+      var p = room.seats[s];
+      return p && !p.bot && p.online !== false;
+    });
+    return list.length ? String(list[0]) : null;
+  }
+
+  function amBotDriver() {
+    var d = botDriverSeat();
+    return !!(d && d === mySeatString());
+  }
+
+  function pickBotMove(r, seat, moves) {
+    var cfg = SEATS[seat];
+    var d = Number(r.state.dice) || 0;
+    var toks = (r.state.tokens && r.state.tokens[seat]) || [];
+    var best = moves[0];
+    var bestScore = -1e9;
+    moves.forEach(function (idx) {
+      var p = Number(toks[idx]);
+      var np = p < 0 ? 0 : p + d;
+      var score = np;
+      if (np === 56) score += 1000;
+      else if (np > 50) score += 400;
+      if (p < 0) score -= 60;
+      if (np <= 50) {
+        var abs = (cfg.start + np) % 52;
+        if (!SAFE[abs]) {
+          seatList(r.mode).forEach(function (os) {
+            if (os === seat || !r.seats || !r.seats[os]) return;
+            var ot = (r.state.tokens && r.state.tokens[os]) || [];
+            for (var k = 0; k < ot.length; k++) {
+              var op = Number(ot[k]);
+              if (op >= 0 && op <= 50 && ((SEATS[os].start + op) % 52) === abs) score += 500;
+            }
+          });
+        } else {
+          score += 15;
+        }
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        best = idx;
+      }
+    });
+    return best;
+  }
+
+  function maybeRunBot() {
+    if (!room || room.status !== "playing" || !room.state) {
+      botPlan = "";
+      if (botTimer) { clearTimeout(botTimer); botTimer = null; }
+      return;
+    }
+    var seat = String(room.state.turn);
+    var p = room.seats && room.seats[seat];
+    if (!p || !p.bot || !amBotDriver()) {
+      botPlan = "";
+      if (botTimer) { clearTimeout(botTimer); botTimer = null; }
+      return;
+    }
+    var plan = seat + "|" + (room.state.rolled ? "m" : "r") + "|" +
+      String(room.state.dice || 0) + "|" + String(room.state.lastDice || 0) + "|" +
+      String(room.state.turnEndsAt || 0);
+    if (plan === botPlan) return;
+    botPlan = plan;
+    if (botTimer) clearTimeout(botTimer);
+    botTimer = setTimeout(function () {
+      botTimer = null;
+      if (!room || room.status !== "playing" || !amBotDriver()) return;
+      var s = String(room.state.turn);
+      var bp = room.seats && room.seats[s];
+      if (!bp || !bp.bot) return;
+      if (!room.state.rolled) {
+        runRoll(s);
+        return;
+      }
+      var moves = legalMoves(room, s);
+      if (!moves.length) {
+        runPass(s);
+        return;
+      }
+      runMove(s, pickBotMove(room, s, moves));
+    }, 950 + Math.floor(Math.random() * 450));
+  }
+
+  function addComputer(attempt) {
+    var tryNo = attempt || 0;
+    if (!room || !roomId || !isHost()) { toast("Only the host can add a computer"); return; }
+    if (room.status !== "waiting") { toast("Game already started"); return; }
+    if (Number(room.bet) > 0) { toast("Computer players are only for free rooms"); return; }
+    var outcome = "retry";
+    var botFree = null;
+    var botUid = null;
+    txRetry(db.ref("ludoRooms/" + roomId), function (r) {
+      outcome = "retry";
+      botFree = null;
+      botUid = null;
+      if (!r || r.status !== "waiting" || !r.seats) { outcome = "blocked"; return; }
+      var free = seatList(r.mode).filter(function (s) { return !r.seats[s]; })[0];
+      if (free === undefined) { outcome = "blocked"; return; }
+      botFree = free;
+      botUid = "bot_" + free + "_" + Math.random().toString(36).slice(2, 7);
+      r.seats[free] = {
+        uid: botUid,
+        name: "Computer",
+        bot: true,
+        online: true,
+        joinedAt: Date.now(),
+        lastSeenAt: Date.now(),
+        camOn: false,
+        micOn: false
+      };
+      outcome = "added";
+      return r;
+    }).then(function (res) {
+      if (res && res.committed && res.snapshot) {
+        var rr = res.snapshot.val() || {};
+        var slot = botFree !== null ? rr.seats && rr.seats[botFree] : null;
+        if (slot && slot.uid === botUid) return;
+      }
+      if (outcome === "blocked") { toast("Room is full"); return; }
+      if (tryNo < 3) {
+        setTimeout(function () { addComputer(tryNo + 1); }, 320);
+        return;
+      }
+      toast("Could not add the computer — try again");
+    }).catch(function () { toast("Could not add the computer"); });
+  }
+
+  function removeComputer(seat) {
+    if (!room || !roomId || room.status !== "waiting" || !isHost()) return;
+    var p = room.seats && room.seats[seat];
+    if (!p || !p.bot) return;
+    db.ref("ludoRooms/" + roomId + "/seats/" + seat).remove().then(function () {
+      toast("Computer removed");
     }).catch(function () {});
   }
 
@@ -3229,9 +3499,16 @@
   function tickRoom() {
     if (!room) return;
     maybeClearStuckStart();
-    if (room.status !== "playing") return;
-    if (!room.state || !room.state.turnEndsAt) return;
-    if (Date.now() >= room.state.turnEndsAt && isLeader()) forceSkip();
+    if (room.status !== "playing" || !room.state) return;
+    maybeRunBot();
+    renderDice();
+    renderStatus();
+    if (room.state.rolled) {
+      if (room.state.turnEndsAt && fbNow() >= room.state.turnEndsAt) forceSkip();
+      return;
+    }
+    if (!room.state.turnEndsAt) return;
+    if (fbNow() >= room.state.turnEndsAt) skipNoRoll();
   }
 
   function maybeClearStuckStart() {
@@ -3457,11 +3734,15 @@
           if (!btn) return;
           var act = btn.getAttribute("data-act");
           var mine = s === mySeatString();
+          var sp = room && room.seats && room.seats[s];
           if (act === "cam") { if (mine) toggleCam(); }
           else if (act === "mic") { if (mine) toggleMic(); }
           else if (act === "gift") { openGiftFlow(s); }
           else if (act === "full") { openFull(s); }
-          else if (act === "exit") { if (mine) leaveRoom(); }
+          else if (act === "exit") {
+            if (mine) leaveRoom();
+            else if (sp && sp.bot) removeComputer(s);
+          }
         });
         tile.appendChild(bar);
         strip.appendChild(tile);
@@ -3590,13 +3871,17 @@
       if (!active) return;
       var p = room.seats && room.seats[s];
       var mine = s === mySeatString();
+      var bot = !!(p && p.bot);
+      var canRemoveBot = !!(bot && room.status === "waiting" && isHost());
       tile.classList.toggle("empty", !p);
       tile.classList.toggle("self", mine);
+      tile.classList.toggle("bot", bot);
+      tile.classList.toggle("canRemoveBot", canRemoveBot);
       tile.classList.toggle("activeTurn", !!(room.status === "playing" && room.state && String(room.state.turn) === s));
       var name = tile.querySelector(".pname");
       if (name) name.textContent = p ? (p.name || "Player") : "Empty";
       var off = camOffs[s];
-      if (off) off.textContent = p ? (String(p.name || "P").trim().charAt(0).toUpperCase() || "P") : "";
+      if (off) off.textContent = p ? (bot ? "PC" : (String(p.name || "P").trim().charAt(0).toUpperCase() || "P")) : "";
       var camState = p ? (mine ? (camOn && !!localStream) : p.camOn !== false) : false;
       var micState = p ? (mine ? (micOn && !!localStream) : p.micOn !== false) : false;
       var showOff = !!p && (!camState || !liveSeats[s]);
@@ -3628,7 +3913,7 @@
         giftBtn.disabled = !p || !roomSeats(room).some(function (x) { return room.seats[x].uid !== uid; });
       }
       if (fullBtn) fullBtn.disabled = !p;
-      if (exitBtn) exitBtn.disabled = !mine;
+      if (exitBtn) exitBtn.disabled = !mine && !canRemoveBot;
     });
   }
 
@@ -3680,11 +3965,17 @@
       stopDiceSpin();
       return;
     }
-    dock.classList.remove("hidden");
     var seat = String(room.state.turn);
-    dock.style.setProperty("--dc", SEATS[seat].color);
+    var owner = room.seats && room.seats[seat];
     var mine = seat === mySeatString();
-    var canRoll = mine && !room.state.rolled;
+    if (!mine || !owner || owner.bot) {
+      dock.classList.add("hidden");
+      stopDiceSpin();
+      return;
+    }
+    dock.classList.remove("hidden");
+    dock.style.setProperty("--dc", SEATS[seat].color);
+    var canRoll = !room.state.rolled;
     el.classList.toggle("myturn", canRoll);
     var spinning = Date.now() < spinUntil;
     var face = spinning
@@ -3693,14 +3984,7 @@
     paintDiceFace(face);
     if (spinning) el.classList.add("rolling");
     else el.classList.remove("rolling");
-    if (hint) {
-      if (mine) {
-        if (!room.state.rolled) hint.textContent = "YOUR TURN — TAP DICE";
-        else hint.textContent = legalMoves(room, seat).length ? "YOUR MOVE" : "NO MOVE — PASSING…";
-      } else {
-        hint.textContent = seatName(room, seat) + (room.state.rolled ? " moving" : " rolling");
-      }
-    }
+    if (hint) hint.textContent = String(SEATS[seat].name || "").toUpperCase() + " DICE";
   }
 
   function renderCenter() {
@@ -3755,25 +4039,33 @@
       var bet = Math.max(0, Math.floor(Number(room.bet) || 0));
       if (filled >= 2) {
         txt = filled + "/" + total + " players — tap PLAY to start" +
-          (bet > 0 ? " · bet " + fmtMoney(bet) : "");
+          (bet > 0 ? " · bet " + fmtMoney(bet) : (isHost() ? " · + COMPUTER adds a computer" : ""));
       } else if (filled === 1) {
         txt = bet > 0
           ? "1/" + total + " players — need 1 more for the bet game" + (isHost() ? " · tap an empty seat to call a friend" : "")
-          : "1/" + total + " players — tap PLAY for solo practice" + (isHost() ? " · tap an empty seat to call a friend" : "");
+          : "1/" + total + " players — tap PLAY for solo practice" +
+            (isHost() ? " · + COMPUTER to play against a computer" : "");
       } else {
         txt = filled + "/" + total + " players — need " + (2 - filled) + " more" +
           (isHost() ? " · tap an empty seat to call a friend" : "");
       }
     } else if (room.status === "playing") {
       var t = String(room.state.turn);
-      if (t === mySeatString()) {
-        var moves = room.state.rolled ? legalMoves(room, t) : [];
-        txt = room.state.rolled
-          ? (moves.length ? "Your move — tap a token" : "No move — passing…")
-          : "Your turn — tap the dice";
+      var mineTurn = t === mySeatString();
+      var who = mineTurn ? "You" : seatName(room, t);
+      var phase;
+      if (room.state.rolled) {
+        phase = mineTurn
+          ? (legalMoves(room, t).length ? "tap a token" : "no move — passing…")
+          : "moving";
       } else {
-        txt = seatName(room, t) + "'s turn" + (room.state.rolled ? " — moving" : " — rolling");
+        phase = mineTurn ? "tap the dice" : "rolling…";
       }
+      var left = room.state.turnEndsAt
+        ? Math.max(0, Math.ceil((room.state.turnEndsAt - fbNow()) / 1000))
+        : 0;
+      txt = (room.state.lastEvent ? room.state.lastEvent + " · " : "") + who + " — " + phase;
+      if (left > 0) txt += " · " + left + "s";
     } else {
       txt = room.winnerUid ? (seatName(room, room.winnerSeat) + " wins!") : "Game over";
     }
@@ -3796,7 +4088,8 @@
     if (!room) return;
     renderRoomPill();
     $("meChip").textContent = myName;
-    var rolledNow = !!(room.status === "playing" && room.state && room.state.rolled);
+    var rolledNow = !!(room.status === "playing" && room.state && room.state.rolled &&
+      String(room.state.turn) === mySeatString());
     var rollKey = rolledNow
       ? (String(room.state.turn) + ":" + String(room.state.lastDice || 0) + ":" + String(room.state.startedAt || 0))
       : "";
@@ -3852,17 +4145,24 @@
 
   /* ---------------- media / webrtc ---------------- */
 
+  function hintMotion(stream) {
+    if (!stream) return;
+    try {
+      var vt = stream.getVideoTracks()[0];
+      if (vt && "contentHint" in vt) vt.contentHint = "motion";
+    } catch (e) {}
+  }
+
   function startMedia() {
     if (rtcStarted) return;
     rtcStarted = true;
     mediaReady = false;
-    myRtcStart = Date.now();
     closePeers();
     remoteStreams = {};
     renderStatus();
     var constraints = {
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 640 }, frameRate: { ideal: 20, max: 24 } }
+      video: { facingMode: "user", width: { ideal: 360 }, height: { ideal: 480 }, frameRate: { ideal: 15, max: 15 } }
     };
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       mediaReady = true;
@@ -3874,6 +4174,7 @@
     }
     navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
       localStream = stream;
+      hintMotion(stream);
       micOn = true;
       camOn = stream.getVideoTracks().length > 0;
       mediaReady = true;
@@ -4046,7 +4347,8 @@
   function syncPeers() {
     if (!room || !mediaReady || !roomId) return;
     var others = roomSeats(room).filter(function (s) {
-      return room.seats[s] && room.seats[s].uid !== uid;
+      var p = room.seats[s];
+      return p && p.uid !== uid && !p.bot;
     }).map(function (s) { return room.seats[s].uid; });
     others.forEach(function (p) { ensurePeer(p); });
     Array.from(peers.keys()).forEach(function (p) {
@@ -4054,6 +4356,70 @@
     });
     refreshVideos();
     renderCamTiles();
+  }
+
+  function tuneSenders(pc) {
+    if (!pc || !pc.getSenders) return;
+    try {
+      pc.getSenders().forEach(function (s) {
+        if (!s.track || s.track.kind !== "video") return;
+        var params = s.getParameters();
+        if (!params.encodings || !params.encodings.length) params.encodings = [{}];
+        params.encodings[0].maxBitrate = 220000;
+        params.encodings[0].maxFramerate = 15;
+        params.encodings[0].networkPriority = "low";
+        params.degradationPreference = "maintain-framerate";
+        s.setParameters(params).catch(function () {});
+      });
+    } catch (e) {}
+  }
+
+  function restartPeer(peerUid) {
+    if (!peerUid || peerUid === uid || !roomId) return;
+    var now = Date.now();
+    if (now - (peerRestarts[peerUid] || 0) < 20000) return;
+    peerRestarts[peerUid] = now;
+    delete videoStats[peerUid];
+    closePeer(peerUid);
+    publishEpoch();
+    setTimeout(function () {
+      if (room && mediaReady) {
+        ensurePeer(peerUid);
+        refreshVideos();
+      }
+    }, 400);
+  }
+
+  function watchdogVideos() {
+    if (!room || !mediaReady || document.hidden) return;
+    peers.forEach(function (entry, peerUid) {
+      var pc = entry.pc;
+      if (!pc || !pc.getStats || pc.connectionState !== "connected") return;
+      var seat = roomSeats(room).filter(function (s) {
+        return room.seats[s] && room.seats[s].uid === peerUid;
+      })[0];
+      var p = seat !== undefined ? room.seats[seat] : null;
+      if (!p || p.bot || p.camOn === false) return;
+      pc.getStats().then(function (report) {
+        var frames = null;
+        report.forEach(function (st) {
+          if (st.type === "inbound-rtp" && (st.kind === "video" || st.mediaType === "video")) {
+            frames = Number(st.framesDecoded || 0);
+          }
+        });
+        if (frames === null) return;
+        var now = Date.now();
+        var prev = videoStats[peerUid];
+        if (!prev || frames > prev.frames) {
+          videoStats[peerUid] = { frames: frames, at: now };
+          return;
+        }
+        if (now - prev.at > 12000) {
+          videoStats[peerUid] = { frames: frames, at: now };
+          restartPeer(peerUid);
+        }
+      }).catch(function () {});
+    });
   }
 
   function ensurePeer(peerUid) {
@@ -4064,13 +4430,15 @@
     try { pc = new RTCPeerConnection(ICE); } catch (e) { return; }
     var entry = {
       pc: pc, peerUid: peerUid, pair: pair, base: base,
-      pendingIce: [], refs: [], createdAt: Date.now(), offerAt: 0
+      pendingIce: [], refs: [], createdAt: Date.now(), offerAt: 0,
+      minOfferAt: Date.now() - 1200
     };
     peers.set(peerUid, entry);
     if (localStream) {
       localStream.getTracks().forEach(function (t) {
         try { pc.addTrack(t, localStream); } catch (e) {}
       });
+      tuneSenders(pc);
     } else {
       try {
         pc.addTransceiver("audio", { direction: "recvonly" });
@@ -4086,8 +4454,21 @@
       }
     };
     pc.onconnectionstatechange = function () {
-      if (pc.connectionState === "failed") {
-        try { pc.restartIce(); } catch (e) {}
+      var st = pc.connectionState;
+      if (st === "connected") {
+        tuneSenders(pc);
+        return;
+      }
+      if (st === "failed") {
+        restartPeer(peerUid);
+        return;
+      }
+      if (st === "disconnected") {
+        setTimeout(function () {
+          if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+            restartPeer(peerUid);
+          }
+        }, 5000);
       }
     };
 
@@ -4135,7 +4516,7 @@
       var offCb = offerRef.on("value", function (snap) {
         var v = snap.val();
         if (!v || !v.sdp) return;
-        if (v.at && v.at < myRtcStart) return;
+        if (v.at && v.at < entry.minOfferAt) return;
         if (pc.remoteDescription) return;
         pc.setRemoteDescription({ type: v.type || "offer", sdp: v.sdp }).then(function () {
           return pc.createAnswer();
@@ -4339,7 +4720,10 @@
 
   function openGiftFlow(preselect) {
     if (!room || !roomId) return;
-    var others = roomSeats(room).filter(function (s) { return room.seats[s] && room.seats[s].uid !== uid; });
+    var others = roomSeats(room).filter(function (s) {
+      var p = room.seats[s];
+      return p && p.uid !== uid && !p.bot;
+    });
     if (!others.length) { toast("No other players"); return; }
     var target = (preselect !== undefined && preselect !== null && others.indexOf(String(preselect)) >= 0)
       ? String(preselect) : others[0];
