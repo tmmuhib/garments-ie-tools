@@ -343,6 +343,20 @@
     flex: 0 0 auto;
   }
   .camTile.activeTurn .turnChip { display: inline-block; }
+  .waitChip {
+    display: none;
+    font-style: normal;
+    font-size: 6px;
+    font-weight: 900;
+    letter-spacing: .04em;
+    color: #3b2600;
+    background: #ffcc80;
+    border-radius: 3px;
+    padding: 0 2px;
+    flex: 0 0 auto;
+  }
+  .camTile.offline .waitChip { display: inline-block; }
+  .camTile.offline { border-style: dashed; }
   .camBar {
     position: absolute;
     left: 0; right: 0; bottom: 0;
@@ -368,6 +382,8 @@
   .ctrl.exit { visibility: hidden; color: #ff8a80; }
   .camTile.self .ctrl.exit { visibility: visible; }
   .camTile.canRemoveBot .ctrl.exit { visibility: visible; }
+  .ctrl.kick { display: none; color: #ff8a80; }
+  .camTile.canKick .ctrl.kick { display: flex; }
   .camTile.bot .pname { color: #ffe08a; }
   .camTile.bot [data-act="cam"],
   .camTile.bot [data-act="mic"],
@@ -383,7 +399,7 @@
     min-height: clamp(60px, 17vw, 74px);
     padding: 1px 8px;
   }
-  #diceDock.dockIdle #dice { visibility: hidden; }
+  #diceDock.dockIdle #dice { opacity: .62; filter: saturate(.35); pointer-events: none; }
   .tileEmpty {
     position: absolute; inset: 0;
     display: none;
@@ -404,6 +420,43 @@
     border-radius: 14px;
     overflow: hidden;
     box-shadow: 0 18px 46px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .06);
+    transform-origin: 50% 50%;
+  }
+  #netWait {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 30;
+    display: none;
+    flex-direction: column; align-items: center;
+    gap: 3px;
+    padding: 9px 13px;
+    max-width: 80%;
+    border-radius: 14px;
+    background: rgba(3, 16, 10, .88);
+    border: 1px solid rgba(255, 255, 255, .2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .55);
+    text-align: center;
+    pointer-events: none;
+  }
+  #netWait.show { display: flex; }
+  #netWait b {
+    font-size: clamp(11px, 3.2vw, 16px);
+    color: #ffe082;
+    letter-spacing: .02em;
+    word-break: break-word;
+  }
+  #netWait span { font-size: clamp(8px, 2.2vw, 11px); color: #cfe9dc; font-weight: 700; }
+  #netWait .dotRow { display: flex; gap: 4px; margin-top: 1px; }
+  #netWait .dotRow i {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #00e35f;
+    animation: netDot 1s ease-in-out infinite;
+  }
+  #netWait .dotRow i:nth-child(2) { animation-delay: .16s; }
+  #netWait .dotRow i:nth-child(3) { animation-delay: .32s; }
+  @keyframes netDot {
+    0%, 100% { opacity: .25; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-2px); }
   }
   #cells { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); }
   .cell { position: relative; background: #fffdf6; box-shadow: inset 0 0 0 .5px #ddd7c8; }
@@ -445,7 +498,7 @@
     filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .35));
     transition: left .22s ease, top .22s ease;
   }
-  .btoken svg { width: 100%; height: auto; display: block; }
+  .btoken svg { width: 100%; height: auto; display: block; transform: rotate(var(--vrot, 0deg)); }
   .btoken.movable { pointer-events: auto; cursor: pointer; z-index: 9; animation: tokenPulseBoard 1s ease-in-out infinite; }
 
   #center { position: absolute; left: 40%; top: 40%; width: 20%; height: 20%; z-index: 4; }
@@ -523,6 +576,9 @@
     box-shadow: 0 0 0 2px #fff, 0 0 18px var(--pc), 0 6px 16px rgba(0, 0, 0, .3);
   }
   .home.empty .homeInner { border-style: dashed; border-color: rgba(255, 255, 255, .35); }
+  .home.offline .homeInner { border-style: dashed; border-color: #ffcc80; }
+  .home.offline .homeHead { background: rgba(255, 152, 0, .3); }
+  .home.offline .homeHead .pname { color: #ffe0b2; }
   .home.giftPulse .homeInner { animation: giftPulse .9s ease; }
   .homeHead {
     flex: 0 0 auto;
@@ -679,6 +735,16 @@
     border: 1px solid rgba(255, 193, 7, .45);
     background: rgba(255, 193, 7, .14);
     color: #ffe08a;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  #btnAddPlayer {
+    border: 1px solid rgba(0, 200, 83, .45);
+    background: rgba(0, 200, 83, .14);
+    color: #a9ffd0;
     border-radius: 999px;
     padding: 4px 9px;
     font-size: 10px;
@@ -1011,6 +1077,7 @@
           <div id="centerSlot"></div>
         </div>
       </div>
+      <div id="netWait"></div>
     </div>
   </div>
   <div class="camStrip" id="camStripBottom"></div>
@@ -1021,6 +1088,7 @@
     <span id="potBadge" class="hidden">POT ৳0</span>
     <button id="musicBadge" class="hidden" type="button"></button>
     <span id="statusText"></span>
+    <button id="btnAddPlayer" class="hidden" type="button">+ PLAYER</button>
     <button id="btnAddBot" class="hidden" type="button">+ COMPUTER</button>
     <button id="btnEnableMedia" class="hidden" type="button">Enable camera &amp; mic</button>
   </div>
@@ -1159,6 +1227,7 @@
     gift: '<svg viewBox="0 0 24 24"><path d="M20 8h-2.2a3 3 0 0 0-4.6-3.7L12 5.6l-1.2-1.3A3 3 0 0 0 6.2 8H4v4h1v9h14v-9h1zM8 8a1 1 0 1 1 1-1c0 .6-.3 1.1-.8 1.5L8 8zm8 0-1.2-.5A1.8 1.8 0 1 1 16 8zM9 12h2v7H9zm4 0h2v7h-2z" fill="currentColor"/></svg>',
     full: '<svg viewBox="0 0 24 24"><path d="M3 3h8v2H5v6H3zm18 0v8h-2V5h-6V3zM3 13h2v6h6v2H3zm16 0h2v8h-8v-2h6z" fill="currentColor"/></svg>',
     exit: '<svg viewBox="0 0 24 24"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5zm5.6 4.6L14.2 9l2 2H8v2h8.2l-2 2 1.4 1.4L20.4 12z" fill="currentColor"/></svg>',
+    kick: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor" opacity=".3"/><path d="M8.4 7 12 10.6 15.6 7 17 8.4 13.4 12 17 15.6 15.6 17 12 13.4 8.4 17 7 15.6 10.6 12 7 8.4z" fill="currentColor"/></svg>',
     music: '<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="6.4" cy="18" r="2.6" fill="currentColor"/><circle cx="16.4" cy="16" r="2.6" fill="currentColor"/></svg>',
     trash: '<svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7zM9.5 7V4h5v3M4 7h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>'
   };
@@ -1208,8 +1277,14 @@
   var autoPassTimer = null;
   var endModalKey = "";
   var lastDiceKey = "";
-  var lastForceAt = 0;
-  var lastSkipTry = 0;
+  var netOnline = true;
+  var connectedRef = null;
+  var netWaitSig = "";
+  var camOrderSig = "";
+  var statusBarSig = "";
+  var roomViewSig = "";
+  var diceFaceSig = "";
+  var fitSig = "";
   var serverOffset = 0;
   var botTimer = null;
   var botPlan = "";
@@ -1530,6 +1605,7 @@
     var ref = db.ref("ludoRooms/" + id);
     var finish = function () {
       db.ref("ludoMusic/" + id).remove().catch(function () {});
+      db.ref("ludoRtc/" + id).remove().catch(function () {});
       return ref.remove();
     };
     if (!r) return finish();
@@ -1574,13 +1650,15 @@
           else {
             db.ref("ludoRooms/" + id).remove().catch(function () {});
             db.ref("ludoMusic/" + id).remove().catch(function () {});
+            db.ref("ludoRtc/" + id).remove().catch(function () {});
           }
           return;
         }
         var seats = roomSeats(r);
+        var offlineLimit = r.status === "playing" ? 30 * 60 * 1000 : 120000;
         var stale = !seats.length || seats.every(function (s) {
           var p = r.seats[s];
-          return p && (p.bot || (p.online === false && now - (p.lastSeenAt || 0) > 120000));
+          return p && (p.bot || (p.online === false && now - (p.lastSeenAt || 0) > offlineLimit));
         });
         var tooOld = now - (r.createdAt || 0) > 6 * 3600 * 1000 && r.status !== "playing";
         var stuckStart = r.status === "waiting" && r.starting && now - (r.starting.at || 0) > 120000;
@@ -2073,6 +2151,7 @@
     db.ref(".info/serverTimeOffset").on("value", function (s) {
       serverOffset = Number(s.val()) || 0;
     });
+    attachConnection();
     fetchMe();
     attachRole();
     attachBalance();
@@ -2119,9 +2198,38 @@
     }).catch(function () {});
   }
 
+  function attachConnection() {
+    if (!db || connectedRef) return;
+    connectedRef = db.ref(".info/connected");
+    connectedRef.on("value", function (snap) {
+      var now = snap.val() === true;
+      var was = netOnline;
+      netOnline = now;
+      if (now && roomId && mySeat && room && room.seats && room.seats[mySeat]) {
+        presenceArmed = false;
+        armPresence();
+        db.ref("ludoRooms/" + roomId + "/seats/" + mySeat)
+          .update({ online: true, lastSeenAt: Date.now() }).catch(function () {});
+        replayVideos();
+        syncPeers();
+        publishEpoch();
+      }
+      if (was !== now) {
+        renderNetWait();
+        renderDice();
+        renderStatus();
+        if (room) {
+          renderHomes();
+          renderCamTiles();
+        }
+      }
+    });
+  }
+
   function refreshAdminUi() {
     if (lastRooms) renderRooms(lastRooms);
     renderRoomActions();
+    if (room) { renderCamTiles(); renderHomes(); }
   }
 
   function bindUi() {
@@ -2188,6 +2296,7 @@
     setInterval(keepRemoteAudio, 4000);
     $("btnMusic").addEventListener("click", openMusicModal);
     $("btnDeleteRoom").addEventListener("click", deleteRoom);
+    $("btnAddPlayer").addEventListener("click", openAddPlayer);
     $("btnAddBot").addEventListener("click", addComputer);
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) return;
@@ -2223,7 +2332,7 @@
       if (roomId && mySeat && db) {
         try {
           db.ref("ludoRooms/" + roomId + "/seats/" + mySeat + "/online").set(false);
-          db.ref("ludoRooms/" + roomId + "/rtcEpoch/" + uid).remove();
+          db.ref("ludoRtc/" + roomId + "/epoch/" + uid).remove();
         } catch (e) {}
       }
       closePeers();
@@ -2257,6 +2366,100 @@
     resumeRoomMusic();
   }
 
+  /* Each player sees their own home (and own camera) at the bottom-left. */
+  function viewRotationSteps() {
+    var s = mySeatString();
+    if (s === null) return 0;
+    var n = Number(s);
+    if (!isFinite(n)) return 0;
+    return (3 - n + 4) % 4;
+  }
+
+  function applyViewRotation() {
+    var deg = viewRotationSteps() * 90;
+    var board = $("board");
+    if (board) {
+      board.style.transform = deg ? "rotate(" + deg + "deg)" : "";
+      board.style.setProperty("--vrot", (-deg) + "deg");
+    }
+    ["0", "1", "2", "3"].forEach(function (s) {
+      var home = homeEls[s];
+      if (home) home.style.transform = deg ? "rotate(" + (-deg) + "deg)" : "";
+    });
+    var label = $("centerLabel");
+    if (label) {
+      label.style.transform = deg
+        ? "translate(-50%, -50%) rotate(" + (-deg) + "deg)"
+        : "";
+    }
+    var slot = $("centerSlot");
+    if (slot) slot.style.transform = deg ? "rotate(" + (-deg) + "deg)" : "";
+  }
+
+  function layoutCamTiles() {
+    if (!camsBuilt) return;
+    var k = viewRotationSteps();
+    var sig = k + "|" + String(mySeat);
+    if (sig === camOrderSig) return;
+    camOrderSig = sig;
+    var top = $("camStripTop");
+    var bottom = $("camStripBottom");
+    if (!top || !bottom) return;
+    var topOrder = [null, null];
+    var bottomOrder = [null, null];
+    ["0", "1", "2", "3"].forEach(function (s) {
+      var c = (Number(s) + k) % 4;
+      if (c === 0) topOrder[0] = s;
+      else if (c === 1) topOrder[1] = s;
+      else if (c === 3) bottomOrder[0] = s;
+      else bottomOrder[1] = s;
+    });
+    topOrder.forEach(function (s) {
+      if (s !== null && camTiles[s]) top.appendChild(camTiles[s]);
+    });
+    bottomOrder.forEach(function (s) {
+      if (s !== null && camTiles[s]) bottom.appendChild(camTiles[s]);
+    });
+  }
+
+  function waitState() {
+    if (!room || room.status !== "playing" || !room.state) return null;
+    if (netOnline === false) return { mine: true, name: myName };
+    var s = String(room.state.turn);
+    var p = room.seats && room.seats[s];
+    if (p && !p.bot && p.online === false) return { mine: false, name: seatName(room, s) };
+    return null;
+  }
+
+  function renderNetWait() {
+    var box = $("netWait");
+    if (!box) return;
+    var w = waitState();
+    if (!w) {
+      if (netWaitSig) {
+        box.classList.remove("show");
+        box.textContent = "";
+        netWaitSig = "";
+      }
+      return;
+    }
+    var sig = w.mine ? "me" : ("s|" + w.name);
+    if (sig === netWaitSig) return;
+    netWaitSig = sig;
+    box.textContent = "";
+    var b = document.createElement("b");
+    b.textContent = w.mine ? "No internet" : w.name;
+    var sp = document.createElement("span");
+    sp.textContent = w.mine ? "waiting for connection…" : "waiting for internet…";
+    var dots = document.createElement("div");
+    dots.className = "dotRow";
+    for (var i = 0; i < 3; i++) dots.appendChild(document.createElement("i"));
+    box.appendChild(b);
+    box.appendChild(sp);
+    box.appendChild(dots);
+    box.classList.add("show");
+  }
+
   function fitBoard() {
     var wrap = $("boardWrap");
     var stage = $("boardStage");
@@ -2275,6 +2478,9 @@
     var size = Math.min(w, 560);
     if (avail > 0) size = Math.min(size, avail);
     size = Math.max(150, Math.floor(size));
+    var sig = size + "x" + Math.round(w);
+    if (sig === fitSig) return;
+    fitSig = sig;
     stage.style.width = size + "px";
     stage.style.height = size + "px";
   }
@@ -2437,6 +2643,7 @@
       strong.textContent = (inv.fromName || "Player") + " is calling you";
       var span = document.createElement("span");
       span.textContent = (inv.mode || 4) + " Players · Room " + String(inv.roomId).slice(-6).toUpperCase() +
+        (inv.playing ? " · In game" : "") +
         (Number(inv.bet) > 0 ? " · Bet " + fmtMoney(inv.bet) : "");
       info.appendChild(strong);
       info.appendChild(span);
@@ -2462,6 +2669,7 @@
     $("ringAvatar").textContent = String(inv.fromName || "P").trim().charAt(0).toUpperCase() || "P";
     $("ringTitle").textContent = (inv.fromName || "Player") + " is calling you";
     $("ringSub").textContent = (inv.mode || 4) + " Players · Room " + String(inv.roomId).slice(-6).toUpperCase() +
+      (inv.playing ? " · In game" : "") +
       (Number(inv.bet) > 0 ? " · Bet " + fmtMoney(inv.bet) : "");
     $("ringLayer").classList.remove("hidden");
     startRing();
@@ -2499,9 +2707,11 @@
         return;
       }
       if (r.starting) { toast("Game is starting — try again in a moment"); return; }
-      if (r.status !== "waiting") { toast("Game already started"); return; }
+      var midGame = r.status === "playing";
+      if (r.status !== "waiting" && !midGame) { toast("Game already started"); return; }
+      if (midGame && Number(r.bet) > 0) { toast("This is a bet game — new players can join before it starts"); return; }
       if (Number(r.bet) > myBalance) { toast("You need " + fmtMoney(r.bet) + " to join this room"); return; }
-      claimSeat(id, inv.seat).then(function (assigned) {
+      claimSeat(id, inv.seat, 0, midGame).then(function (assigned) {
         if (assigned === null) { toast("Room is full"); return; }
         db.ref("ludoInvites/" + uid + "/" + id).remove().catch(function () {});
         enterRoom(id, assigned);
@@ -2529,23 +2739,27 @@
 
   /* ---------------- room lifecycle ---------------- */
 
-  function claimSeat(id, preferSeat, attempt) {
+  function claimSeat(id, preferSeat, attempt, midGame) {
     var tryNo = attempt || 0;
+    var live = midGame === true;
     var assigned = null;
     return new Promise(function (resolve, reject) {
       txRetry(db.ref("ludoRooms/" + id), function (r) {
         assigned = null;
-        if (!r || r.status !== "waiting" || r.starting || !r.seats) return;
-        // A real player is joining: every computer seat leaves first.
-        Object.keys(r.seats).forEach(function (k) {
-          if (!isBotEntry(r.seats[k])) return;
-          delete r.seats[k];
-          if (r.state) {
-            if (r.state.tokens) delete r.state.tokens[k];
-            if (r.state.homeCount) delete r.state.homeCount[k];
-            if (r.state.removed) delete r.state.removed[k];
-          }
-        });
+        var openRoom = r && (r.status === "waiting" || (live && r.status === "playing"));
+        if (!r || !openRoom || r.starting || !r.seats) return;
+        // A real player is joining a waiting room: every computer seat leaves first.
+        if (r.status === "waiting") {
+          Object.keys(r.seats).forEach(function (k) {
+            if (!isBotEntry(r.seats[k])) return;
+            delete r.seats[k];
+            if (r.state) {
+              if (r.state.tokens) delete r.state.tokens[k];
+              if (r.state.homeCount) delete r.state.homeCount[k];
+              if (r.state.removed) delete r.state.removed[k];
+            }
+          });
+        }
         var seats = seatList(r.mode);
         var free = null;
         if (preferSeat !== undefined && preferSeat !== null && seats.indexOf(String(preferSeat)) >= 0 && !r.seats[String(preferSeat)]) {
@@ -2569,6 +2783,8 @@
           r.state.homeCount = r.state.homeCount || {};
           r.state.homeCount[free] = 0;
           if (r.state.removed) delete r.state.removed[free];
+          if (r.state.kicked) delete r.state.kicked[free];
+          if (live) r.state.lastEvent = myName + " joined the game";
         }
         assigned = free;
         return r;
@@ -2588,7 +2804,7 @@
         if (assigned === null) { resolve(null); return; }
         if (tryNo < 2) {
           setTimeout(function () {
-            claimSeat(id, preferSeat, tryNo + 1).then(resolve).catch(reject);
+            claimSeat(id, preferSeat, tryNo + 1, midGame).then(resolve).catch(reject);
           }, 320);
           return;
         }
@@ -2690,6 +2906,8 @@
     buildBoardOnce();
     buildHomesOnce();
     buildCamTilesOnce();
+    applyViewRotation();
+    layoutCamTiles();
     centerSig = "";
     musicKey = "";
     musicWanted = false;
@@ -2700,7 +2918,7 @@
     attachRtcEpoch();
     var seatRef = roomRef.child("seats/" + mySeat);
     seatRef.update({ name: myName, online: true, lastSeenAt: Date.now() }).catch(function () {});
-    db.ref("ludoRooms/" + id + "/rtcEpoch/" + uid).set(Date.now()).catch(function () {});
+    db.ref("ludoRtc/" + id + "/epoch/" + uid).set(Date.now()).catch(function () {});
     startMedia();
     requestAnimationFrame(function () {
       fitBoard();
@@ -2717,6 +2935,24 @@
     presenceArmed = true;
   }
 
+  function roomViewSigOf(r) {
+    if (!r) return "";
+    var seats = {};
+    Object.keys(r.seats || {}).forEach(function (k) {
+      var p = r.seats[k] || {};
+      seats[k] = [p.uid, p.name, p.online === false ? 0 : 1, p.camOn === false ? 0 : 1,
+        p.micOn === false ? 0 : 1, p.bot ? 1 : 0];
+    });
+    var st = r.state || {};
+    return JSON.stringify([
+      r.status, r.mode, r.bet, r.pot, r.name, r.hostUid, r.starting ? 1 : 0,
+      r.roundId, r.winnerUid, r.winnerSeat, r.endedReason, seats,
+      st.turn, st.dice, st.lastDice, st.rolled ? 1 : 0, st.tokens, st.homeCount,
+      st.lastEvent, st.turnEndsAt, st.startedAt, st.removed, st.kicked,
+      r.music ? [r.music.file ? 1 : 0, r.music.url, r.music.at, r.music.playing ? 1 : 0, r.music.title] : 0
+    ]);
+  }
+
   function attachRoom() {
     if (roomListener) {
       roomRef.off("value", roomListener);
@@ -2731,17 +2967,26 @@
         return;
       }
       room = data;
-      if (!room.seats || !room.seats[mySeat]) {
-        if (!selfLeaving) toast("You are no longer in this room");
+      var meSeat = room.seats && room.seats[mySeat];
+      if (!meSeat || String(meSeat.uid) !== String(uid)) {
+        if (!selfLeaving) {
+          var kicked = room.state && room.state.kicked && room.state.kicked[mySeat];
+          if (kicked && String(kicked.uid) === String(uid)) {
+            toast("You were removed by " + (kicked.by || "the room owner"));
+          } else {
+            toast("You are no longer in this room");
+          }
+        }
         leaveLocalRoom(true);
         return;
       }
-      renderRoom();
-      refreshVideos();
-      renderHomes();
-      renderCamTiles();
-      applyRoomMusic();
-      syncPeers();
+      var vsig = roomViewSigOf(room);
+      if (vsig !== roomViewSig) {
+        roomViewSig = vsig;
+        renderRoom();
+        syncPeers();
+        applyRoomMusic();
+      }
       maybeAutoPass();
       cleanupOffline();
     });
@@ -2763,7 +3008,7 @@
     if (rtcEpochRef && rtcEpochCb) {
       try { rtcEpochRef.off("value", rtcEpochCb); } catch (e) {}
     }
-    rtcEpochRef = roomRef.child("rtcEpoch");
+    rtcEpochRef = db.ref("ludoRtc/" + roomId + "/epoch");
     rtcEpochCb = rtcEpochRef.on("value", function (snap) {
       var v = snap.val() || {};
       Object.keys(v).forEach(function (peerUid) {
@@ -2833,7 +3078,7 @@
     rtcEpochRef = null;
     rtcEpochCb = null;
     if (roomId && db) {
-      db.ref("ludoRooms/" + roomId + "/rtcEpoch/" + uid).remove().catch(function () {});
+      db.ref("ludoRtc/" + roomId + "/epoch/" + uid).remove().catch(function () {});
     }
     if (roomId && mySeat !== null && db) {
       // Drop the disconnect hooks too, otherwise they recreate a ghost room
@@ -2865,12 +3110,26 @@
     presenceArmed = false;
     endModalKey = "";
     centerSig = "";
+    camOrderSig = "";
+    netWaitSig = "";
+    statusBarSig = "";
+    roomViewSig = "";
+    diceFaceSig = "";
+    var nw = $("netWait");
+    if (nw) {
+      nw.classList.remove("show");
+      nw.textContent = "";
+    }
     giftCounts = {};
     $("gameView").classList.add("hidden");
     $("lobbyView").classList.remove("hidden");
     $("roomPill").classList.add("hidden");
     $("btnMusic").classList.add("hidden");
     $("btnDeleteRoom").classList.add("hidden");
+    var addPlayerBtn = $("btnAddPlayer");
+    if (addPlayerBtn) addPlayerBtn.classList.add("hidden");
+    var addBotBtn = $("btnAddBot");
+    if (addBotBtn) addBotBtn.classList.add("hidden");
     $("musicBadge").classList.add("hidden");
     if (db) {
       db.ref("ludoRooms").orderByKey().limitToLast(80).once("value").then(function (s) {
@@ -2883,7 +3142,7 @@
     }
   }
 
-  function removeSeat(id, seat, seatUid, system) {
+  function removeSeat(id, seat, seatUid, system, kickedBy) {
     var ref = db.ref("ludoRooms/" + id);
     return ref.once("value").then(function (snap) {
       var r = snap.val();
@@ -2910,7 +3169,12 @@
         if (r.state.tokens) updates["state/tokens/" + seat] = null;
         if (r.state.homeCount) updates["state/homeCount/" + seat] = null;
         updates["state/removed/" + seat] = true;
-        updates["state/lastEvent"] = goneName + " left — tokens returned home";
+        updates["state/lastEvent"] = kickedBy
+          ? (goneName + " was removed")
+          : (goneName + " left — tokens returned home");
+        if (kickedBy) {
+          updates["state/kicked/" + seat] = { uid: String(p.uid), by: String(kickedBy), at: Date.now() };
+        }
         if (r.status === "playing" && String(r.state.turn) === String(seat)) {
           updates["state/turn"] = next;
           updates["state/dice"] = 0;
@@ -2925,6 +3189,31 @@
 
   function isHost() {
     return !!(room && room.hostUid === uid);
+  }
+
+  function canModerate() {
+    return !!(room && (room.hostUid === uid || room.createdBy === uid || isAdminUser));
+  }
+
+  function kickPlayer(seat) {
+    if (!room || !roomId) return;
+    if (!canModerate()) { toast("Only the room owner or an admin can remove players"); return; }
+    var p = room.seats && room.seats[seat];
+    if (!p || p.bot) return;
+    if (String(p.uid) === String(uid)) { toast("You cannot remove yourself — use Exit"); return; }
+    openModal("Remove " + (p.name || "player") + "?", bodyText(
+      (p.name || "This player") + " will be removed from the room. Their tokens go home and the game continues."
+    ), [
+      { label: "Remove", cls: "danger", onClick: function () { doKick(seat, p); } },
+      { label: "Cancel", cls: "ghost" }
+    ]);
+  }
+
+  function doKick(seat, p) {
+    if (!roomId) return;
+    removeSeat(roomId, seat, p.uid, false, myName).then(function (ok) {
+      toast(ok ? ((p.name || "Player") + " removed") : "Could not remove that player");
+    }).catch(function () { toast("Could not remove that player"); });
   }
 
   function isLeader() {
@@ -2953,6 +3242,19 @@
       var freeGame = !!(room && !(Number(room.bet) > 0));
       botBtn.classList.toggle("hidden", !(inRoom && waiting && freeSeat && freeGame && isHost()));
     }
+    var addBtn = $("btnAddPlayer");
+    if (addBtn) {
+      var hasFree = !!(room && room.seats && seatList(room.mode).some(function (s) { return !room.seats[s]; }));
+      addBtn.classList.toggle("hidden", !(inRoom && hasFree && canModerate()));
+    }
+  }
+
+  function openAddPlayer() {
+    if (!room || !roomId) return;
+    if (!canModerate()) { toast("Only the room owner or an admin can add players"); return; }
+    var free = seatList(room.mode).filter(function (s) { return !room.seats[s]; })[0];
+    if (free === undefined) { toast("Room is full"); return; }
+    openFriendList(free);
   }
 
   function deleteRoom() {
@@ -3005,8 +3307,11 @@
 
   function cleanupOffline() {
     if (!room || !roomId || !isLeader()) return;
+    // Mid-game we never kick anyone: the board shows "waiting" until the
+    // player's internet comes back (their seat and tokens are kept).
+    if (room.status === "playing") return;
     var now = Date.now();
-    var limit = room.status === "playing" ? 8000 : 20000;
+    var limit = 60000;
     roomSeats(room).forEach(function (s) {
       var p = room.seats[s];
       if (!p || p.uid === uid || p.bot) return;
@@ -3253,6 +3558,7 @@
 
   function rollDice() {
     if (!roomRef || !room || !canAct() || room.state.rolled) return;
+    if (netOnline === false) { toast("No internet — waiting for connection"); return; }
     beep(340, 0.06, 0);
     beep(520, 0.06, 0.07);
     runRoll(mySeatString());
@@ -3276,6 +3582,7 @@
 
   function moveToken(idx) {
     if (!roomRef || !room || !room.state || !canAct() || !room.state.rolled) return;
+    if (netOnline === false) { toast("No internet — waiting for connection"); return; }
     var seat = mySeatString();
     if (legalMoves(room, seat).indexOf(idx) < 0) return;
     runMove(seat, idx);
@@ -3359,43 +3666,6 @@
       r.state.turn = nextSeat(r, seat);
       r.state.turnEndsAt = fbNow() + TURN_ROLL_MS;
       r.state.lastEvent = seatName(r, seat) + " had no move";
-      return r;
-    }).catch(function () {});
-  }
-
-  function forceSkip() {
-    if (!roomRef || !room || !room.state) return;
-    if (Date.now() - lastForceAt < 3000) return;
-    lastForceAt = Date.now();
-    var old = String(room.state.turn);
-    txRetry(roomRef, function (r) {
-      if (!r || r.status !== "playing" || !r.state) return;
-      if (String(r.state.turn) !== old) return;
-      if (!r.state.turnEndsAt || fbNow() < r.state.turnEndsAt) return;
-      r.state.dice = 0;
-      r.state.rolled = false;
-      r.state.turn = nextSeat(r, old);
-      r.state.turnEndsAt = fbNow() + TURN_ROLL_MS;
-      r.state.lastEvent = "Time out — next player";
-      return r;
-    }).catch(function () {});
-  }
-
-  function skipNoRoll() {
-    if (!roomRef || !room || room.status !== "playing" || !room.state) return;
-    if (room.state.rolled) return;
-    if (Date.now() - lastSkipTry < 2500) return;
-    lastSkipTry = Date.now();
-    var old = String(room.state.turn);
-    txRetry(roomRef, function (r) {
-      if (!r || r.status !== "playing" || !r.state || r.state.rolled) return;
-      if (String(r.state.turn) !== old) return;
-      if (!r.state.turnEndsAt || fbNow() < r.state.turnEndsAt) return;
-      r.state.dice = 0;
-      r.state.rolled = false;
-      r.state.turn = nextSeat(r, old);
-      r.state.turnEndsAt = fbNow() + TURN_ROLL_MS;
-      r.state.lastEvent = seatName(r, old) + " did not roll — turn skipped";
       return r;
     }).catch(function () {});
   }
@@ -3560,13 +3830,8 @@
     if (room.status !== "playing" || !room.state) return;
     maybeRunBot();
     renderDice();
+    renderNetWait();
     renderStatus();
-    if (room.state.rolled) {
-      if (room.state.turnEndsAt && fbNow() >= room.state.turnEndsAt) forceSkip();
-      return;
-    }
-    if (!room.state.turnEndsAt) return;
-    if (fbNow() >= room.state.turnEndsAt) skipNoRoll();
   }
 
   function maybeClearStuckStart() {
@@ -3759,9 +4024,13 @@
         var turnChip = document.createElement("em");
         turnChip.className = "turnChip";
         turnChip.textContent = "TURN";
+        var waitChip = document.createElement("em");
+        waitChip.className = "waitChip";
+        waitChip.textContent = "WAIT";
         tag.appendChild(dot);
         tag.appendChild(nm);
         tag.appendChild(turnChip);
+        tag.appendChild(waitChip);
         view.appendChild(tag);
 
         var emptyHit = document.createElement("button");
@@ -3778,10 +4047,12 @@
 
         var bar = document.createElement("div");
         bar.className = "camBar";
-        [["cam", ICON.cam], ["mic", ICON.mic], ["gift", ICON.gift], ["full", ICON.full], ["exit", ICON.exit]].forEach(function (pair) {
+        [["cam", ICON.cam], ["mic", ICON.mic], ["gift", ICON.gift], ["full", ICON.full], ["kick", ICON.kick], ["exit", ICON.exit]].forEach(function (pair) {
           var b = document.createElement("button");
           b.type = "button";
-          b.className = "ctrl" + (pair[0] === "exit" ? " exit" : "");
+          b.className = "ctrl" +
+            (pair[0] === "exit" ? " exit" : "") +
+            (pair[0] === "kick" ? " kick" : "");
           b.setAttribute("data-act", pair[0]);
           b.title = pair[0].charAt(0).toUpperCase() + pair[0].slice(1);
           b.innerHTML = pair[1];
@@ -3797,6 +4068,7 @@
           else if (act === "mic") { if (mine) toggleMic(); }
           else if (act === "gift") { openGiftFlow(s); }
           else if (act === "full") { openFull(s); }
+          else if (act === "kick") { kickPlayer(s); }
           else if (act === "exit") {
             if (mine) leaveRoom();
             else if (sp && sp.bot) removeComputer(s);
@@ -3889,6 +4161,12 @@
     });
   }
 
+  function emptySeatHint() {
+    if (!room) return "";
+    if (canModerate()) return room.status === "waiting" ? "Tap to invite" : "Tap to add";
+    return room.status === "waiting" ? "Waiting for host" : "Empty seat";
+  }
+
   function renderHomes() {
     if (!room) return;
     ["0", "1", "2", "3"].forEach(function (s) {
@@ -3901,6 +4179,7 @@
       var mine = s === mySeatString();
       home.classList.toggle("empty", !p);
       home.classList.toggle("self", mine);
+      home.classList.toggle("offline", !!(p && !p.bot && p.online === false));
       home.classList.toggle("activeTurn", !!(room.status === "playing" && room.state && String(room.state.turn) === s));
       var name = home.querySelector(".pname");
       if (name) name.textContent = p ? (p.name || "Player") : "Empty";
@@ -3908,8 +4187,7 @@
       if (hit) {
         var span = hit.querySelector("span");
         if (span) {
-          span.textContent = (room.status === "waiting" && isHost()) ? "Tap to invite" :
-            (room.status === "waiting" ? "Waiting for host" : "Empty seat");
+          span.textContent = emptySeatHint();
         }
       }
       var badge = homeBadges[s];
@@ -3931,10 +4209,13 @@
       var mine = s === mySeatString();
       var bot = !!(p && p.bot);
       var canRemoveBot = !!(bot && room.status === "waiting" && isHost());
+      var canKick = !!(p && !bot && !mine && canModerate());
       tile.classList.toggle("empty", !p);
       tile.classList.toggle("self", mine);
       tile.classList.toggle("bot", bot);
+      tile.classList.toggle("offline", !!(p && !bot && p.online === false));
       tile.classList.toggle("canRemoveBot", canRemoveBot);
+      tile.classList.toggle("canKick", canKick);
       tile.classList.toggle("activeTurn", !!(room.status === "playing" && room.state && String(room.state.turn) === s));
       var name = tile.querySelector(".pname");
       if (name) name.textContent = p ? (p.name || "Player") : "Empty";
@@ -3950,8 +4231,7 @@
       if (hit) {
         var span = hit.querySelector("span");
         if (span) {
-          span.textContent = (room.status === "waiting" && isHost()) ? "Tap to invite" :
-            (room.status === "waiting" ? "Waiting for host" : "Empty seat");
+          span.textContent = emptySeatHint();
         }
       }
       var camBtn = tile.querySelector('[data-act="cam"]');
@@ -3976,6 +4256,9 @@
   }
 
   function paintDiceFace(face) {
+    var key = String(Number(face) || 1);
+    if (key === diceFaceSig) return;
+    diceFaceSig = key;
     var on = PIPS[face] || PIPS[1];
     var html = "";
     for (var i = 0; i < 9; i++) {
@@ -4018,8 +4301,9 @@
     var el = $("dice");
     if (!dock || !el) return;
     dock.classList.remove("hidden");
-    if (!room || room.status !== "playing" || !room.state || !SEATS[String(room.state.turn)]) {
+    if (!room || room.status !== "playing" || !room.state || !SEATS[String(room.state.turn)] || waitState()) {
       dock.classList.add("dockIdle");
+      el.classList.remove("myturn");
       stopDiceSpin();
       return;
     }
@@ -4082,60 +4366,24 @@
   }
 
   function renderStatus() {
-    var txt = "";
-    if (!room) txt = "";
-    else if (room.status === "waiting") {
-      var filled = roomSeats(room).length;
-      var total = seatList(room.mode).length;
-      var bet = Math.max(0, Math.floor(Number(room.bet) || 0));
-      if (filled >= 2) {
-        txt = filled + "/" + total + " players — tap PLAY to start" +
-          (bet > 0 ? " · bet " + fmtMoney(bet) : (isHost() ? " · + COMPUTER adds a computer" : ""));
-      } else if (filled === 1) {
-        txt = bet > 0
-          ? "1/" + total + " players — need 1 more for the bet game" + (isHost() ? " · tap an empty seat to call a friend" : "")
-          : "1/" + total + " players — tap PLAY for solo practice" +
-            (isHost() ? " · + COMPUTER to play against a computer" : "");
-      } else {
-        txt = filled + "/" + total + " players — need " + (2 - filled) + " more" +
-          (isHost() ? " · tap an empty seat to call a friend" : "");
-      }
-    } else if (room.status === "playing") {
-      var t = String(room.state.turn);
-      var mineTurn = t === mySeatString();
-      var who = mineTurn ? "You" : seatName(room, t);
-      var phase;
-      if (room.state.rolled) {
-        phase = mineTurn
-          ? (legalMoves(room, t).length ? "tap a token" : "no move — passing…")
-          : "moving";
-      } else {
-        phase = mineTurn ? "tap the dice" : "rolling…";
-      }
-      var left = room.state.turnEndsAt
-        ? Math.max(0, Math.ceil((room.state.turnEndsAt - fbNow()) / 1000))
-        : 0;
-      txt = (room.state.lastEvent ? room.state.lastEvent + " · " : "") + who + " — " + phase;
-      if (left > 0) txt += " · " + left + "s";
-    } else {
-      txt = room.winnerUid ? (seatName(room, room.winnerSeat) + " wins!") : "Game over";
-    }
-    $("statusText").textContent = txt;
+    // The status line is hidden by design (v44); only the action buttons matter.
     var retry = $("btnEnableMedia");
-    retry.classList.toggle("hidden", !(mediaReady && !localStream && roomId));
+    if (retry) retry.classList.toggle("hidden", !(mediaReady && !localStream && roomId));
     layoutStatusBar();
   }
 
   function layoutStatusBar() {
     var bar = $("statusBar");
     if (!bar) return;
-    var show = false;
-    ["potBadge", "musicBadge", "btnAddBot", "btnEnableMedia"].forEach(function (id) {
+    var shown = [];
+    ["potBadge", "musicBadge", "btnAddPlayer", "btnAddBot", "btnEnableMedia"].forEach(function (id) {
       var el = $(id);
-      if (!el || el.classList.contains("hidden")) return;
-      if (window.getComputedStyle(el).display !== "none") show = true;
+      if (el && !el.classList.contains("hidden")) shown.push(id);
     });
-    bar.classList.toggle("hidden", !show);
+    var sig = shown.join(",");
+    if (sig === statusBarSig) return;
+    statusBarSig = sig;
+    bar.classList.toggle("hidden", !shown.length);
   }
 
   function renderRoomPill() {
@@ -4166,6 +4414,7 @@
     renderHomes();
     renderCamTiles();
     renderDice();
+    renderNetWait();
     renderCenter();
     renderStatus();
     renderPot();
@@ -4225,7 +4474,10 @@
     remoteStreams = {};
     renderStatus();
     var constraints = {
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      audio: {
+        echoCancellation: true, noiseSuppression: true, autoGainControl: true,
+        channelCount: 1, sampleRate: 48000, sampleSize: 16, latency: 0.01
+      },
       video: { facingMode: "user", width: { ideal: 360 }, height: { ideal: 480 }, frameRate: { ideal: 15, max: 15 } }
     };
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -4294,7 +4546,7 @@
 
   function publishEpoch() {
     if (roomId && db) {
-      db.ref("ludoRooms/" + roomId + "/rtcEpoch/" + uid).set(Date.now()).catch(function () {});
+      db.ref("ludoRtc/" + roomId + "/epoch/" + uid).set(Date.now()).catch(function () {});
     }
   }
 
@@ -4502,14 +4754,37 @@
     if (!pc || !pc.getSenders) return;
     try {
       pc.getSenders().forEach(function (s) {
-        if (!s.track || s.track.kind !== "video") return;
+        if (!s.track) return;
         var params = s.getParameters();
         if (!params.encodings || !params.encodings.length) params.encodings = [{}];
-        params.encodings[0].maxBitrate = 220000;
-        params.encodings[0].maxFramerate = 15;
-        params.encodings[0].networkPriority = "low";
-        params.degradationPreference = "maintain-framerate";
+        if (s.track.kind === "audio") {
+          params.encodings[0].maxBitrate = 64000;
+          params.encodings[0].networkPriority = "high";
+          params.encodings[0].dtx = false;
+        } else if (s.track.kind === "video") {
+          params.encodings[0].maxBitrate = 220000;
+          params.encodings[0].maxFramerate = 15;
+          params.encodings[0].networkPriority = "low";
+          params.degradationPreference = "maintain-framerate";
+        } else {
+          return;
+        }
         s.setParameters(params).catch(function () {});
+      });
+    } catch (e) {}
+  }
+
+  function preferOpus(pc) {
+    try {
+      if (!pc || !pc.getTransceivers || !window.RTCRtpSender || !RTCRtpSender.getCapabilities) return;
+      var caps = RTCRtpSender.getCapabilities("audio");
+      if (!caps || !caps.codecs || !caps.codecs.length) return;
+      var opus = caps.codecs.filter(function (c) { return /opus/i.test(c.mimeType || ""); });
+      if (!opus.length) return;
+      pc.getTransceivers().forEach(function (tr) {
+        if (!tr || !tr.setCodecPreferences) return;
+        if (!tr.sender || !tr.sender.track || tr.sender.track.kind !== "audio") return;
+        try { tr.setCodecPreferences(opus); } catch (e) {}
       });
     } catch (e) {}
   }
@@ -4565,7 +4840,7 @@
   function ensurePeer(peerUid) {
     if (!peerUid || peerUid === uid || !roomId || !mediaReady || peers.has(peerUid)) return;
     var pair = pairKey(uid, peerUid);
-    var base = "ludoRooms/" + roomId + "/rtc/" + pair;
+    var base = "ludoRtc/" + roomId + "/" + pair;
     var pc;
     try { pc = new RTCPeerConnection(ICE); } catch (e) { return; }
     var entry = {
@@ -4579,6 +4854,7 @@
         try { pc.addTrack(t, localStream); } catch (e) {}
       });
       tuneSenders(pc);
+      preferOpus(pc);
     } else {
       try {
         pc.addTransceiver("audio", { direction: "recvonly" });
@@ -4737,9 +5013,10 @@
 
   function onEmptySeat(seat) {
     if (!room) return;
-    if (room.status !== "waiting") { toast("Game already started"); return; }
-    if (!isHost()) { toast("Only the host can invite players"); return; }
-    openFriendList(seat);
+    if (canModerate()) { openFriendList(seat); return; }
+    toast(room.status === "waiting"
+      ? "Only the host can invite players"
+      : "Only the room owner or an admin can add players");
   }
 
   function loadProfile(id) {
@@ -4762,7 +5039,7 @@
   }
 
   function openFriendList(seat) {
-    if (!room || room.status !== "waiting" || !isHost()) return;
+    if (!room || !canModerate()) return;
     var body = document.createElement("div");
     var status = document.createElement("div");
     status.className = "empty";
@@ -4771,7 +5048,7 @@
     list.className = "friendList";
     body.appendChild(status);
     body.appendChild(list);
-    openModal("Invite friends", body, [{ label: "Close", cls: "ghost" }]);
+    openModal(room.status === "waiting" ? "Invite friends" : "Add a player", body, [{ label: "Close", cls: "ghost" }]);
 
     db.ref("friends/" + uid).once("value").then(function (snap) {
       var ids = [];
@@ -4832,13 +5109,15 @@
   }
 
   function sendInvite(seat, target) {
-    if (!room || !roomId || room.status !== "waiting") return;
+    if (!room || !roomId || !canModerate()) return;
     if (!target || target.uid === uid) return;
+    if (room.seats && room.seats[seat]) { toast("That seat is already taken"); return; }
     db.ref("ludoInvites/" + target.uid + "/" + roomId).set({
       roomId: roomId,
       seat: seat,
       mode: Number(room.mode) || 4,
       bet: Math.max(0, Math.floor(Number(room.bet) || 0)),
+      playing: room.status === "playing",
       fromUid: uid,
       fromName: myName,
       at: Date.now()
