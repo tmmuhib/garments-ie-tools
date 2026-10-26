@@ -277,9 +277,9 @@
     display: flex;
     justify-content: center;
     gap: 5px;
-    height: clamp(62px, 18vw, 82px);
-    min-height: clamp(62px, 18vw, 82px);
-    max-height: clamp(62px, 18vw, 82px);
+    height: clamp(82px, 24vw, 108px);
+    min-height: clamp(82px, 24vw, 108px);
+    max-height: clamp(82px, 24vw, 108px);
     padding: 2px 0;
   }
   .camTile {
@@ -379,20 +379,11 @@
     flex: 0 0 auto;
     display: flex; align-items: center; justify-content: center;
     gap: 10px;
-    height: clamp(52px, 14.5vw, 64px);
-    min-height: clamp(52px, 14.5vw, 64px);
-    padding: 2px 8px;
+    height: clamp(60px, 17vw, 74px);
+    min-height: clamp(60px, 17vw, 74px);
+    padding: 1px 8px;
   }
-  #diceDock.dockIdle #dice,
-  #diceDock.dockIdle .dockLabel { visibility: hidden; }
-  .dockLabel {
-    font-size: clamp(9px, 2.7vw, 11.5px);
-    font-weight: 800;
-    letter-spacing: .03em;
-    color: var(--dc, #cfe9dc);
-    max-width: 62vw;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
+  #diceDock.dockIdle #dice { visibility: hidden; }
   .tileEmpty {
     position: absolute; inset: 0;
     display: none;
@@ -626,12 +617,12 @@
   #dice {
     position: relative;
     flex: 0 0 auto;
-    width: clamp(44px, 13vw, 56px);
+    width: clamp(50px, 14.5vw, 62px);
     aspect-ratio: 1 / 1;
-    border: 3px solid var(--dc, #e6dfd0);
+    border: 4px solid var(--dc, #e6dfd0);
     border-radius: 22%;
-    background: linear-gradient(145deg, #ffffff, #e6dfd0);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, .5), inset 0 -2px 0 rgba(0, 0, 0, .12);
+    background: radial-gradient(circle at 32% 26%, #ffffff 0%, #f7f2e8 42%, var(--dc, #e6dfd0) 135%);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .55), 0 0 0 2px rgba(255, 255, 255, .1), inset 0 -2px 0 rgba(0, 0, 0, .12);
     z-index: 10;
     display: grid; place-items: center;
     pointer-events: none;
@@ -657,6 +648,7 @@
     text-align: center;
   }
   #statusBar #statusText {
+    display: none;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -899,8 +891,8 @@
     50% { transform: translateY(-2.5px); }
   }
   @keyframes dicePulse {
-    0%, 100% { box-shadow: 0 6px 14px rgba(0, 0, 0, .45), 0 0 0 2px rgba(255, 255, 255, .55), 0 0 14px rgba(0, 200, 83, .55); }
-    50% { box-shadow: 0 8px 18px rgba(0, 0, 0, .5), 0 0 0 4px rgba(255, 255, 255, .75), 0 0 22px rgba(0, 200, 83, .8); }
+    0%, 100% { box-shadow: 0 6px 14px rgba(0, 0, 0, .45), 0 0 0 2px rgba(255, 255, 255, .55), 0 0 14px var(--dc, #00c853); }
+    50% { box-shadow: 0 8px 18px rgba(0, 0, 0, .5), 0 0 0 4px rgba(255, 255, 255, .75), 0 0 24px var(--dc, #00c853); }
   }
   @keyframes diceRoll {
     0% { transform: rotate(0deg) scale(1); }
@@ -1024,7 +1016,6 @@
   <div class="camStrip" id="camStripBottom"></div>
   <div id="diceDock">
     <div id="dice"><div class="pipGrid" id="dicePips"></div></div>
-    <span class="dockLabel" id="diceHint"></span>
   </div>
   <div id="statusBar">
     <span id="potBadge" class="hidden">POT ৳0</span>
@@ -1231,6 +1222,7 @@
   var peers = new Map();
   var remoteStreams = {};
   var remoteAudios = {};
+  var remoteAudioStreams = {};
   var rtcEpochRef = null;
   var rtcEpochCb = null;
   var peerRestarts = {};
@@ -2190,6 +2182,10 @@
       if (currentInvite) declineInvite(currentInvite);
     });
     $("btnEnableMedia").addEventListener("click", retryMedia);
+    ["pointerdown", "touchend", "click", "keydown"].forEach(function (ev) {
+      document.addEventListener(ev, unlockRemoteAudio, true);
+    });
+    setInterval(keepRemoteAudio, 4000);
     $("btnMusic").addEventListener("click", openMusicModal);
     $("btnDeleteRoom").addEventListener("click", deleteRoom);
     $("btnAddBot").addEventListener("click", addComputer);
@@ -2256,7 +2252,7 @@
     });
     Object.keys(remoteAudios).forEach(function (u) {
       var a = remoteAudios[u];
-      if (a && a.srcObject) playVideo(a);
+      if (a && a.srcObject) tryPlayRemote(a);
     });
     resumeRoomMusic();
   }
@@ -4020,7 +4016,6 @@
   function renderDice() {
     var dock = $("diceDock");
     var el = $("dice");
-    var hint = $("diceHint");
     if (!dock || !el) return;
     dock.classList.remove("hidden");
     if (!room || room.status !== "playing" || !room.state || !SEATS[String(room.state.turn)]) {
@@ -4029,17 +4024,11 @@
       return;
     }
     var seat = String(room.state.turn);
-    var owner = room.seats && room.seats[seat];
-    var mine = seat === mySeatString();
-    if (!mine || !owner || owner.bot) {
-      dock.classList.add("dockIdle");
-      stopDiceSpin();
-      return;
-    }
     dock.classList.remove("dockIdle");
     dock.style.setProperty("--dc", SEATS[seat].color);
-    var canRoll = !room.state.rolled;
-    el.classList.toggle("myturn", canRoll);
+    el.style.setProperty("--dc", SEATS[seat].color);
+    var mine = seat === mySeatString();
+    el.classList.toggle("myturn", mine && !room.state.rolled);
     var spinning = Date.now() < spinUntil;
     var face = spinning
       ? (1 + Math.floor(Math.random() * 6))
@@ -4047,7 +4036,6 @@
     paintDiceFace(face);
     if (spinning) el.classList.add("rolling");
     else el.classList.remove("rolling");
-    if (hint) hint.textContent = String(SEATS[seat].name || "").toUpperCase() + " DICE";
   }
 
   function renderCenter() {
@@ -4135,6 +4123,19 @@
     $("statusText").textContent = txt;
     var retry = $("btnEnableMedia");
     retry.classList.toggle("hidden", !(mediaReady && !localStream && roomId));
+    layoutStatusBar();
+  }
+
+  function layoutStatusBar() {
+    var bar = $("statusBar");
+    if (!bar) return;
+    var show = false;
+    ["potBadge", "musicBadge", "btnAddBot", "btnEnableMedia"].forEach(function (id) {
+      var el = $(id);
+      if (!el || el.classList.contains("hidden")) return;
+      if (window.getComputedStyle(el).display !== "none") show = true;
+    });
+    bar.classList.toggle("hidden", !show);
   }
 
   function renderRoomPill() {
@@ -4151,8 +4152,7 @@
     if (!room) return;
     renderRoomPill();
     $("meChip").textContent = myName;
-    var rolledNow = !!(room.status === "playing" && room.state && room.state.rolled &&
-      String(room.state.turn) === mySeatString());
+    var rolledNow = !!(room.status === "playing" && room.state && room.state.rolled);
     var rollKey = rolledNow
       ? (String(room.state.turn) + ":" + String(room.state.lastDice || 0) + ":" + String(room.state.startedAt || 0))
       : "";
@@ -4171,6 +4171,7 @@
     renderPot();
     renderRoomActions();
     applyRoomMusic();
+    layoutStatusBar();
     fitBoard();
     if (room.status === "ended") settleRoom();
     if (room.status === "ended") {
@@ -4264,6 +4265,7 @@
   }
 
   function afterMedia() {
+    ensureAudio();
     syncMediaFlags();
     attachLocalVideo();
     renderStatus();
@@ -4323,6 +4325,72 @@
     renderCamTiles();
   }
 
+  function remoteAudioStream(pu, stream) {
+    var tracks = [];
+    try { tracks = stream.getAudioTracks(); } catch (e) { tracks = []; }
+    if (!tracks.length) return null;
+    var cur = remoteAudioStreams[pu];
+    if (!cur) {
+      try { cur = new MediaStream(tracks); } catch (e) { return null; }
+      remoteAudioStreams[pu] = cur;
+      return cur;
+    }
+    var have = [];
+    try { have = cur.getAudioTracks(); } catch (e) { have = []; }
+    var same = have.length === tracks.length;
+    if (same) {
+      for (var i = 0; i < tracks.length; i++) {
+        if (have[i] !== tracks[i]) { same = false; break; }
+      }
+    }
+    if (same) return cur;
+    have.forEach(function (t) { try { cur.removeTrack(t); } catch (e) {} });
+    tracks.forEach(function (t) { try { cur.addTrack(t); } catch (e) {} });
+    return cur;
+  }
+
+  function scheduleAudioRetry(a) {
+    if (!a || a._retryTimer) return;
+    var delays = [250, 700, 1500, 3000, 6000, 10000];
+    var i = 0;
+    var step = function () {
+      a._retryTimer = null;
+      if (!a || !a._want || !a.parentNode) return;
+      if (!a.paused) return;
+      try { a.play().catch(function () {}); } catch (e) {}
+      if (!a.paused || i >= delays.length - 1) return;
+      i++;
+      a._retryTimer = setTimeout(step, delays[i]);
+    };
+    a._retryTimer = setTimeout(step, delays[0]);
+  }
+
+  function tryPlayRemote(a) {
+    if (!a || !a.srcObject) return;
+    a._want = true;
+    a.muted = false;
+    a.volume = 1;
+    if (!a.paused) return;
+    var p = null;
+    try { p = a.play(); } catch (e) { p = null; }
+    if (p && p.catch) p.catch(function () { scheduleAudioRetry(a); });
+    else if (a.paused) scheduleAudioRetry(a);
+  }
+
+  function keepRemoteAudio() {
+    Object.keys(remoteAudios).forEach(function (pu) {
+      var a = remoteAudios[pu];
+      if (!a || !a.srcObject) return;
+      if (a.paused) tryPlayRemote(a);
+      else if (a.muted) a.muted = false;
+    });
+  }
+
+  function unlockRemoteAudio() {
+    ensureAudio();
+    keepRemoteAudio();
+  }
+
   function syncRemoteAudio() {
     if (!room) return;
     var keep = {};
@@ -4331,28 +4399,34 @@
       if (!p || p.uid === uid) return;
       var stream = remoteStreams[p.uid];
       if (!stream) return;
+      var astream = remoteAudioStream(p.uid, stream);
+      if (!astream) return;
       keep[p.uid] = true;
       var a = remoteAudios[p.uid];
       if (!a) {
         a = document.createElement("audio");
         a.autoplay = true;
         a.playsInline = true;
+        a.setAttribute("autoplay", "");
         a.setAttribute("playsinline", "");
+        a.setAttribute("webkit-playsinline", "");
+        a.style.cssText = "position:fixed;left:-4px;bottom:-4px;width:2px;height:2px;opacity:.01;pointer-events:none;";
         document.body.appendChild(a);
         remoteAudios[p.uid] = a;
       }
-      if (a.srcObject !== stream) a.srcObject = stream;
-      a.muted = false;
-      a.volume = 1;
-      playVideo(a);
+      if (a.srcObject !== astream) a.srcObject = astream;
+      tryPlayRemote(a);
     });
     Object.keys(remoteAudios).forEach(function (pu) {
       if (keep[pu]) return;
       var a = remoteAudios[pu];
+      a._want = false;
+      if (a._retryTimer) { clearTimeout(a._retryTimer); a._retryTimer = null; }
       try { a.pause(); } catch (e) {}
       try { a.srcObject = null; } catch (e) {}
       if (a.parentNode) a.parentNode.removeChild(a);
       delete remoteAudios[pu];
+      delete remoteAudioStreams[pu];
     });
   }
 
@@ -4365,11 +4439,14 @@
     remoteStreams = {};
     Object.keys(remoteAudios).forEach(function (pu) {
       var a = remoteAudios[pu];
+      a._want = false;
+      if (a._retryTimer) { clearTimeout(a._retryTimer); a._retryTimer = null; }
       try { a.pause(); } catch (e) {}
       try { a.srcObject = null; } catch (e) {}
       if (a.parentNode) a.parentNode.removeChild(a);
       delete remoteAudios[pu];
     });
+    remoteAudioStreams = {};
     rtcStarted = false;
     mediaReady = false;
     micOn = false;
