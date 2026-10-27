@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>TM247 Live</title>
+<style>
+  :root {
+    --bg: #08080d;
+    --panel: #12121b;
+    --panel2: #191924;
+    --line: rgba(255, 255, 255, .08);
+    --text: #f6f4f8;
+    --muted: #9c98ab;
+    --pink: #ff2d6f;
+    --pink2: #ff5f92;
+    --gold: #ffb703;
+    --green: #29d67a;
+    --red: #ff4d5e;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans Bengali", sans-serif;
+    font-size: 13px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .hidden { display: none !important; }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+  input, select { font: inherit; }
+  #app { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+
+  /* ---------- top bar ---------- */
+  #topbar {
+    flex: 0 0 auto;
+    height: 42px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 6px; padding: 0 10px;
+    background: #0b0b12;
+    border-bottom: 1px solid var(--line);
+    z-index: 5;
+  }
+  .brand { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .brandDot {
+    width: 18px; height: 18px; border-radius: 6px;
+    background: linear-gradient(135deg, var(--pink), #ff8a5c);
+    box-shadow: 0 0 12px rgba(255, 45, 111, .55);
+  }
+  .brandText { font-size: 12px; font-weight: 900; letter-spacing: .1em; }
+  .brandText b { color: var(--pink2); }
+  .tbRight { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .chip {
+    border-radius: 8px; padding: 4px 8px; font-size: 10.5px; font-weight: 800;
+    background: rgba(41, 214, 122, .14); color: #9cf7c4; white-space: nowrap;
+  }
+  .tbBtn {
+    border-radius: 8px; padding: 5px 9px; font-size: 10.5px; font-weight: 800;
+    background: rgba(255, 255, 255, .07); white-space: nowrap;
+  }
+  .tbBtn.go { background: var(--pink); color: #fff; box-shadow: 0 4px 12px rgba(255, 45, 111, .35); }
+  .tbBtn.end { background: rgba(255, 77, 94, .16); color: #ff9aa5; }
+
+  /* ---------- lobby ---------- */
+  #lobbyView { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 10px 10px 24px; }
+  .lobbyHead {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; color: var(--muted); margin: 2px 2px 10px; font-weight: 700;
+  }
+  .lobbyHead b { color: var(--pink2); }
+  #roomGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .roomCard {
+    position: relative; border-radius: 12px; overflow: hidden;
+    background: var(--panel); border: 1px solid var(--line);
+    aspect-ratio: 3 / 4; display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 8px; text-align: left;
+  }
+  .roomCard:active { transform: scale(.985); }
+  .roomCard .thumb {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(255, 45, 111, .38), transparent 65%),
+      radial-gradient(90% 70% at 20% 100%, rgba(90, 60, 255, .35), transparent 70%),
+      linear-gradient(160deg, #1a1626, #0d0d14);
+  }
+  .roomCard .initial {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -58%);
+    font-size: 42px; font-weight: 900; color: rgba(255, 255, 255, .16);
+  }
+  .roomCard .meta { position: relative; z-index: 1; }
+  .roomCard .nm { font-size: 12px; font-weight: 800; display: block; }
+  .roomCard .ttl {
+    font-size: 10px; color: #d6cfe0; display: block; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .liveTag {
+    position: absolute; top: 7px; left: 7px; z-index: 2;
+    background: var(--pink); color: #fff; font-size: 8.5px; font-weight: 900;
+    letter-spacing: .12em; padding: 2px 6px; border-radius: 5px;
+    box-shadow: 0 0 10px rgba(255, 45, 111, .5);
+  }
+  .eyeTag {
+    position: absolute; top: 7px; right: 7px; z-index: 2;
+    background: rgba(0, 0, 0, .55); color: #fff; font-size: 9px; font-weight: 700;
+    padding: 2px 6px; border-radius: 5px;
+  }
+  .lobbyEmpty {
+    grid-column: 1 / -1; text-align: center; padding: 34px 16px;
+    color: var(--muted); font-size: 12px; line-height: 1.7;
+    border: 1px dashed var(--line); border-radius: 12px;
+  }
+  .lobbyEmpty b { color: var(--text); }
+
+  /* ---------- room ---------- */
+  #roomView { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  #stage {
+    position: relative; flex: 0 0 auto; background: #000;
+    width: 100%; aspect-ratio: 3 / 4; max-height: 52vh; overflow: hidden;
+  }
+  #stageVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
+  #stageOff {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 12px; text-align: center; padding: 20px;
+  }
+  .stageTop {
+    position: absolute; top: 8px; left: 8px; right: 8px; z-index: 3;
+    display: flex; align-items: center; gap: 6px; pointer-events: none;
+  }
+  .stageChip {
+    background: rgba(0, 0, 0, .55); backdrop-filter: blur(6px);
+    border-radius: 6px; padding: 3px 7px; font-size: 9.5px; font-weight: 800;
+  }
+  .stageChip.live { background: var(--pink); }
+  #roomTitleText {
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 10px; color: #efe7f4;
+  }
+  .stageSide {
+    position: absolute; right: 8px; bottom: 8px; z-index: 4;
+    display: flex; flex-direction: column; gap: 7px; align-items: flex-end;
+  }
+  .roundBtn {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(0, 0, 0, .5); backdrop-filter: blur(6px);
+    display: grid; place-items: center; font-size: 15px;
+    border: 1px solid rgba(255, 255, 255, .12);
+  }
+  .roundBtn b { position: absolute; }
+  #btnLike { background: rgba(255, 45, 111, .22); border-color: rgba(255, 45, 111, .5); }
+  #likeCount {
+    position: absolute; transform: translateY(24px);
+    font-size: 9px; font-weight: 800; color: #ffd9e5;
+  }
+  .likeWrap { position: relative; }
+  #guestBox {
+    position: absolute; left: 8px; bottom: 8px; z-index: 4;
+    width: 32%; max-width: 130px; aspect-ratio: 3 / 4;
+    border-radius: 10px; overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, .55);
+    background: #000; box-shadow: 0 8px 20px rgba(0, 0, 0, .55);
+  }
+  #guestVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #guestName {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, .75));
+    font-size: 8.5px; font-weight: 800; padding: 10px 4px 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
+  }
+  #hearts { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+  .heartFly {
+    position: absolute; bottom: 60px; font-size: 18px;
+    animation: fly 1.5s ease-out forwards;
+  }
+  @keyframes fly {
+    0% { opacity: 1; transform: translateY(0) scale(.7); }
+    100% { opacity: 0; transform: translateY(-150px) scale(1.5) rotate(18deg); }
+  }
+  #tapSound {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    z-index: 6; background: rgba(0, 0, 0, .7); border: 1px solid var(--line);
+    padding: 9px 14px; border-radius: 10px; font-size: 11px; font-weight: 800;
+  }
+  #reqBanner {
+    position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 5;
+    background: rgba(18, 18, 27, .94); border: 1px solid rgba(255, 183, 3, .45);
+    border-radius: 10px; padding: 7px 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  #reqText { flex: 1; min-width: 0; font-size: 10.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #reqBanner button { padding: 5px 9px; border-radius: 7px; font-size: 10px; font-weight: 800; }
+  #btnAccept { background: var(--green); color: #04150c; }
+  #btnDecline { background: rgba(255, 255, 255, .1); }
+
+  #chatList {
+    flex: 1 1 auto; min-height: 60px; overflow-y: auto;
+    padding: 8px 10px; display: flex; flex-direction: column; gap: 5px;
+    background: var(--bg);
+  }
+  .msg { font-size: 11.5px; line-height: 1.45; word-break: break-word; }
+  .msg .who { font-weight: 800; color: #b7e9ff; margin-right: 4px; }
+  .msg .who.me { color: var(--gold); }
+  .msg.sys { color: var(--muted); font-size: 10.5px; font-style: italic; }
+  .msg.gift {
+    background: linear-gradient(90deg, rgba(255, 183, 3, .18), rgba(255, 45, 111, .14));
+    border-left: 3px solid var(--gold);
+    border-radius: 6px; padding: 5px 7px; font-size: 11px;
+  }
+  .msg.gift b { color: #ffe08a; }
+  .giftEmo { font-size: 15px; }
+
+  #composer {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 6px;
+    padding: 7px 8px; background: #0b0b12; border-top: 1px solid var(--line);
+  }
+  #chatInput {
+    flex: 1; min-width: 0; background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 20px; padding: 8px 12px; color: var(--text); font-size: 12px;
+    outline: none;
+  }
+  #chatInput::placeholder { color: #6d6a7d; }
+  #btnGift { width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 183, 3, .16); font-size: 16px; flex: 0 0 auto; }
+  #btnSend {
+    flex: 0 0 auto; background: var(--pink); color: #fff; font-weight: 800;
+    font-size: 11px; padding: 8px 12px; border-radius: 18px;
+  }
+  #actionBar {
+    flex: 0 0 auto; display: flex; gap: 6px; padding: 0 8px 8px;
+    background: #0b0b12;
+  }
+  #actionBar button {
+    flex: 1; padding: 8px 6px; border-radius: 9px; font-size: 10.5px; font-weight: 800;
+    background: rgba(255, 255, 255, .07);
+  }
+  #btnRequest { background: linear-gradient(90deg, #7c4dff, #ff2d6f); color: #fff; }
+  #btnRequest[disabled] { opacity: .6; }
+  #btnRemoveGuest { background: rgba(255, 77, 94, .16); color: #ff9aa5; }
+
+  /* ---------- modal ---------- */
+  #modalWrap {
+    position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, .68);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  #modalBox {
+    width: 100%; max-width: 520px; max-height: 86vh; overflow-y: auto;
+    background: var(--panel); border-radius: 16px 16px 0 0;
+    border-top: 1px solid var(--line); padding: 14px 14px 18px;
+    animation: sheetUp .18s ease-out;
+  }
+  @keyframes sheetUp { from { transform: translateY(28px); opacity: .6; } to { transform: none; opacity: 1; } }
+  #modalTitle { margin: 0 0 10px; font-size: 14px; font-weight: 900; }
+  #modalBody { font-size: 12px; color: #d9d3e4; line-height: 1.6; }
+  #modalBody p { margin: 0 0 8px; }
+  .field { margin: 9px 0; }
+  .field label { display: block; font-size: 10.5px; color: var(--muted); margin-bottom: 4px; font-weight: 700; }
+  .field input, .field select {
+    width: 100%; background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 9px; padding: 9px 10px; color: var(--text); font-size: 12.5px; outline: none;
+  }
+  #modalActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  #modalActions button {
+    flex: 1 1 45%; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 800;
+    background: rgba(255, 255, 255, .08);
+  }
+  #modalActions button.primary { background: var(--pink); color: #fff; }
+  #modalActions button.ok { background: var(--green); color: #04150c; }
+
+  .giftGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .giftItem {
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 6px; text-align: center;
+  }
+  .giftItem:active { border-color: var(--pink); }
+  .giftItem .ge { font-size: 22px; display: block; }
+  .giftItem .gn { font-size: 9.5px; color: #ded8e8; display: block; margin-top: 3px; }
+  .giftItem .gp { font-size: 10px; font-weight: 800; color: var(--gold); display: block; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%);
+    background: rgba(20, 20, 30, .96); border: 1px solid var(--line);
+    color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 14px;
+    border-radius: 20px; z-index: 60; max-width: 86vw; text-align: center;
+  }
+  #fatal {
+    position: fixed; inset: 0; z-index: 80; background: #08080d;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 24px; text-align: center;
+  }
+  #fatal h2 { font-size: 17px; margin: 0; }
+  #fatal p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand">
+      <span class="brandDot"></span>
+      <span class="brandText">TM247 <b>LIVE</b></span>
+    </div>
+    <div class="tbRight">
+      <span class="chip" id="balChip">৳0</span>
+      <button class="tbBtn" id="btnDeposit" type="button">Deposit</button>
+      <button class="tbBtn go" id="btnGoLive" type="button">Go Live</button>
+    </div>
+  </header>
+
+  <main id="lobbyView">
+    <div class="lobbyHead">
+      <span><b id="liveCount">0</b> live now</span>
+      <span id="meName">—</span>
+    </div>
+    <div id="roomGrid"></div>
+  </main>
+
+  <main id="roomView" class="hidden">
+    <div id="stage">
+      <video id="stageVideo" playsinline autoplay webkit-playsinline></video>
+      <div id="stageOff">Model is starting the camera…</div>
+      <div class="stageTop">
+        <span class="stageChip live">LIVE</span>
+        <span class="stageChip" id="viewCount">0 watching</span>
+        <span id="roomTitleText"></span>
+      </div>
+      <div id="guestBox" class="hidden">
+        <video id="guestVideo" playsinline autoplay muted webkit-playsinline></video>
+        <span id="guestName"></span>
+      </div>
+      <div class="stageSide">
+        <div class="likeWrap">
+          <button class="roundBtn" id="btnLike" type="button">♥</button>
+          <span id="likeCount">0</span>
+        </div>
+        <button class="roundBtn" id="btnFull" type="button">⛶</button>
+      </div>
+      <div id="hearts"></div>
+      <button id="tapSound" class="hidden" type="button">🔇 Tap for sound</button>
+      <div id="reqBanner" class="hidden">
+        <span id="reqText"></span>
+        <button id="btnAccept" type="button">Accept</button>
+        <button id="btnDecline" type="button">No</button>
+      </div>
+    </div>
+    <div id="chatList"></div>
+    <div id="composer">
+      <button id="btnGift" type="button">🎁</button>
+      <input id="chatInput" type="text" maxlength="200" placeholder="Say something nice…" autocomplete="off" />
+      <button id="btnSend" type="button">Send</button>
+    </div>
+    <div id="actionBar">
+      <button id="btnRequest" type="button">Request to join</button>
+      <button id="btnLeave" type="button">Leave</button>
+      <button id="btnRemoveGuest" class="hidden" type="button">Remove guest</button>
+      <button id="btnEndStream" class="hidden" type="button">End live</button>
+    </div>
+  </main>
+</div>
+
+<div id="modalWrap" class="hidden">
+  <div id="modalBox">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div id="modalActions"></div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<div id="fatal" class="hidden">
+  <h2>Open this page from the TM247 app</h2>
+  <p>This page needs your TM247 account.<br />Open it from the app so your login and balance are available.</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var DB_URL = "https://easylife-e96f6-default-rtdb.firebaseio.com";
+  var SHARE = 0.30;
+  var MAX_CHAT = 140;
+  var LOBBY_MAX_AGE = 8 * 3600 * 1000;
+  var ICE = {
+    iceServers: [
+      { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+      {
+        urls: [
+          "turn:openrelay.metered.ca:80",
+          "turn:openrelay.metered.ca:443",
+          "turn:openrelay.metered.ca:443?transport=tcp"
+        ],
+        username: "openrelayproject",
+        credential: "openrelayproject"
+      }
+    ]
+  };
+  var GIFTS = [
+    { id: "heart", emo: "💖", name: "Heart", price: 5 },
+    { id: "rose", emo: "🌹", name: "Rose", price: 10 },
+    { id: "kiss", emo: "😘", name: "Kiss", price: 20 },
+    { id: "bear", emo: "🧸", name: "Teddy", price: 30 },
+    { id: "crown", emo: "👑", name: "Crown", price: 50 },
+    { id: "diamond", emo: "💎", name: "Diamond", price: 100 },
+    { id: "rocket", emo: "🚀", name: "Rocket", price: 200 },
+    { id: "castle", emo: "🏰", name: "Castle", price: 500 },
+    { id: "car", emo: "🚗", name: "Car", price: 1000 },
+    { id: "yacht", emo: "🛥️", name: "Yacht", price: 2000 },
+    { id: "panda", emo: "🐼", name: "Panda", price: 150 },
+    { id: "rainbow", emo: "🌈", name: "Rainbow", price: 300 }
+  ];
+
+  function $(id) { return document.getElementById(id); }
+
+  var params = new URLSearchParams(
+    ((location.search || "").replace(/^\?/, "") + "&" + (location.hash || "").replace(/^#/, ""))
+      .replace(/^&/, "")
+  );
+  var uid = String(params.get("uid") || "").trim();
+  var myName = String(params.get("username") || "").trim() || "Guest";
+
+  if (!uid) {
+    $("fatal").classList.remove("hidden");
+    return;
+  }
+
+  var db = null;
+  var myBalance = 0;
+  var balanceRef = null;
+  var balanceCb = null;
+
+  var lobby = {};
+  var lobbyRef = null;
+  var lobbyCb = null;
+
+  var roomId = null;
+  var room = null;
+  var roomRef = null;
+  var roomCb = null;
+  var chatRef = null;
+  var chatCb = null;
+  var chatData = {};
+  var presenceRef = null;
+  var presenceCb = null;
+  var presence = {};
+  var reqRef = null;
+  var reqCb = null;
+  var requests = {};
+  var reqsRef = null;
+  var reqsCb = null;
+
+  var localStream = null;
+  var camOn = true;
+  var micOn = true;
+  var remoteStreams = {};
+  var peers = new Map();
+  var stageReady = false;
+
+  var lastLike = 0;
+  var lastViewerCount = -1;
+  var toastTimer = null;
+
+  function toast(msg) {
+    var el = $("toast");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.add("hidden"); }, 2600);
+  }
+
+  var modalOnClose = null;
+  function closeModal() {
+    $("modalWrap").classList.add("hidden");
+    $("modalBody").textContent = "";
+    $("modalActions").textContent = "";
+    var cb = modalOnClose;
+    modalOnClose = null;
+    if (cb) cb();
+  }
+  function openModal(title, bodyHtml, actions, onClose) {
+    $("modalTitle").textContent = title;
+    $("modalBody").innerHTML = bodyHtml || "";
+    $("modalActions").textContent = "";
+    (actions || []).forEach(function (a) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = a.label;
+      if (a.cls) b.className = a.cls;
+      b.addEventListener("click", function () {
+        // Run the action while the dialog body (and its inputs) still exist.
+        if (a.fn) a.fn();
+        if (a.keep !== true) closeModal();
+      });
+      $("modalActions").appendChild(b);
+    });
+    modalOnClose = onClose || null;
+    $("modalWrap").classList.remove("hidden");
+  }
+
+  function round2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
+  function fmt(v) {
+    var n = round2(v);
+    var txt = Math.abs(n - Math.round(n)) < 0.005 ? String(Math.round(n)) : n.toFixed(2);
+    return "৳" + txt;
+  }
+  function shortName(s) { return String(s || "").slice(0, 18); }
+
+  /* ---------------- balance ---------------- */
+  function attachBalance() {
+    balanceRef = db.ref("users/" + uid + "/balance");
+    balanceCb = balanceRef.on("value", function (snap) {
+      myBalance = round2(snap.val());
+      $("balChip").textContent = fmt(myBalance);
+    });
+  }
+
+  /* ---------------- money helpers (same schema as the app) ---------------- */
+  function pruneLedger(ledger) {
+    var keys = Object.keys(ledger || {});
+    if (keys.length <= 80) return ledger;
+    keys.sort(function (a, b) { return (ledger[b].at || 0) - (ledger[a].at || 0); });
+    var out = {};
+    keys.slice(0, 80).forEach(function (k) { out[k] = ledger[k]; });
+    return out;
+  }
+
+  function userTx(targetUid, fn) {
+    var ref = db.ref("users/" + targetUid);
+    return ref.once("value").then(function (snap) {
+      var primed = snap.val();
+      return ref.transaction(function (u) {
+        var base = u;
+        if (base === null) {
+          if (!primed) return;
+          base = JSON.parse(JSON.stringify(primed));
+        }
+        return fn(base);
+      });
+    });
+  }
+
+  function writeTx(targetUid, kind, amount, note, refId, name) {
+    if (!db || !targetUid) return;
+    var key = "live_" + String(kind) + "_" + String(refId).replace(/[^A-Za-z0-9_-]/g, "");
+    db.ref("transactions/" + targetUid + "/" + key).set({
+      kind: kind,
+      amount: round2(amount),
+      status: "completed",
+      method: "Live",
+      number: "",
+      note: note,
+      refId: refId,
+      at: Date.now(),
+      userName: name || "",
+      remarks: ""
+    }).catch(function () {});
+  }
+
+  /* ---------------- lobby ---------------- */
+  function startLobby() {
+    $("meName").textContent = shortName(myName);
+    lobbyRef = db.ref("liveRooms");
+    lobbyCb = lobbyRef.on("value", function (snap) {
+      lobby = snap.val() || {};
+      renderLobby();
+      if (roomId && lobby[roomId]) room = lobby[roomId];
+    });
+  }
+
+  function isLive(r) {
+    if (!r || r.status !== "live") return false;
+    return Date.now() - (r.startedAt || 0) < LOBBY_MAX_AGE;
+  }
+
+  function renderLobby() {
+    var grid = $("roomGrid");
+    grid.textContent = "";
+    var ids = Object.keys(lobby).filter(function (id) { return isLive(lobby[id]); });
+    ids.sort(function (a, b) { return (lobby[b].likes || 0) - (lobby[a].likes || 0); });
+    $("liveCount").textContent = String(ids.length);
+    if (!ids.length) {
+      var empty = document.createElement("div");
+      empty.className = "lobbyEmpty";
+      empty.innerHTML = "<b>No one is live right now.</b><br />Tap <b>Go Live</b> and start your own room.";
+      grid.appendChild(empty);
+      return;
+    }
+    ids.forEach(function (id) {
+      var r = lobby[id];
+      var card = document.createElement("button");
+      card.type = "button";
+      card.className = "roomCard";
+      var initial = document.createElement("span");
+      initial.className = "initial";
+      initial.textContent = String(r.modelName || "?").slice(0, 1).toUpperCase();
+      var thumb = document.createElement("span");
+      thumb.className = "thumb";
+      var live = document.createElement("span");
+      live.className = "liveTag";
+      live.textContent = "LIVE";
+      var eye = document.createElement("span");
+      eye.className = "eyeTag";
+      eye.textContent = "👁 " + (r.viewers || 0);
+      var meta = document.createElement("span");
+      meta.className = "meta";
+      var nm = document.createElement("span");
+      nm.className = "nm";
+      nm.textContent = shortName(r.modelName || "Model");
+      var ttl = document.createElement("span");
+      ttl.className = "ttl";
+      ttl.textContent = r.title || "Live now";
+      meta.appendChild(nm);
+      meta.appendChild(ttl);
+      card.appendChild(thumb);
+      card.appendChild(initial);
+      card.appendChild(live);
+      card.appendChild(eye);
+      card.appendChild(meta);
+      card.addEventListener("click", function () { openRoom(id); });
+      grid.appendChild(card);
+    });
+  }
+
+  /* ---------------- go live ---------------- */
+  function askGoLive() {
+    if (roomId && room && room.modelUid === uid) { openRoom(roomId); return; }
+    openModal(
+      "Start your live",
+      '<p>Camera and mic will turn on. Everyone can watch, comment and send gifts.</p>' +
+      '<div class="field"><label>Room title</label><input id="liveTitleInput" type="text" maxlength="40" placeholder="Come talk with me" /></div>',
+      [
+        { label: "Cancel" },
+        { label: "Go Live", cls: "primary", fn: function () {
+          var t = ($("liveTitleInput") && $("liveTitleInput").value || "").trim();
+          startStream(t || "Live now");
+        } }
+      ]
+    );
+    setTimeout(function () {
+      var inp = $("liveTitleInput");
+      if (inp) inp.focus();
+    }, 120);
+  }
+
+  function startStream(title) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast("Camera is not available on this device");
+      return;
+    }
+    toast("Starting camera…");
+    navigator.mediaDevices.getUserMedia(mediaConstraints(true)).then(function (s) {
+      localStream = s;
+      camOn = true;
+      micOn = true;
+      var ref = db.ref("liveRooms").push();
+      roomRef = ref;
+      var payload = {
+        modelUid: uid,
+        modelName: myName,
+        title: title,
+        status: "live",
+        startedAt: Date.now(),
+        likes: 0,
+        giftTotal: 0,
+        viewers: 0,
+        guest: null
+      };
+      return ref.set(payload).then(function () {
+        // If the phone drops, the room closes by itself.
+        ref.child("status").onDisconnect().set("ended");
+        $("btnGoLive").classList.add("hidden");
+        openRoom(ref.key);
+        toast("You are live");
+      });
+    }).catch(function (err) {
+      var m = String((err && err.name) || err || "");
+      if (m.indexOf("NotAllowed") >= 0) toast("Camera/mic permission needed");
+      else toast("Camera could not start");
+    });
+  }
+
+  /* ---------------- room lifecycle ---------------- */
+  function openRoom(id) {
+    if (roomId === id) return;
+    if (roomId) leaveRoom(true);
+    roomId = id;
+    room = lobby[id] || null;
+    chatData = {};
+    presence = {};
+    requests = {};
+    $("lobbyView").classList.add("hidden");
+    $("roomView").classList.remove("hidden");
+    $("chatList").textContent = "";
+    renderRoom();
+    attachRoom();
+    attachPresence();
+    attachChat();
+    if (room && room.modelUid === uid) {
+      $("btnGoLive").classList.add("hidden");
+      if (localStream) attachStage();
+    }
+    if (localStream && room && room.guest && room.guest.uid === uid) attachStage();
+  }
+
+  function attachRoom() {
+    roomRef = db.ref("liveRooms/" + roomId);
+    roomCb = roomRef.on("value", function (snap) {
+      var prevGuest = room && room.guest ? room.guest.uid : null;
+      room = snap.val();
+      if (!room) { toast("Room closed"); leaveRoom(); return; }
+      if (room.status !== "live") { toast("Live ended"); leaveRoom(); return; }
+      var guest = room.guest ? room.guest.uid : null;
+      if (prevGuest !== guest) onGuestChanged(guest);
+      renderRoom();
+      syncPeers();
+    });
+    attachRequests();
+  }
+
+  function onGuestChanged(guest) {
+    if (guest === uid) {
+      if (!localStream) startGuestMedia();
+    } else if (localStream && room && room.modelUid !== uid) {
+      // I was the guest and the model removed me. Keep watching the same link.
+      toast("You are no longer on stage");
+      stopLocalMedia();
+      syncPeers();
+    }
+    // The new guest needs a fresh cable that carries their camera.
+    if (room && room.modelUid === uid && guest) {
+      closePeer(guest);
+      syncPeers();
+    }
+    if (room && room.modelUid === uid && guest) toast("Guest joined the stage");
+  }
+
+  function startGuestMedia() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    navigator.mediaDevices.getUserMedia(mediaConstraints(true)).then(function (s) {
+      localStream = s;
+      camOn = true;
+      micOn = true;
+      toast("You are on stage");
+      // Rebuild every cable so my camera/mic gets sent, not just received.
+      closePeers();
+      attachStage();
+      syncPeers();
+    }).catch(function () {
+      toast("Camera/mic permission needed to join the stage");
+      db.ref("liveRooms/" + roomId + "/guest").remove();
+    });
+  }
+
+  function attachRequests() {
+    reqsRef = db.ref("liveReq/" + roomId);
+    reqsCb = reqsRef.on("value", function (snap) {
+      requests = snap.val() || {};
+      renderRequests();
+    });
+  }
+
+  function renderRequests() {
+    if (!room || room.modelUid !== uid) { $("reqBanner").classList.add("hidden"); return; }
+    var keys = Object.keys(requests);
+    if (!keys.length || room.guest) { $("reqBanner").classList.add("hidden"); return; }
+    keys.sort(function (a, b) { return (requests[a].at || 0) - (requests[b].at || 0); });
+    var first = requests[keys[0]];
+    $("reqText").textContent = shortName(first.name) + " wants to join the stage";
+    $("reqBanner").classList.remove("hidden");
+  }
+
+  function attachPresence() {
+    var p = db.ref("livePresence/" + roomId + "/" + uid);
+    p.set({ name: myName, at: Date.now() }).catch(function () {});
+    p.onDisconnect().remove();
+    presenceRef = db.ref("livePresence/" + roomId);
+    presenceCb = presenceRef.on("value", function (snap) {
+      presence = snap.val() || {};
+      renderRoom();
+      syncPeers();
+      // Only the model writes the public viewer count, so the lobby stays accurate.
+      if (room && room.modelUid === uid) {
+        var n = Object.keys(presence).length;
+        if (n !== lastViewerCount) {
+          lastViewerCount = n;
+          db.ref("liveRooms/" + roomId + "/viewers").set(n).catch(function () {});
+        }
+      }
+    });
+  }
+
+  function attachChat() {
+    chatRef = db.ref("liveChat/" + roomId);
+    chatCb = chatRef.on("value", function (snap) {
+      chatData = snap.val() || {};
+      renderChat();
+    });
+    var meta = room || lobby[roomId];
+    if (!meta || meta.modelUid !== uid) {
+      reqRef = db.ref("liveReq/" + roomId + "/" + uid);
+      reqCb = reqRef.on("value", function (snap) {
+        var v = snap.val();
+        var btn = $("btnRequest");
+        if (v) {
+          btn.textContent = "Request sent · waiting";
+          btn.disabled = true;
+        } else if (room && room.guest && room.guest.uid === uid) {
+          btn.textContent = "You are on stage";
+          btn.disabled = true;
+        } else {
+          btn.textContent = "Request to join";
+          btn.disabled = false;
+        }
+      });
+    }
+  }
+
+  function cleanupListeners() {
+    if (roomCb && roomRef) { try { roomRef.off("value", roomCb); } catch (e) {} }
+    if (chatCb && chatRef) { try { chatRef.off("value", chatCb); } catch (e) {} }
+    if (presenceCb && presenceRef) { try { presenceRef.off("value", presenceCb); } catch (e) {} }
+    if (reqCb && reqRef) { try { reqRef.off("value", reqCb); } catch (e) {} }
+    if (reqsCb && reqsRef) { try { reqsRef.off("value", reqsCb); } catch (e) {} }
+    roomCb = chatCb = presenceCb = reqCb = reqsCb = null;
+    roomRef = chatRef = presenceRef = reqRef = reqsRef = null;
+  }
+
+  function leaveRoom(silent) {
+    if (roomId) {
+      try { db.ref("livePresence/" + roomId + "/" + uid).remove(); } catch (e) {}
+      if (room && room.modelUid === uid) {
+        try {
+          db.ref("liveRooms/" + roomId + "/status").onDisconnect().cancel();
+        } catch (e) {}
+      }
+    }
+    cleanupListeners();
+    closePeers();
+    stopLocalMedia();
+    roomId = null;
+    room = null;
+    chatData = {};
+    presence = {};
+    requests = {};
+    peers = new Map();
+    remoteStreams = {};
+    stageReady = false;
+    lastViewerCount = -1;
+    $("roomView").classList.add("hidden");
+    $("lobbyView").classList.remove("hidden");
+    $("btnGoLive").classList.remove("hidden");
+    $("btnEndStream").classList.add("hidden");
+    $("btnRemoveGuest").classList.add("hidden");
+    $("reqBanner").classList.add("hidden");
+    $("btnRequest").textContent = "Request to join";
+    $("btnRequest").disabled = false;
+    $("stageVideo").srcObject = null;
+    $("guestBox").classList.add("hidden");
+    $("tapSound").classList.add("hidden");
+    if (!silent) renderLobby();
+  }
+
+  function endStream() {
+    if (!roomId || !room) return;
+    openModal("End live?", "<p>Your room will close for everyone.</p>", [
+      { label: "Cancel" },
+      { label: "End live", cls: "primary", fn: function () {
+        var id = roomId;
+        try { db.ref("liveRooms/" + id + "/status").onDisconnect().cancel(); } catch (e) {}
+        db.ref("liveRooms/" + id).update({ status: "ended", endedAt: Date.now() }).catch(function () {});
+        db.ref("livePresence/" + id).remove().catch(function () {});
+        db.ref("liveRtc/" + id).remove().catch(function () {});
+        db.ref("liveReq/" + id).remove().catch(function () {});
+        // Late ICE writes can recreate these nodes, so sweep once more.
+        setTimeout(function () {
+          db.ref("livePresence/" + id).remove().catch(function () {});
+          db.ref("liveRtc/" + id).remove().catch(function () {});
+          db.ref("liveChat/" + id).remove().catch(function () {});
+        }, 4000);
+        leaveRoom();
+        toast("Live ended");
+      } }
+    ]);
+  }
+
+  /* ---------------- stage rendering ---------------- */
+  function isModel(u) { return !!(room && room.modelUid === u); }
+  function isGuest(u) { return !!(room && room.guest && room.guest.uid === u); }
+  function isPublisher(u) { return isModel(u) || isGuest(u); }
+
+  function renderRoom() {
+    if (!room) return;
+    $("roomTitleText").textContent = (room.modelName || "") + (room.title ? " · " + room.title : "");
+    $("likeCount").textContent = String(room.likes || 0);
+    var n = Object.keys(presence).length;
+    $("viewCount").textContent = n + " watching";
+    var mine = room.modelUid === uid;
+    $("btnEndStream").classList.toggle("hidden", !mine);
+    $("btnGoLive").classList.toggle("hidden", mine);
+    $("btnRemoveGuest").classList.toggle("hidden", !mine || !room.guest);
+    $("btnRequest").classList.toggle("hidden", mine || isGuest(uid));
+    if (room.guest && room.guest.uid === uid) {
+      $("btnRequest").disabled = true;
+      $("btnRequest").textContent = "You are on stage";
+    }
+    renderRequests();
+    attachStage();
+  }
+
+  function attachStage() {
+    if (!room) return;
+    var main = $("stageVideo");
+    var mainStream = isModel(uid) ? localStream : remoteStreams[room.modelUid];
+    if (mainStream) {
+      if (main.srcObject !== mainStream) main.srcObject = mainStream;
+      main.muted = isModel(uid);
+      playEl(main);
+      $("stageOff").classList.add("hidden");
+    } else {
+      $("stageOff").classList.remove("hidden");
+    }
+    var gbox = $("guestBox");
+    var g = room.guest;
+    if (g && g.uid !== room.modelUid) {
+      var gs = (g.uid === uid) ? localStream : remoteStreams[g.uid];
+      gbox.classList.remove("hidden");
+      $("guestName").textContent = shortName(g.name) || "Guest";
+      if (gs) {
+        var gv = $("guestVideo");
+        if (gv.srcObject !== gs) gv.srcObject = gs;
+        gv.muted = g.uid === uid;
+        playEl(gv);
+      }
+    } else {
+      gbox.classList.add("hidden");
+    }
+    stageReady = !!mainStream;
+    checkSound();
+  }
+
+  function checkSound() {
+    var v = $("stageVideo");
+    var chip = $("tapSound");
+    if (!v || !v.srcObject || (room && room.modelUid === uid)) { chip.classList.add("hidden"); return; }
+    chip.classList.toggle("hidden", !v.paused && !v.muted);
+  }
+
+  function playEl(v) {
+    if (!v) return;
+    var p = v.play();
+    if (p && p.catch) p.catch(function () { $("tapSound").classList.remove("hidden"); });
+  }
+
+  function replayVideos() {
+    if (!roomId) return;
+    playEl($("stageVideo"));
+    playEl($("guestVideo"));
+    checkSound();
+  }
+
+  function mediaConstraints(withVideo) {
+    return {
+      audio: {
+        echoCancellation: true, noiseSuppression: true, autoGainControl: true,
+        channelCount: 1, sampleRate: 48000
+      },
+      video: withVideo
+        ? { facingMode: "user", width: { ideal: 540 }, height: { ideal: 720 }, frameRate: { ideal: 20, max: 24 } }
+        : false
+    };
+  }
+
+  function stopLocalMedia() {
+    if (localStream) {
+      localStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+    }
+    localStream = null;
+    camOn = false;
+    micOn = false;
+  }
+
+  /* ---------------- chat ---------------- */
+  function renderChat() {
+    var list = $("chatList");
+    var keys = Object.keys(chatData);
+    keys.sort(function (a, b) { return (chatData[a].at || 0) - (chatData[b].at || 0); });
+    var recent = keys.slice(-80);
+    var atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+    list.textContent = "";
+    recent.forEach(function (k) { list.appendChild(chatRow(chatData[k])); });
+    if (atBottom) list.scrollTop = list.scrollHeight;
+  }
+
+  function chatRow(m) {
+    var row = document.createElement("div");
+    if (!m) return row;
+    if (m.type === "gift") {
+      row.className = "msg gift";
+      var emo = document.createElement("span");
+      emo.className = "giftEmo";
+      emo.textContent = (m.emo || "🎁") + " ";
+      var t = document.createElement("span");
+      t.innerHTML = "<b></b> sent <b></b>";
+      t.getElementsByTagName("b")[0].textContent = m.name || "Someone";
+      t.getElementsByTagName("b")[1].textContent = (m.label || "gift") + " " + fmt(m.amount);
+      row.appendChild(emo);
+      row.appendChild(t);
+      return row;
+    }
+    row.className = m.type === "system" ? "msg sys" : "msg";
+    if (m.type === "system") {
+      row.textContent = m.text || "";
+      return row;
+    }
+    var who = document.createElement("span");
+    who.className = "who" + (m.uid === uid ? " me" : "");
+    who.textContent = m.name + ":";
+    var txt = document.createTextNode(" " + (m.text || ""));
+    row.appendChild(who);
+    row.appendChild(txt);
+    return row;
+  }
+
+  function sendChat() {
+    var inp = $("chatInput");
+    var text = String(inp.value || "").trim().slice(0, 200);
+    if (!text || !roomId) return;
+    inp.value = "";
+    db.ref("liveChat/" + roomId).push({
+      uid: uid, name: myName, text: text, type: "chat", at: Date.now()
+    }).then(function () {
+      pruneChat();
+    }).catch(function () { toast("Message not sent"); });
+  }
+
+  function pruneChat() {
+    var keys = Object.keys(chatData);
+    if (keys.length <= MAX_CHAT + 40) return;
+    keys.sort(function (a, b) { return (chatData[a].at || 0) - (chatData[b].at || 0); });
+    var updates = {};
+    keys.slice(0, keys.length - MAX_CHAT).forEach(function (k) {
+      updates["/liveChat/" + roomId + "/" + k] = null;
+    });
+    db.ref().update(updates).catch(function () {});
+  }
+
+  /* ---------------- likes ---------------- */
+  function like() {
+    if (!roomId) return;
+    if (Date.now() - lastLike < 260) return;
+    lastLike = Date.now();
+    db.ref("liveRooms/" + roomId + "/likes").transaction(function (v) {
+      return (Number(v) || 0) + 1;
+    }).catch(function () {});
+    var h = document.createElement("span");
+    h.className = "heartFly";
+    h.textContent = "💗";
+    h.style.left = (34 + Math.random() * 32) + "%";
+    $("hearts").appendChild(h);
+    setTimeout(function () { if (h.parentNode) h.parentNode.removeChild(h); }, 1500);
+  }
+
+  /* ---------------- gifts ---------------- */
+  function openGiftPicker() {
+    if (!roomId) return;
+    var html = '<div class="giftGrid" id="giftGrid"></div>' +
+      '<p style="margin-top:10px;color:#9c98ab;font-size:10.5px">Balance: <b>' + fmt(myBalance) + '</b> · 30% of every gift goes to the model.</p>';
+    openModal("Send a gift", html, [{ label: "Close" }]);
+    var grid = $("giftGrid");
+    GIFTS.forEach(function (g) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "giftItem";
+      b.innerHTML = '<span class="ge"></span><span class="gn"></span><span class="gp"></span>';
+      b.getElementsByClassName("ge")[0].textContent = g.emo;
+      b.getElementsByClassName("gn")[0].textContent = g.name;
+      b.getElementsByClassName("gp")[0].textContent = fmt(g.price);
+      b.addEventListener("click", function () {
+        closeModal();
+        sendGift(g);
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  function sendGift(g) {
+    if (!roomId || !room) return;
+    if (room.modelUid === uid) { toast("You cannot gift yourself"); return; }
+    var key = "g" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+    var charged = false;
+    var short = false;
+    var balBefore = myBalance;
+    userTx(uid, function (u) {
+      charged = false;
+      short = false;
+      var led = u.liveLedger || {};
+      if (led[key]) { charged = true; return u; }
+      var bal = round2(u.balance);
+      if (bal < g.price) { short = true; balBefore = bal; return; }
+      led[key] = { amt: -g.price, at: Date.now() };
+      u.liveLedger = pruneLedger(led);
+      u.balance = round2(bal - g.price);
+      charged = true;
+      return u;
+    }).then(function (res) {
+      if (short) {
+        openDeposit(g.price, balBefore);
+        return;
+      }
+      if (!charged || !(res && res.committed)) { toast("Gift failed, try again"); return; }
+      writeTx(uid, "live_gift_sent", -g.price, "Gift " + g.name + " to " + room.modelName, key, myName);
+      creditModel(g, key);
+      db.ref("liveChat/" + roomId).push({
+        uid: uid, name: myName, type: "gift",
+        gift: g.id, label: g.name, emo: g.emo, amount: g.price, at: Date.now()
+      }).catch(function () {});
+      db.ref("liveRooms/" + roomId + "/giftTotal").transaction(function (v) {
+        return round2((Number(v) || 0) + g.price);
+      }).catch(function () {});
+      toast(g.emo + " " + g.name + " sent — " + fmt(g.price));
+    }).catch(function () { toast("Gift failed, try again"); });
+  }
+
+  function creditModel(g, key) {
+    if (!room || !room.modelUid) return;
+    var modelUid = room.modelUid;
+    var share = round2(g.price * SHARE);
+    if (share <= 0) return;
+    var ek = "e_" + key;
+    userTx(modelUid, function (u) {
+      var led = u.liveLedger || {};
+      if (led[ek]) return u;
+      led[ek] = { amt: share, at: Date.now() };
+      u.liveLedger = pruneLedger(led);
+      u.balance = round2((Number(u.balance) || 0) + share);
+      return u;
+    }).then(function () {
+      writeTx(modelUid, "live_gift_earn", share,
+        "Gift " + g.name + " from " + myName + " (30%)", key, room ? room.modelName : "");
+    }).catch(function () {});
+  }
+
+  /* ---------------- deposit ---------------- */
+  function openDeposit(needed, balanceNow) {
+    var head = needed
+      ? '<p style="color:#ff9aa5">Balance ' + fmt(balanceNow) + ' — this gift needs ' + fmt(needed) +
+        '. Please deposit first.</p>'
+      : '<p>Add money to your TM247 balance. Admin approves the request, then the balance is added.</p>';
+    openModal("Deposit", head + '<div id="depBox"><p style="color:#9c98ab;font-size:11px">Loading methods…</p></div>',
+      [{ label: "Close" }]);
+    db.ref("depositConfig/methods").once("value").then(function (snap) {
+      var val = snap.val() || {};
+      var list = Object.keys(val).map(function (k) { return val[k]; }).filter(function (m) { return m && m.name; });
+      var box = $("depBox");
+      if (!box) return;
+      if (!list.length) {
+        box.innerHTML = "<p>No deposit method is set up yet. Ask the admin to add one.</p>" +
+          "<p style='color:#9c98ab'>Or use the Deposit button on the app home screen.</p>";
+        return;
+      }
+      box.innerHTML =
+        '<div class="field"><label>Method</label><select id="depMethod"></select></div>' +
+        '<div class="field"><label>Amount (৳)</label><input id="depAmount" type="number" min="10" step="1" placeholder="100" /></div>' +
+        '<div class="field"><label>Transaction ID / sender number</label><input id="depTrx" type="text" maxlength="40" placeholder="e.g. bKash TrxID" /></div>' +
+        '<p id="depInfo" style="font-size:11px;color:#9c98ab"></p>' +
+        '<button class="primary" id="depSubmit" type="button" style="width:100%;padding:11px;border-radius:10px;background:#ff2d6f;font-weight:800;margin-top:6px">Send deposit request</button>';
+      var sel = $("depMethod");
+      list.forEach(function (m, i) {
+        var o = document.createElement("option");
+        o.value = String(i);
+        o.textContent = m.name + " · " + (m.number || "");
+        sel.appendChild(o);
+      });
+      var showInfo = function () {
+        var m = list[Number(sel.value) || 0];
+        $("depInfo").textContent = m ? ("Send to: " + m.name + " — " + (m.number || "")) : "";
+      };
+      sel.addEventListener("change", showInfo);
+      showInfo();
+      if (needed) $("depAmount").value = String(Math.ceil(needed));
+      $("depSubmit").addEventListener("click", function () {
+        var m = list[Number(sel.value) || 0];
+        var amount = round2(parseFloat($("depAmount").value || "0"));
+        var trx = String($("depTrx").value || "").trim();
+        if (!m) { toast("Choose a method"); return; }
+        if (!(amount >= 10)) { toast("Minimum ৳10"); return; }
+        if (trx.length < 3) { toast("Enter the transaction ID"); return; }
+        submitDeposit(amount, m, trx);
+      });
+    }).catch(function () { toast("Could not load deposit methods"); });
+  }
+
+  function submitDeposit(amount, method, trxId) {
+    var reqRef = db.ref("depositRequests").push();
+    var txRef = db.ref("transactions/" + uid).push();
+    var now = Date.now();
+    var req = {
+      uid: uid, userName: myName, amount: amount,
+      methodName: method.name, methodNumber: method.number || "",
+      trxId: trxId, status: "pending", at: now, txId: txRef.key
+    };
+    var tx = {
+      kind: "deposit", amount: amount, status: "pending",
+      method: method.name, number: method.number || "",
+      note: "Deposit via " + method.name, refId: reqRef.key, at: now, userName: myName
+    };
+    var updates = {};
+    updates["/depositRequests/" + reqRef.key] = req;
+    updates["/transactions/" + uid + "/" + txRef.key] = tx;
+    db.ref().update(updates).then(function () {
+      closeModal();
+      toast("Deposit request sent — admin approve korle balance add hobe");
+    }).catch(function () {
+      toast("Deposit request failed");
+    });
+  }
+
+  /* ---------------- stage request (viewer side) ---------------- */
+  function requestStage() {
+    if (!roomId || !room) return;
+    if (room.modelUid === uid) return;
+    if (room.guest && room.guest.uid === uid) return;
+    db.ref("liveReq/" + roomId + "/" + uid).set({ uid: uid, name: myName, at: Date.now() })
+      .then(function () {
+        $("btnRequest").textContent = "Request sent · waiting";
+        $("btnRequest").disabled = true;
+        toast("Request sent to the model");
+      }).catch(function () { toast("Could not send request"); });
+  }
+
+  function acceptGuest() {
+    if (!roomId || !room) return;
+    var keys = Object.keys(requests);
+    if (!keys.length) return;
+    keys.sort(function (a, b) { return (requests[a].at || 0) - (requests[b].at || 0); });
+    var req = requests[keys[0]];
+    if (room.guest) { toast("Remove the current guest first"); return; }
+    var patch = {};
+    patch["/liveRooms/" + roomId + "/guest"] = { uid: req.uid, name: req.name, at: Date.now() };
+    patch["/liveReq/" + roomId + "/" + req.uid] = null;
+    db.ref().update(patch).then(function () {
+      db.ref("liveChat/" + roomId).push({
+        uid: "system", name: "System", type: "system",
+        text: req.name + " joined the stage", at: Date.now()
+      }).catch(function () {});
+    }).catch(function () { toast("Could not accept"); });
+  }
+
+  function declineGuest() {
+    if (!roomId) return;
+    var keys = Object.keys(requests);
+    if (!keys.length) return;
+    keys.sort(function (a, b) { return (requests[a].at || 0) - (requests[b].at || 0); });
+    db.ref("liveReq/" + roomId + "/" + keys[0]).remove();
+  }
+
+  function removeGuest() {
+    if (!roomId || !room || !room.guest) return;
+    var g = room.guest;
+    db.ref("liveRooms/" + roomId + "/guest").remove();
+    db.ref("liveChat/" + roomId).push({
+      uid: "system", name: "System", type: "system",
+      text: g.name + " left the stage", at: Date.now()
+    }).catch(function () {});
+  }
+
+  /* ---------------- WebRTC mesh ---------------- */
+  function pairKey(a, b) {
+    var x = String(a), y = String(b);
+    return x < y ? x + "__" + y : y + "__" + x;
+  }
+
+  function peerTargets() {
+    if (!room) return [];
+    var out = [];
+    if (isPublisher(uid)) {
+      Object.keys(presence).forEach(function (u) { if (u !== uid) out.push(u); });
+    } else {
+      if (room.modelUid) out.push(room.modelUid);
+      if (room.guest && room.guest.uid) out.push(room.guest.uid);
+    }
+    return out.filter(function (u, i) { return u && u !== uid && out.indexOf(u) === i; });
+  }
+
+  function iOfferFor(remoteUid) {
+    if (!isPublisher(uid)) return false;
+    if (!isPublisher(remoteUid)) return true;
+    return room && uid === room.modelUid;
+  }
+
+  function syncPeers() {
+    if (!roomId || !room) return;
+    if (isGuest(uid) && !localStream) return;
+    var targets = peerTargets();
+    targets.forEach(function (t) { ensurePeer(t); });
+    Array.from(peers.keys()).forEach(function (p) {
+      if (targets.indexOf(p) < 0) closePeer(p);
+    });
+  }
+
+  function ensurePeer(remoteUid) {
+    if (!remoteUid || remoteUid === uid || !roomId || peers.has(remoteUid)) return;
+    var base = "liveRtc/" + roomId + "/" + pairKey(uid, remoteUid);
+    var pc;
+    try { pc = new RTCPeerConnection(ICE); } catch (e) { return; }
+    var entry = {
+      pc: pc, peerUid: remoteUid, base: base, refs: [],
+      pendingIce: [], offerAt: 0, created: Date.now()
+    };
+    peers.set(remoteUid, entry);
+
+    if (localStream) {
+      localStream.getTracks().forEach(function (t) {
+        try { pc.addTrack(t, localStream); } catch (e) {}
+      });
+    } else {
+      try {
+        pc.addTransceiver("audio", { direction: "recvonly" });
+        pc.addTransceiver("video", { direction: "recvonly" });
+      } catch (e) {}
+    }
+
+    pc.ontrack = function (ev) {
+      if (ev.streams && ev.streams[0]) {
+        remoteStreams[remoteUid] = ev.streams[0];
+      } else {
+        if (!remoteStreams[remoteUid]) remoteStreams[remoteUid] = new MediaStream();
+        try { remoteStreams[remoteUid].addTrack(ev.track); } catch (e) {}
+      }
+      attachStage();
+    };
+    pc.onicecandidate = function (ev) {
+      if (ev.candidate && db && room && room.status === "live") {
+        db.ref(base + "/ice/" + uid).push(ev.candidate.toJSON()).catch(function () {});
+      }
+    };
+    pc.onconnectionstatechange = function () {
+      if (pc.connectionState === "failed") {
+        closePeer(remoteUid);
+        setTimeout(function () { if (roomId) ensurePeer(remoteUid); }, 1200);
+      }
+    };
+
+    var offerRef = db.ref(base + "/offer");
+    var answerRef = db.ref(base + "/answer");
+    var iceRef = db.ref(base + "/ice/" + remoteUid);
+    var addIce = function (c) {
+      if (!c) return;
+      if (pc.remoteDescription && pc.remoteDescription.type) {
+        pc.addIceCandidate(c).catch(function () {});
+      } else {
+        entry.pendingIce.push(c);
+      }
+    };
+    var flushIce = function () {
+      entry.pendingIce.splice(0).forEach(function (c) { pc.addIceCandidate(c).catch(function () {}); });
+    };
+    var iceCb = iceRef.on("child_added", function (snap) { addIce(snap.val()); });
+    entry.refs.push({ ref: iceRef, type: "child_added", cb: iceCb });
+
+    if (iOfferFor(remoteUid)) {
+      pc.createOffer().then(function (offer) {
+        return pc.setLocalDescription(offer);
+      }).then(function () {
+        entry.offerAt = Date.now();
+        return offerRef.set({
+          sdp: pc.localDescription.sdp,
+          type: pc.localDescription.type,
+          from: uid,
+          at: entry.offerAt
+        });
+      }).then(function () {
+        var ansCb = answerRef.on("value", function (snap) {
+          var v = snap.val();
+          if (!v || !v.sdp) return;
+          if (v.at && v.at < entry.offerAt) return;
+          if (pc.signalingState !== "have-local-offer") return;
+          pc.setRemoteDescription({ type: "answer", sdp: v.sdp }).then(flushIce).catch(function () {});
+        });
+        entry.refs.push({ ref: answerRef, type: "value", cb: ansCb });
+      }).catch(function () {});
+    } else {
+      var minOfferAt = Date.now() - 6000;
+      var offCb = offerRef.on("value", function (snap) {
+        var v = snap.val();
+        if (!v || !v.sdp) return;
+        if (v.at && v.at < minOfferAt) return;
+        if (pc.remoteDescription) return;
+        pc.setRemoteDescription({ type: v.type || "offer", sdp: v.sdp }).then(function () {
+          return pc.createAnswer();
+        }).then(function (ans) {
+          return pc.setLocalDescription(ans);
+        }).then(function () {
+          flushIce();
+          return answerRef.set({
+            sdp: pc.localDescription.sdp,
+            type: pc.localDescription.type,
+            from: uid,
+            at: Date.now()
+          });
+        }).catch(function () {});
+      });
+      entry.refs.push({ ref: offerRef, type: "value", cb: offCb });
+    }
+  }
+
+  function closePeer(remoteUid) {
+    var entry = peers.get(remoteUid);
+    if (!entry) return;
+    entry.refs.forEach(function (r) {
+      try { r.ref.off(r.type, r.cb); } catch (e) {}
+    });
+    try { entry.pc.close(); } catch (e) {}
+    peers.delete(remoteUid);
+    delete remoteStreams[remoteUid];
+    attachStage();
+  }
+
+  function closePeers() {
+    Array.from(peers.keys()).forEach(function (p) { closePeer(p); });
+  }
+
+  /* ---------------- media controls ---------------- */
+  function toggleCam() {
+    if (!localStream) return;
+    camOn = !camOn;
+    localStream.getVideoTracks().forEach(function (t) { t.enabled = camOn; });
+    db.ref("liveRooms/" + roomId + "/camOn").set(camOn).catch(function () {});
+    toast(camOn ? "Camera on" : "Camera off");
+    attachStage();
+  }
+
+  function toggleMic() {
+    if (!localStream) return;
+    micOn = !micOn;
+    localStream.getAudioTracks().forEach(function (t) { t.enabled = micOn; });
+    toast(micOn ? "Mic on" : "Mic muted");
+  }
+
+  function modelControls() {
+    openModal("Camera & mic", "<p>Only you see these controls.</p>", [
+      { label: camOn ? "Camera off" : "Camera on", fn: toggleCam },
+      { label: micOn ? "Mute mic" : "Unmute mic", fn: toggleMic },
+      { label: "Close" }
+    ]);
+  }
+
+  /* ---------------- wire up ---------------- */
+  function bindUi() {
+    $("btnGoLive").addEventListener("click", askGoLive);
+    $("btnDeposit").addEventListener("click", function () { openDeposit(0, myBalance); });
+    $("btnLike").addEventListener("click", like);
+    $("btnGift").addEventListener("click", openGiftPicker);
+    $("btnSend").addEventListener("click", sendChat);
+    $("chatInput").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); sendChat(); }
+    });
+    $("btnRequest").addEventListener("click", requestStage);
+    $("btnLeave").addEventListener("click", function () { leaveRoom(); });
+    $("btnEndStream").addEventListener("click", endStream);
+    $("btnRemoveGuest").addEventListener("click", removeGuest);
+    $("btnAccept").addEventListener("click", acceptGuest);
+    $("btnDecline").addEventListener("click", declineGuest);
+    $("btnFull").addEventListener("click", function () {
+      var v = $("stageVideo");
+      if (!v) return;
+      if (v.requestFullscreen) v.requestFullscreen().catch(function () {});
+      else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+    });
+    $("tapSound").addEventListener("click", function () {
+      $("stageVideo").muted = false;
+      $("tapSound").classList.add("hidden");
+      playEl($("stageVideo"));
+    });
+    $("stageVideo").addEventListener("click", function () {
+      if (room && room.modelUid === uid) modelControls();
+    });
+    document.addEventListener("pointerdown", function () { replayVideos(); }, { passive: true });
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) replayVideos();
+    });
+    window.addEventListener("beforeunload", function () {
+      if (roomId) db.ref("livePresence/" + roomId + "/" + uid).remove();
+    });
+    $("modalWrap").addEventListener("click", function (e) {
+      if (e.target === $("modalWrap")) closeModal();
+    });
+  }
+
+  function ageGate() {
+    var ok = false;
+    try { ok = localStorage.getItem("tm247_live_age") === "1"; } catch (e) {}
+    if (ok) return;
+    openModal("18+ only",
+      "<p>This section has adult live rooms. You must be 18 or older.</p>" +
+      "<p>Rules: no nudity in public places, no recording of other users, no harassment, no minors. " +
+      "Breaking the rules gets the account removed.</p>",
+      [
+        { label: "Leave" },
+        { label: "I am 18+", cls: "ok", fn: function () {
+          try { localStorage.setItem("tm247_live_age", "1"); } catch (e) {}
+        } }
+      ], null);
+  }
+
+  window.__liveState = function () {
+    var out = {
+      uid: uid, name: myName, roomId: roomId,
+      model: room ? room.modelUid : null,
+      isModel: !!(room && room.modelUid === uid),
+      guest: room && room.guest ? room.guest.uid : null,
+      isGuest: isGuest(uid),
+      balance: myBalance,
+      likes: room ? room.likes || 0 : 0,
+      giftTotal: room ? room.giftTotal || 0 : 0,
+      presence: Object.keys(presence).length,
+      chat: Object.keys(chatData).length,
+      cam: camOn, mic: micOn,
+      local: !!(localStream && localStream.getTracks().length),
+      stage: $("stageVideo").srcObject
+        ? $("stageVideo").srcObject.getTracks().map(function (t) { return t.kind + ":" + t.readyState; })
+        : [],
+      guestVideo: $("guestVideo").srcObject
+        ? $("guestVideo").srcObject.getTracks().map(function (t) { return t.kind + ":" + t.readyState; })
+        : [],
+      peers: []
+    };
+    peers.forEach(function (e, k) {
+      out.peers.push({
+        uid: k, state: e.pc.connectionState,
+        video: remoteStreams[k] ? remoteStreams[k].getTracks().length : 0,
+        offerer: iOfferFor(k)
+      });
+    });
+    return out;
+  };
+
+  function boot() {
+    if (!window.firebase || !window.firebase.database) {
+      $("fatal").classList.remove("hidden");
+      $("fatal").querySelector("h2").textContent = "Connection problem";
+      $("fatal").querySelector("p").textContent = "Firebase could not load. Check your internet and reload.";
+      return;
+    }
+    try {
+      if (!firebase.apps.length) firebase.initializeApp({ databaseURL: DB_URL });
+      db = firebase.database();
+    } catch (e) {
+      $("fatal").classList.remove("hidden");
+      return;
+    }
+    bindUi();
+    attachBalance();
+    startLobby();
+    ageGate();
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
